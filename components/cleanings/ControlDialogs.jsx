@@ -1,32 +1,19 @@
 import { useEffect, useState } from "react";
-import {
-  Button,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
-  Typography,
-} from "@mui/material";
+import { Box, Typography } from "@mui/material";
 import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutlined";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutlined";
 import PersonRemoveOutlinedIcon from "@mui/icons-material/PersonRemoveOutlined";
 import ReplayIcon from "@mui/icons-material/Replay";
-import { JacoTextInput } from "@/design-system/shared/ui";
+import {
+  JacoButton,
+  JacoModal,
+  JacoTextInput,
+  uiColors,
+  uiTypography,
+} from "@/design-system/shared/ui";
 import { usePendingAction } from "./shared";
 
 const DELETE_REASON_MIN_LENGTH = 3;
-
-const actionButtonSx = {
-  minHeight: 40,
-  minWidth: 112,
-  px: 2,
-  borderRadius: "8px",
-  fontWeight: 700,
-  lineHeight: "20px",
-  alignItems: "center",
-  justifyContent: "center",
-  whiteSpace: "nowrap",
-};
 
 function useDeleteReason(open, action) {
   const [reason, setReason] = useState("");
@@ -75,26 +62,46 @@ function DeleteReasonField({ value, onChange }) {
   );
 }
 
-function ConfirmActionButton({ meta, disabled, loading, onClick }) {
+// Confirm dialog shared by cleaning and preparation actions; the tone carries the action meaning.
+function ActionConfirmModal({ open, meta, isDelete, reason, onReasonChange, isReasonValid, isPending, onClose, onConfirm }) {
   return (
-    <Button
-      size="small"
-      variant="contained"
-      startIcon={meta.icon}
-      onClick={onClick}
-      disabled={disabled}
-      loading={loading}
-      loadingPosition="start"
-      sx={{
-        ...actionButtonSx,
-        bgcolor: meta.bgcolor,
-        color: "#fff",
-        "&:hover": { bgcolor: meta.hoverBgcolor },
-        "&.Mui-disabled": { bgcolor: "action.disabledBackground", color: "action.disabled" },
-      }}
+    <JacoModal
+      open={open}
+      onClose={onClose}
+      title={meta.title}
+      maxWidth="xs"
+      actions={
+        <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 1, width: "100%" }}>
+          <JacoButton
+            tone="secondary"
+            compact
+            onClick={onClose}
+          >
+            Отмена
+          </JacoButton>
+          <JacoButton
+            tone={meta.tone}
+            compact
+            startIcon={meta.icon}
+            disabled={!isReasonValid}
+            loading={isPending}
+            onClick={onConfirm}
+          >
+            {meta.button}
+          </JacoButton>
+        </Box>
+      }
     >
-      {meta.button}
-    </Button>
+      <Box sx={{ display: "grid", gap: 2 }}>
+        <Typography sx={{ ...uiTypography.body, color: uiColors.text }}>{meta.text}</Typography>
+        {isDelete ? (
+          <DeleteReasonField
+            value={reason}
+            onChange={onReasonChange}
+          />
+        ) : null}
+      </Box>
+    </JacoModal>
   );
 }
 
@@ -112,71 +119,44 @@ export function ControlActionConfirmDialog({ open, action, item, cleaning, onClo
       text: `Уборка «${cleaningName}»${employeeSuffix} будет отмечена как подтверждённая.`,
       button: "Подтвердить",
       icon: <CheckCircleOutlineIcon />,
-      bgcolor: "#16a34a",
-      hoverBgcolor: "#15803d",
+      tone: "success",
     },
     return: {
       title: "Вернуть на доработку?",
       text: `Уборка «${cleaningName}» вернётся ${getReturnTarget(item?.employee)} на доработку: время окончания будет сброшено.`,
       button: "Вернуть",
       icon: <ReplayIcon />,
-      bgcolor: "#f59e0b",
-      hoverBgcolor: "#d97706",
+      tone: "warning",
     },
     detach: {
       title: "Снять с сотрудника?",
       text: `Уборка «${cleaningName}» станет свободной: сотрудник и время начала будут очищены. Если у уборки уже прошло время удаления, система удалит её в течение 5 минут.`,
       button: "Снять",
       icon: <PersonRemoveOutlinedIcon />,
-      bgcolor: "#f59e0b",
-      hoverBgcolor: "#d97706",
+      tone: "warning",
     },
     delete: {
       title: "Удалить запись?",
       text: `Запись «${cleaningName}»${employeeSuffix} будет удалена из проверки.`,
       button: "Удалить",
       icon: <DeleteOutlineIcon />,
-      bgcolor: "primary.main",
-      hoverBgcolor: "primary.dark",
+      tone: "danger",
     },
   };
   const meta = actionMeta[action?.type] || actionMeta.delete;
 
   return (
-    <Dialog
+    <ActionConfirmModal
       open={open}
+      meta={meta}
+      isDelete={isDelete}
+      reason={reason}
+      onReasonChange={setReason}
+      isReasonValid={isReasonValid}
+      isPending={isPending}
       onClose={onClose}
-      fullWidth
-      maxWidth="xs"
-      slotProps={{ paper: { sx: { borderRadius: "12px" } } }}
-    >
-      <DialogTitle sx={{ fontWeight: 700 }}>{meta.title}</DialogTitle>
-      <DialogContent sx={{ display: "grid", gap: 2 }}>
-        <Typography sx={{ color: "text.secondary", fontSize: 15 }}>{meta.text}</Typography>
-        {isDelete ? (
-          <DeleteReasonField
-            value={reason}
-            onChange={setReason}
-          />
-        ) : null}
-      </DialogContent>
-      <DialogActions sx={{ px: 3, pb: 2.5, gap: 1 }}>
-        <Button
-          size="small"
-          variant="outlined"
-          onClick={onClose}
-          sx={actionButtonSx}
-        >
-          Отмена
-        </Button>
-        <ConfirmActionButton
-          meta={meta}
-          disabled={!isReasonValid}
-          loading={isPending}
-          onClick={() => runPending(() => onConfirm(confirmReason))}
-        />
-      </DialogActions>
-    </Dialog>
+      onConfirm={() => runPending(() => onConfirm(confirmReason))}
+    />
   );
 }
 
@@ -192,54 +172,29 @@ export function PreparationActionConfirmDialog({ open, action, item, onClose, on
       text: `Заготовка «${item?.name || "Заготовка"}» будет отмечена как подтверждённая.`,
       button: "Подтвердить",
       icon: <CheckCircleOutlineIcon />,
-      bgcolor: "#16a34a",
-      hoverBgcolor: "#15803d",
+      tone: "success",
     },
     delete: {
       title: "Удалить заготовку?",
       text: `Заготовка «${item?.name || "Заготовка"}» будет удалена из проверки.`,
       button: "Удалить",
       icon: <DeleteOutlineIcon />,
-      bgcolor: "primary.main",
-      hoverBgcolor: "primary.dark",
+      tone: "danger",
     },
   };
   const meta = actionMeta[action?.type] || actionMeta.approve;
 
   return (
-    <Dialog
+    <ActionConfirmModal
       open={open}
+      meta={meta}
+      isDelete={isDelete}
+      reason={reason}
+      onReasonChange={setReason}
+      isReasonValid={isReasonValid}
+      isPending={isPending}
       onClose={onClose}
-      fullWidth
-      maxWidth="xs"
-      slotProps={{ paper: { sx: { borderRadius: "12px" } } }}
-    >
-      <DialogTitle sx={{ fontWeight: 700 }}>{meta.title}</DialogTitle>
-      <DialogContent sx={{ display: "grid", gap: 2 }}>
-        <Typography sx={{ color: "text.secondary", fontSize: 15 }}>{meta.text}</Typography>
-        {isDelete ? (
-          <DeleteReasonField
-            value={reason}
-            onChange={setReason}
-          />
-        ) : null}
-      </DialogContent>
-      <DialogActions sx={{ px: 3, pb: 2.5, gap: 1 }}>
-        <Button
-          size="small"
-          variant="outlined"
-          onClick={onClose}
-          sx={actionButtonSx}
-        >
-          Отмена
-        </Button>
-        <ConfirmActionButton
-          meta={meta}
-          disabled={!isReasonValid}
-          loading={isPending}
-          onClick={() => runPending(() => onConfirm(confirmReason))}
-        />
-      </DialogActions>
-    </Dialog>
+      onConfirm={() => runPending(() => onConfirm(confirmReason))}
+    />
   );
 }

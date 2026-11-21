@@ -23,6 +23,14 @@ const variantStyles = {
       backgroundColor: uiColors.dangerHover,
     },
   },
+  // Attention actions that are not destructive, e.g. sending work back for rework.
+  warning: {
+    color: uiColors.textStrong,
+    backgroundColor: uiColors.warning,
+    "&:hover": {
+      backgroundColor: uiColors.warningHover,
+    },
+  },
   secondary: {
     color: uiColors.text,
     borderColor: uiColors.border,
@@ -43,7 +51,7 @@ const variantStyles = {
   },
 };
 
-const filledTones = new Set(["primary", "success", "danger"]);
+const filledTones = new Set(["primary", "success", "danger", "warning"]);
 
 export default function JacoButton({
   tone = "primary",
@@ -88,7 +96,7 @@ export default function JacoButton({
               "&.Mui-disabled": {
                 backgroundColor: toneStyles.backgroundColor,
                 borderColor: toneStyles.backgroundColor,
-                color: "#FFFFFF",
+                color: toneStyles.color,
               },
             }
           : {}),

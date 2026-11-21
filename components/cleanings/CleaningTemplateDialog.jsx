@@ -1,11 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import {
   Box,
-  Button,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
   Grid,
   IconButton,
   RadioGroup,
@@ -14,7 +9,6 @@ import {
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import AllInclusiveOutlinedIcon from "@mui/icons-material/AllInclusiveOutlined";
-import CloseIcon from "@mui/icons-material/Close";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutlined";
 import DescriptionOutlinedIcon from "@mui/icons-material/DescriptionOutlined";
 import HelpOutlineOutlinedIcon from "@mui/icons-material/HelpOutlineOutlined";
@@ -24,12 +18,16 @@ import PlaceOutlinedIcon from "@mui/icons-material/PlaceOutlined";
 import ScheduleOutlinedIcon from "@mui/icons-material/ScheduleOutlined";
 import {
   JacoAutocomplete,
+  JacoButton,
   JacoCheckboxField,
   JacoCityCafe,
+  JacoModal,
   JacoRadioCard,
   JacoSelect,
   JacoTextInput,
   JacoTimePicker,
+  uiColors,
+  uiTypography,
 } from "@/design-system/shared/ui";
 import { LEGACY_ONLY_OPTION_VALUE, NIGHTLY_CLEANUP_TIME, days, defaultForm } from "./constants";
 import {
@@ -42,16 +40,6 @@ import {
   isValidTime,
 } from "./helpers";
 import { FormHint, FormLabel, FormSection, useBeforeUnloadGuard } from "./shared";
-
-const actionButtonSx = {
-  minHeight: 44,
-  borderRadius: "8px",
-  fontSize: 16,
-  fontWeight: 700,
-  lineHeight: "20px",
-  alignItems: "center",
-  justifyContent: "center",
-};
 
 const timeFieldSx = { width: 150 };
 
@@ -350,64 +338,39 @@ export default function CleaningTemplateDialog({
   ];
 
   return (
-    <Dialog
+    <JacoModal
       open={open}
       onClose={requestClose}
-      fullWidth
+      title={isEdit ? `Уборка «${form.name}»` : "Новая уборка"}
       maxWidth="md"
-      scroll="paper"
-      slotProps={{
-        paper: {
-          sx: {
-            width: { xs: "calc(100% - 24px)", md: 760 },
-            borderRadius: "12px",
-            maxHeight: "92vh",
-            overflow: "hidden",
-          },
-        },
-      }}
-    >
-      <DialogTitle
-        sx={{ px: { xs: 2, md: 3 }, py: 1.75, borderBottom: "1px solid", borderColor: "divider" }}
-      >
-        <Box
-          sx={{
-            display: "flex",
-            alignItems: "flex-start",
-            justifyContent: "space-between",
-            gap: 1.5,
-          }}
-        >
-          <Box>
-            <Typography
-              sx={{
-                color: "text.secondary",
-                fontSize: 12,
-                fontWeight: 700,
-                letterSpacing: 2,
-                textTransform: "uppercase",
-              }}
-            >
-              Уборка
+      containedDesktopScroll
+      desktopMaxHeight="92vh"
+      paperSx={{ width: { xs: "100%", md: 760 } }}
+      actions={
+        <Box sx={{ display: "grid", gap: 1, width: "100%" }}>
+          {submitAttempted && hasErrors ? (
+            <Typography sx={{ ...uiTypography.compactLabel, fontSize: 13, color: uiColors.danger }}>
+              Проверьте отмеченные поля
             </Typography>
-            <Typography
-              variant="h4"
-              sx={{ fontWeight: 700, mt: 0.25, fontSize: { xs: 24, md: 28 } }}
+          ) : null}
+          <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 1 }}>
+            <JacoButton
+              tone="secondary"
+              onClick={requestClose}
             >
-              {isEdit ? form.name : "Новая уборка"}
-            </Typography>
+              Отмена
+            </JacoButton>
+            <JacoButton
+              onClick={save}
+              disabled={!canEdit}
+              sx={{ minWidth: 160 }}
+            >
+              Сохранить
+            </JacoButton>
           </Box>
-
-          <IconButton
-            size="small"
-            onClick={requestClose}
-          >
-            <CloseIcon fontSize="small" />
-          </IconButton>
         </Box>
-      </DialogTitle>
-
-      <DialogContent sx={{ px: { xs: 2, md: 3 }, py: 2 }}>
+      }
+    >
         <Box sx={{ display: "grid", gap: 3 }}>
           <FormSection
             icon={<DescriptionOutlinedIcon />}
@@ -593,21 +556,15 @@ export default function CleaningTemplateDialog({
                   ))}
 
                   {canEdit ? (
-                    <Button
-                      size="small"
-                      variant="outlined"
+                    <JacoButton
+                      tone="secondary"
+                      compact
                       startIcon={<AddIcon />}
                       onClick={addTime}
-                      sx={{
-                        borderStyle: "dashed",
-                        px: 2,
-                        py: 0.75,
-                        borderRadius: "8px",
-                        color: "text.secondary",
-                      }}
+                      sx={{ borderStyle: "dashed" }}
                     >
                       Добавить время
-                    </Button>
+                    </JacoButton>
                   ) : null}
                 </Box>
                 <FormHint tone={invalidTimeIndexes.size ? "error" : "muted"}>
@@ -672,9 +629,10 @@ export default function CleaningTemplateDialog({
                       key={deleteCase.kind}
                       component="li"
                       sx={{
+                        ...uiTypography.compactLabel,
                         fontSize: 13,
                         lineHeight: 1.45,
-                        color: isActive ? "text.primary" : "text.secondary",
+                        color: isActive ? uiColors.textStrong : uiColors.textMuted,
                         fontWeight: isActive ? 600 : 400,
                       }}
                     >
@@ -708,42 +666,6 @@ export default function CleaningTemplateDialog({
             <FormHint>{locationSummary || "Кафе не выбраны"}</FormHint>
           </FormSection>
         </Box>
-      </DialogContent>
-
-      <DialogActions
-        disableSpacing
-        sx={{
-          px: { xs: 2, md: 3 },
-          py: 1.5,
-          borderTop: "1px solid",
-          borderColor: "divider",
-          gap: 1.5,
-          flexWrap: "wrap",
-        }}
-      >
-        {submitAttempted && hasErrors ? (
-          <Typography sx={{ width: "100%", color: "error.main", fontSize: 13 }}>
-            Проверьте отмеченные поля
-          </Typography>
-        ) : null}
-        <Button
-          size="small"
-          variant="contained"
-          onClick={save}
-          disabled={!canEdit}
-          sx={{ ...actionButtonSx, flex: 1 }}
-        >
-          Сохранить
-        </Button>
-        <Button
-          size="small"
-          variant="outlined"
-          onClick={requestClose}
-          sx={{ ...actionButtonSx, minWidth: 112, fontWeight: 500 }}
-        >
-          Отмена
-        </Button>
-      </DialogActions>
-    </Dialog>
+    </JacoModal>
   );
 }

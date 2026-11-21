@@ -102,7 +102,7 @@ export function Buttons() {
 }
 
 export function ButtonStateMatrix() {
-  const tones = ["primary", "success", "secondary", "outlinePrimary", "danger"];
+  const tones = ["primary", "success", "warning", "secondary", "outlinePrimary", "danger"];
 
   return (
     <StoryCanvas>

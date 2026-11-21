@@ -4,45 +4,42 @@ import {
   AccordionDetails,
   AccordionSummary,
   Box,
-  Button,
-  Chip,
   CircularProgress,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
   Grid,
-  InputAdornment,
-  Paper,
-  TextField,
   Typography,
   useMediaQuery,
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutlined";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
-import SearchIcon from "@mui/icons-material/Search";
 import { TextEditor } from "@/ui/Forms";
 import HistoryLog from "@/ui/history/HistoryLog";
-import { JacoAutocomplete, JacoButton } from "@/design-system/shared/ui";
+import {
+  JacoAutocomplete,
+  JacoButton,
+  JacoModal,
+  JacoSearchField,
+  JacoStatusChip,
+  JacoSurface,
+  JacoTextInput,
+  uiColors,
+  uiRadii,
+  uiStateColors,
+  uiTypography,
+} from "@/design-system/shared/ui";
 import { formatPlural } from "@/src/helpers/utils/i18n";
 import { getCategoryName, isSameId } from "./helpers";
 import { FormHint, FormLabel } from "./shared";
 
-const centeredButtonSx = {
-  alignItems: "center",
-  justifyContent: "center",
-  lineHeight: "20px",
+const titleSx = {
+  ...uiTypography.bodyMedium,
+  fontWeight: 700,
+  color: uiColors.textStrong,
 };
 
-const actionButtonSx = {
-  ...centeredButtonSx,
-  minHeight: 40,
-  minWidth: 112,
-  px: 2,
-  borderRadius: "8px",
-  fontWeight: 700,
-  whiteSpace: "nowrap",
+const mutedTextSx = {
+  ...uiTypography.label,
+  color: uiColors.textMuted,
 };
 
 function getAppliedToText(count) {
@@ -105,18 +102,20 @@ function CategoryTemplatesAccordion({
       variant="outlined"
       disableGutters
       sx={{
-        borderRadius: "8px",
+        borderRadius: `${uiRadii.md} !important`,
+        borderColor: uiColors.border,
         overflow: "hidden",
         "&:before": { display: "none" },
       }}
     >
       <AccordionSummary expandIcon={<ExpandMoreIcon />}>
         <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-          <Typography sx={{ fontSize: 15, fontWeight: 700 }}>Применяется для</Typography>
-          <Chip
+          <Typography sx={titleSx}>Применяется для</Typography>
+          <JacoStatusChip
             label={selectedTemplates.length}
-            size="small"
-            sx={{ height: 22, minWidth: 28, fontWeight: 700 }}
+            tone="neutral"
+            variant="soft"
+            sx={{ minWidth: 28 }}
           />
         </Box>
       </AccordionSummary>
@@ -144,9 +143,11 @@ function CategoryTemplatesAccordion({
                 {...optionProps}
               >
                 <Box sx={{ minWidth: 0 }}>
-                  <Typography sx={{ fontSize: 14 }}>{getTemplateOptionLabel(template)}</Typography>
+                  <Typography sx={{ ...uiTypography.label, color: uiColors.textStrong }}>
+                    {getTemplateOptionLabel(template)}
+                  </Typography>
                   {movesFromCategory ? (
-                    <Typography sx={{ color: "text.secondary", fontSize: 12 }}>
+                    <Typography sx={{ ...uiTypography.compactLabel, color: uiColors.textMuted }}>
                       Сейчас: {getCategoryName(categories, template.categoryId)}
                     </Typography>
                   ) : null}
@@ -224,34 +225,21 @@ export default function CleaningCategoriesView({
       spacing={2.5}
     >
       <Grid size={{ xs: 12, md: 3 }}>
-        <Paper
-          variant="outlined"
-          sx={{ borderRadius: "8px", overflow: "hidden", height: "100%" }}
-        >
+        <JacoSurface sx={{ overflow: "hidden", height: "100%" }}>
           <Box
             sx={{
               p: 1.5,
               display: "grid",
               gap: 1.5,
-              borderBottom: "1px solid",
-              borderColor: "divider",
+              borderBottom: `1px solid ${uiColors.borderLight}`,
             }}
           >
-            <TextField
-              size="small"
-              fullWidth
+            <JacoSearchField
               value={categoryQuery}
+              onValueChange={onCategoryQueryChange}
+              minLength={1}
+              debounceMs={150}
               placeholder="Поиск вида уборки"
-              onChange={(event) => onCategoryQueryChange(event.target.value)}
-              slotProps={{
-                input: {
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <SearchIcon fontSize="small" />
-                    </InputAdornment>
-                  ),
-                },
-              }}
             />
             {canEdit ? (
               <JacoButton
@@ -283,45 +271,37 @@ export default function CleaningCategoriesView({
                     gap: 1.5,
                     alignItems: "flex-start",
                     cursor: "pointer",
-                    bgcolor: selected ? "surface.muted" : "transparent",
-                    borderBottom: "1px solid",
-                    borderColor: "divider",
-                    "&:hover": { bgcolor: "surface.muted" },
+                    bgcolor: selected ? uiColors.surfaceMuted : "transparent",
+                    borderBottom: `1px solid ${uiColors.borderLight}`,
+                    "&:hover": { bgcolor: selected ? uiColors.surfaceMuted : uiStateColors.hover },
                   }}
                 >
                   <Box sx={{ flex: 1, minWidth: 0 }}>
-                    <Typography sx={{ fontSize: 15, fontWeight: 700 }}>{category.name}</Typography>
+                    <Typography sx={titleSx}>{category.name}</Typography>
                   </Box>
-                  <Chip
+                  <JacoStatusChip
                     label={usedCount}
-                    size="small"
-                    sx={{ minWidth: 28, height: 22, fontWeight: 700 }}
+                    tone="neutral"
+                    variant="soft"
+                    sx={{ minWidth: 28 }}
                   />
                 </Box>
               );
             })}
             {filteredCategories.length ? null : (
-              <Typography sx={{ px: 1.5, py: 2, color: "text.secondary", fontSize: 14 }}>
+              <Typography sx={{ ...mutedTextSx, px: 1.5, py: 2 }}>
                 {categories.length ? "Ничего не найдено" : "Видов уборок пока нет"}
               </Typography>
             )}
           </Box>
-        </Paper>
+        </JacoSurface>
       </Grid>
       {card ? (
         <Grid
           size={{ xs: 12, md: 9 }}
           sx={{ display: { xs: "none", md: "block" } }}
         >
-          <Paper
-            variant="outlined"
-            sx={{
-              borderRadius: { xs: 0, md: "8px" },
-              overflow: "hidden",
-              border: { xs: 0, md: "1px solid #e0e0e0" },
-              bgcolor: { xs: "transparent", md: "background.paper" },
-            }}
-          >
+          <JacoSurface sx={{ overflow: "hidden" }}>
             <Box
               sx={{
                 p: { xs: 0, md: 1.5 },
@@ -329,41 +309,37 @@ export default function CleaningCategoriesView({
                 alignItems: "center",
                 justifyContent: "space-between",
                 gap: 2,
-                borderBottom: "1px solid",
-                borderColor: "divider",
+                borderBottom: `1px solid ${uiColors.borderLight}`,
               }}
             >
               <Box>
-                <Typography sx={{ fontSize: 15, fontWeight: 700 }}>{getCardTitle(card)}</Typography>
-                <Typography sx={{ color: "text.secondary", fontSize: 13 }}>
+                <Typography sx={titleSx}>{getCardTitle(card)}</Typography>
+                <Typography sx={mutedTextSx}>
                   {getAppliedToText(card.templateIds.length)}
                 </Typography>
               </Box>
 
-              <Button
-                size="small"
-                variant="outlined"
+              <JacoButton
+                tone="secondary"
+                compact
                 startIcon={<DeleteOutlineIcon />}
                 onClick={() => onDeleteCategory(card.id)}
                 disabled={
                   !canEdit || !card.id || categories.length <= 1 || card.deletable === false
                 }
-                sx={actionButtonSx}
               >
                 Удалить
-              </Button>
+              </JacoButton>
             </Box>
 
             <Box sx={{ px: 2, pt: 2, display: "flex", alignItems: "center", gap: 1.5 }}>
-              <Button
-                size="small"
-                variant="contained"
+              <JacoButton
+                compact
                 onClick={onSaveCategory}
                 disabled={!canEdit}
-                sx={actionButtonSx}
               >
                 Сохранить
-              </Button>
+              </JacoButton>
               <UnsavedChangesHint dirty={dirty} />
             </Box>
 
@@ -374,9 +350,7 @@ export default function CleaningCategoriesView({
               >
                 <Grid size={12}>
                   <FormLabel>Название</FormLabel>
-                  <TextField
-                    size="small"
-                    fullWidth
+                  <JacoTextInput
                     value={card.name}
                     disabled={!canEdit}
                     onChange={(event) => changeCard("name", event.target.value)}
@@ -419,7 +393,7 @@ export default function CleaningCategoriesView({
                 />
               )}
             </Box>
-          </Paper>
+          </JacoSurface>
         </Grid>
       ) : null}
       <CategoryMobileEditDialog
@@ -457,29 +431,41 @@ function CategoryMobileEditDialog({
   }
 
   return (
-    <Dialog
+    <JacoModal
       open={open}
       onClose={onClose}
-      fullWidth
+      title={getCardTitle(card)}
       maxWidth="sm"
-      slotProps={{ paper: { sx: { borderRadius: "12px", maxHeight: "calc(100dvh - 32px)" } } }}
+      actions={
+        <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 1, width: "100%" }}>
+          <JacoButton
+            tone="secondary"
+            compact
+            onClick={onClose}
+          >
+            Закрыть
+          </JacoButton>
+          <JacoButton
+            compact
+            onClick={onSave}
+            disabled={!canEdit}
+          >
+            Сохранить
+          </JacoButton>
+        </Box>
+      }
     >
-      <DialogTitle sx={{ fontWeight: 700 }}>
-        {getCardTitle(card)}
-        <Typography sx={{ color: "text.secondary", fontSize: 14, mt: 0.5 }}>
-          {getAppliedToText(card.templateIds.length)}
-        </Typography>
-        <UnsavedChangesHint
-          dirty={dirty}
-          sx={{ mt: 0.5 }}
-        />
-      </DialogTitle>
-      <DialogContent sx={{ display: "grid", gap: 2, overflow: "auto" }}>
+      <Box sx={{ display: "grid", gap: 2 }}>
+        <Box>
+          <Typography sx={mutedTextSx}>{getAppliedToText(card.templateIds.length)}</Typography>
+          <UnsavedChangesHint
+            dirty={dirty}
+            sx={{ mt: 0.5 }}
+          />
+        </Box>
         <Box>
           <FormLabel>Название</FormLabel>
-          <TextField
-            size="small"
-            fullWidth
+          <JacoTextInput
             value={card.name}
             disabled={!canEdit}
             onChange={(event) => onChange("name", event.target.value)}
@@ -520,27 +506,8 @@ function CategoryMobileEditDialog({
             defaultExpanded={false}
           />
         )}
-      </DialogContent>
-      <DialogActions sx={{ px: 3, pb: 2.5, gap: 1 }}>
-        <Button
-          size="small"
-          variant="contained"
-          onClick={onSave}
-          disabled={!canEdit}
-          sx={actionButtonSx}
-        >
-          Сохранить
-        </Button>
-        <Button
-          size="small"
-          variant="outlined"
-          onClick={onClose}
-          sx={actionButtonSx}
-        >
-          Закрыть
-        </Button>
-      </DialogActions>
-    </Dialog>
+      </Box>
+    </JacoModal>
   );
 }
 
@@ -548,56 +515,50 @@ export function DeleteCategoryDialog({ open, category, templates = [], onClose, 
   const hasLinkedTemplates = templates.length > 0 || category?.deletable === false;
 
   return (
-    <Dialog
+    <JacoModal
       open={open}
       onClose={onClose}
-      fullWidth
+      title="Удалить вид уборки?"
       maxWidth="xs"
-      slotProps={{ paper: { sx: { borderRadius: "12px" } } }}
-    >
-      <DialogTitle sx={{ fontWeight: 700 }}>Удалить вид уборки?</DialogTitle>
-      <DialogContent>
-        <Typography sx={{ color: "text.secondary", fontSize: 15 }}>
-          {hasLinkedTemplates
-            ? `Вид уборки «${category?.name || ""}» нельзя удалить, пока он применяется к уборкам. Сначала перенесите или удалите связанные уборки.`
-            : `Вид уборки «${category?.name || ""}» будет удалён.`}
-        </Typography>
-
-        {hasLinkedTemplates ? (
-          <Box sx={{ mt: 2, display: "flex", flexWrap: "wrap", gap: 1 }}>
-            {templates.map((template) => (
-              <Chip
-                key={template.id}
-                label={template.name}
-                size="small"
-                variant="outlined"
-                sx={{ height: 28, fontWeight: 600 }}
-              />
-            ))}
-          </Box>
-        ) : null}
-      </DialogContent>
-      <DialogActions sx={{ px: 3, pb: 2.5, gap: 1 }}>
-        <Button
-          size="small"
-          variant="outlined"
-          onClick={onClose}
-          sx={actionButtonSx}
-        >
-          Отмена
-        </Button>
-        {!hasLinkedTemplates ? (
-          <Button
-            size="small"
-            variant="contained"
-            color="primary"
-            onClick={onConfirm}
-            sx={actionButtonSx}
+      actions={
+        <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 1, width: "100%" }}>
+          <JacoButton
+            tone="secondary"
+            compact
+            onClick={onClose}
           >
-            Удалить
-          </Button>
-        ) : null}
-      </DialogActions>
-    </Dialog>
+            Отмена
+          </JacoButton>
+          {!hasLinkedTemplates ? (
+            <JacoButton
+              tone="danger"
+              compact
+              onClick={onConfirm}
+            >
+              Удалить
+            </JacoButton>
+          ) : null}
+        </Box>
+      }
+    >
+      <Typography sx={{ ...uiTypography.body, color: uiColors.text }}>
+        {hasLinkedTemplates
+          ? `Вид уборки «${category?.name || ""}» нельзя удалить, пока он применяется к уборкам. Сначала перенесите или удалите связанные уборки.`
+          : `Вид уборки «${category?.name || ""}» будет удалён.`}
+      </Typography>
+
+      {hasLinkedTemplates ? (
+        <Box sx={{ mt: 2, display: "flex", flexWrap: "wrap", gap: 1 }}>
+          {templates.map((template) => (
+            <JacoStatusChip
+              key={template.id}
+              label={template.name}
+              tone="neutral"
+              variant="outlined"
+            />
+          ))}
+        </Box>
+      ) : null}
+    </JacoModal>
   );
 }

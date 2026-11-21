@@ -10,6 +10,7 @@ import {
   JacoSurface,
   uiColors,
   uiShadows,
+  uiTypography,
   useJacoConfirm,
 } from "@/design-system/shared/ui";
 import { useConfirm } from "@/src/hooks/useConfirm";
@@ -48,7 +49,11 @@ export default function CleaningsPage() {
   const router = useRouter();
   const routeSegments = getRouteSegments(router.query.section);
   const routeKey = routeSegments.join("/");
-  const { confirm: confirmUnsaved, ConfirmDialog: UnsavedChangesDialog } = useJacoConfirm();
+  const {
+    confirm: confirmUnsaved,
+    withConfirm: withJacoConfirm,
+    ConfirmDialog: UnsavedChangesDialog,
+  } = useJacoConfirm();
   const confirmDiscardChanges = useCallback(
     () => confirmUnsaved(UNSAVED_CHANGES_CONFIRM),
     [confirmUnsaved],
@@ -59,6 +64,7 @@ export default function CleaningsPage() {
     routeReady: router.isReady,
     confirmDiscardChanges,
   });
+  // Legacy confirm only for the full delete: its 3-second undo countdown has no DS equivalent yet.
   const { withConfirm, ConfirmDialog } = useConfirm();
   const { route, showAlert } = page;
   const canonicalKey = route ? route.segments.join("/") : null;
@@ -166,7 +172,7 @@ export default function CleaningsPage() {
               />
             </JacoSurface>
             {activeTab?.description ? (
-              <Typography sx={{ mt: 1.5, color: "text.secondary", fontSize: 15 }}>
+              <Typography sx={{ ...uiTypography.body, mt: 1.5, color: uiColors.textMuted }}>
                 {activeTab.description}
               </Typography>
             ) : null}
@@ -175,8 +181,10 @@ export default function CleaningsPage() {
 
         {page.bootstrapReady && !page.sectionTabs.length ? (
           <Grid size={12}>
-            <Typography sx={{ fontWeight: 600, mb: 1 }}>Нет доступных разделов</Typography>
-            <Typography sx={{ color: "text.secondary" }}>
+            <Typography sx={{ ...uiTypography.bodyMedium, color: uiColors.textStrong, mb: 1 }}>
+              Нет доступных разделов
+            </Typography>
+            <Typography sx={{ ...uiTypography.body, color: uiColors.textMuted }}>
               Проверьте права доступа к модулю.
             </Typography>
           </Grid>
@@ -240,10 +248,14 @@ export default function CleaningsPage() {
               onRemoveCleaning={page.setRemoveCafeCleaningId}
               onAddOpen={() => page.setAddCafeDialogOpen(true)}
               onHistoryOpen={page.openCafeHistory}
-              onSaveDopTimes={withConfirm(
-                page.saveCafeDopTimes,
-                "Сохранить изменения доп. времени?",
-              )}
+              onSaveDopTimes={withJacoConfirm(page.saveCafeDopTimes, {
+                title: "Сохранить изменения?",
+                message: "Сохранить изменения доп. времени?",
+                cancelLabel: "Отмена",
+                confirmLabel: "Сохранить",
+                tone: "success",
+                confirmTone: "success",
+              })}
               dopTimeDraftCount={Object.keys(page.cafeDopTimeDrafts).length}
               dopTimeDrafts={page.cafeDopTimeDrafts}
               onDopTimeChange={page.setCafeDopTimeDraft}

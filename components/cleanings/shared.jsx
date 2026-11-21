@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   Box,
-  Button,
   CircularProgress,
   IconButton,
   TableCell,
@@ -15,7 +14,13 @@ import UnarchiveOutlinedIcon from "@mui/icons-material/UnarchiveOutlined";
 import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import HistoryIcon from "@mui/icons-material/History";
 import RefreshIcon from "@mui/icons-material/Refresh";
-import { JacoIconButton, JacoStatusChip } from "@/design-system/shared/ui";
+import {
+  JacoButton,
+  JacoIconButton,
+  JacoStatusChip,
+  uiColors,
+  uiTypography,
+} from "@/design-system/shared/ui";
 import { formatClockTime, getAdditionTypeShortName, getDeleteBehavior } from "./helpers";
 
 // Blocks repeated submits until the async action settles; `pendingKey` marks the clicked row.
@@ -60,16 +65,16 @@ export function useBeforeUnloadGuard(active) {
 
 export function FormLabel({ children }) {
   return (
-    <Typography sx={{ color: "text.secondary", fontSize: 14, fontWeight: 600, mb: 0.75 }}>
+    <Typography sx={{ ...uiTypography.label, color: uiColors.text, fontWeight: 600, mb: 0.75 }}>
       {children}
     </Typography>
   );
 }
 
 const formHintColors = {
-  muted: "text.secondary",
-  error: "error.main",
-  warning: "warning.dark",
+  muted: uiColors.textMuted,
+  error: uiColors.danger,
+  warning: uiColors.warningHover,
 };
 
 export function FormHint({ children, tone = "muted", sx }) {
@@ -145,7 +150,7 @@ export function FormSection({ icon, title, children }) {
           alignItems: "center",
           gap: 1,
           mb: 1.75,
-          color: "text.secondary",
+          color: uiColors.text,
           "& .MuiSvgIcon-root": { fontSize: 20 },
         }}
       >
@@ -228,8 +233,9 @@ export function ControlRefreshControl({ onRefresh, refreshing = false, disabled 
         <Tooltip title={error || ""}>
           <Typography
             sx={{
-              color: error ? "warning.dark" : "text.secondary",
+              ...uiTypography.compactLabel,
               fontSize: 13,
+              color: error ? uiColors.warningHover : uiColors.textMuted,
               whiteSpace: "nowrap",
             }}
           >
@@ -257,15 +263,15 @@ export function ControlRefreshControl({ onRefresh, refreshing = false, disabled 
 export function ControlHistoryButton({ onClick, mobile = false, sx }) {
   if (mobile) {
     return (
-      <Button
-        size="small"
-        variant="outlined"
+      <JacoButton
+        tone="secondary"
+        compact
         startIcon={<HistoryIcon />}
         onClick={onClick}
         sx={sx}
       >
         История
-      </Button>
+      </JacoButton>
     );
   }
 
@@ -275,6 +281,7 @@ export function ControlHistoryButton({ onClick, mobile = false, sx }) {
         size="small"
         aria-label="История"
         onClick={onClick}
+        sx={{ color: uiColors.text }}
       >
         <HistoryIcon fontSize="small" />
       </IconButton>

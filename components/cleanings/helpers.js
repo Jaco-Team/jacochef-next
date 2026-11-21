@@ -6,6 +6,7 @@ import {
   controlKindTabs,
   days,
 } from "./constants";
+import { uiColors, uiTableColors, uiTypography } from "@/design-system/shared/ui";
 
 const TIME_PATTERN = /^([01]\d|2[0-3]):([0-5]\d)$/;
 const POOL_CLEANING_MARK = "(Г)";
@@ -311,79 +312,55 @@ export function isControlItemNeverTaken(item) {
   return item?.status === "deleted" && !item.wasStarted;
 }
 
+// `JacoStatusChip` tone and variant of a control status; the variant tells apart statuses of one tone.
 export function getControlStatusMeta(status) {
   const meta = {
-    pending: {
-      label: "Ожидает подтверждения",
-      color: "#b45309",
-      bgcolor: "#fff7ed",
-      borderColor: "#fed7aa",
-    },
-    active: {
-      label: "Активно",
-      color: "#2563eb",
-      bgcolor: "#eff6ff",
-      borderColor: "#bfdbfe",
-    },
-    in_progress: {
-      label: "В процессе",
-      color: "#7c3aed",
-      bgcolor: "#f5f3ff",
-      borderColor: "#ddd6fe",
-    },
-    approved: {
-      label: "Подтверждено",
-      color: "#059669",
-      bgcolor: "#ecfdf5",
-      borderColor: "#a7f3d0",
-    },
-    deleted: {
-      label: "Удалено",
-      color: "#be123c",
-      bgcolor: "#fff1f2",
-      borderColor: "#fecdd3",
-    },
+    pending: { label: "Ожидает подтверждения", tone: "warning", variant: "soft" },
+    active: { label: "Активно", tone: "neutral", variant: "outlined" },
+    in_progress: { label: "В процессе", tone: "warning", variant: "outlined" },
+    approved: { label: "Подтверждено", tone: "success", variant: "soft" },
+    deleted: { label: "Удалено", tone: "danger", variant: "soft" },
     deleted_system: {
       label: "Не выполнена — удалена автоматически",
-      color: "#be123c",
-      bgcolor: "#fff1f2",
-      borderColor: "#fecdd3",
+      tone: "danger",
+      variant: "soft",
     },
-    deleted_manager: {
-      label: "Удалена менеджером",
-      color: "#475569",
-      bgcolor: "#f8fafc",
-      borderColor: "#cbd5e1",
-    },
+    deleted_manager: { label: "Удалена менеджером", tone: "neutral", variant: "soft" },
   };
 
   return meta[status] || meta.active;
 }
 
+// Long chip labels wrap inside the chip instead of widening a table column.
+export const wrappingChipSx = {
+  height: "auto",
+  minHeight: 24,
+  maxWidth: "100%",
+  "& .MuiChip-label": { whiteSpace: "normal", py: 0.25 },
+};
+
 export const tableHeaderSx = {
-  bgcolor: "surface.muted",
+  bgcolor: uiTableColors.shiftHeader,
   "& .MuiTableCell-root": {
     py: 1.25,
-    color: "text.secondary",
-    fontSize: 12,
-    fontWeight: 800,
+    color: uiColors.text,
+    ...uiTypography.compactLabel,
+    fontWeight: 700,
     letterSpacing: 1,
     textTransform: "uppercase",
-    borderBottom: "1px solid",
-    borderColor: "divider",
+    borderBottom: `1px solid ${uiColors.border}`,
   },
 };
 
 export const tableRowSx = {
   "& .MuiTableCell-root": {
     py: 1.5,
-    borderBottom: "1px solid",
-    borderColor: "divider",
+    borderBottom: `1px solid ${uiColors.borderLight}`,
   },
   "&:hover": {
-    bgcolor: "surface.muted",
+    bgcolor: uiTableColors.rowHover,
   },
   "&:hover .cleaning-name-cell": {
-    borderLeftColor: "primary.main",
+    borderLeftColor: uiColors.primary,
   },
 };

@@ -1,40 +1,37 @@
 import { useMemo } from "react";
 import {
   Box,
-  Button,
-  Chip,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
   Grid,
-  IconButton,
-  InputAdornment,
-  Paper,
   Table,
   TableBody,
   TableCell,
   TableContainer,
   TableHead,
   TableRow,
-  TextField,
-  ToggleButton,
-  ToggleButtonGroup,
   Typography,
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import ArchiveOutlinedIcon from "@mui/icons-material/ArchiveOutlined";
 import ScheduleOutlinedIcon from "@mui/icons-material/ScheduleOutlined";
-import SearchIcon from "@mui/icons-material/Search";
-import CloseIcon from "@mui/icons-material/Close";
 import UnarchiveOutlinedIcon from "@mui/icons-material/UnarchiveOutlined";
-import { JacoButton } from "@/design-system/shared/ui";
+import {
+  JacoButton,
+  JacoModal,
+  JacoSearchField,
+  JacoSegmentedTabs,
+  JacoStatusChip,
+  JacoSurface,
+  uiColors,
+  uiRadii,
+  uiTypography,
+} from "@/design-system/shared/ui";
 import {
   getCategoryName,
   getScheduleSortValue,
   getScheduleText,
   tableHeaderSx,
   tableRowSx,
+  wrappingChipSx,
 } from "./helpers";
 import {
   CleaningActions,
@@ -46,17 +43,33 @@ import useTableSort from "./useTableSort";
 
 const STATUS_LABELS = { active: "Активный", archive: "Архив" };
 
-const actionButtonSx = {
-  minHeight: 40,
-  minWidth: 112,
-  px: 2,
-  borderRadius: "8px",
-  fontWeight: 700,
-  lineHeight: "20px",
-  alignItems: "center",
-  justifyContent: "center",
-  whiteSpace: "nowrap",
+const STATUS_FILTERS = [
+  { id: "active", label: "Активные" },
+  { id: "archive", label: "Архив" },
+  { id: "all", label: "Все" },
+];
+
+const cellTextSx = {
+  ...uiTypography.label,
+  color: uiColors.text,
 };
+
+const nameSx = {
+  ...uiTypography.bodyMedium,
+  fontWeight: 700,
+  color: uiColors.textStrong,
+};
+
+function TemplateStatusChip({ status, sx }) {
+  return (
+    <JacoStatusChip
+      label={STATUS_LABELS[status] || STATUS_LABELS.active}
+      tone={status === "archive" ? "neutral" : "success"}
+      variant="soft"
+      sx={sx}
+    />
+  );
+}
 
 export default function CleaningsListPage({
   query,
@@ -95,13 +108,12 @@ export default function CleaningsListPage({
 
   return (
     <Grid size={12}>
-      <Paper
-        variant="outlined"
+      <JacoSurface
         sx={{
-          borderRadius: { xs: 0, md: "12px" },
+          borderRadius: { xs: 0, md: uiRadii.lg },
           overflow: "hidden",
-          border: { xs: 0, md: "1px solid #e0e0e0" },
-          bgcolor: { xs: "transparent", md: "background.paper" },
+          border: { xs: 0, md: `1px solid ${uiColors.border}` },
+          bgcolor: { xs: "transparent", md: uiColors.surface },
         }}
       >
         <Box
@@ -113,62 +125,29 @@ export default function CleaningsListPage({
             gap: 2,
             flexDirection: { xs: "column", md: "row" },
             mb: { xs: 1.75, md: 0 },
-            borderBottom: { xs: 0, md: "1px solid #e0e0e0" },
+            borderBottom: { xs: 0, md: `1px solid ${uiColors.borderLight}` },
           }}
         >
           <Box
             sx={{ display: "flex", gap: 1.5, flexDirection: { xs: "column", sm: "row" }, flex: 1 }}
           >
-            <TextField
-              size="small"
+            <JacoSearchField
               value={query}
-              onChange={(event) => setQuery(event.target.value)}
+              onValueChange={setQuery}
+              minLength={1}
+              debounceMs={150}
               placeholder="Поиск по объекту уборки или должности"
               sx={{ width: { xs: "100%", sm: 420 } }}
-              slotProps={{
-                input: {
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <SearchIcon fontSize="small" />
-                    </InputAdornment>
-                  ),
-                  endAdornment: query ? (
-                    <InputAdornment position="end">
-                      <IconButton
-                        size="small"
-                        onClick={() => setQuery("")}
-                        edge="end"
-                      >
-                        <CloseIcon fontSize="small" />
-                      </IconButton>
-                    </InputAdornment>
-                  ) : null,
-                },
-              }}
             />
 
-            <ToggleButtonGroup
-              size="small"
-              exclusive
+            <JacoSegmentedTabs
+              size="compact"
               value={filter}
               onChange={(_, value) => value && setFilter(value)}
-              sx={{
-                "& .MuiToggleButton-root": {
-                  px: 1.75,
-                  py: 0,
-                  height: 40,
-                  minHeight: 40,
-                  lineHeight: "20px",
-                  textTransform: "none",
-                  fontSize: 14,
-                  fontWeight: 600,
-                },
-              }}
-            >
-              <ToggleButton value="active">Активные</ToggleButton>
-              <ToggleButton value="archive">Архив</ToggleButton>
-              <ToggleButton value="all">Все</ToggleButton>
-            </ToggleButtonGroup>
+              items={STATUS_FILTERS}
+              aria-label="Фильтр по статусу"
+              sx={{ width: { xs: "100%", sm: 300 }, flexShrink: 0 }}
+            />
           </Box>
 
           <Box
@@ -180,7 +159,7 @@ export default function CleaningsListPage({
               flexWrap: "wrap",
             }}
           >
-            <Typography sx={{ color: "text.secondary", fontSize: 14, whiteSpace: "nowrap" }}>
+            <Typography sx={{ ...cellTextSx, whiteSpace: "nowrap" }}>
               Показано <b>{filteredTemplates.length}</b> из {templates.length}
             </Typography>
             {canCreate ? (
@@ -258,25 +237,26 @@ export default function CleaningsListPage({
                     className="cleaning-name-cell"
                     sx={{ borderLeft: "3px solid transparent" }}
                   >
-                    <Typography sx={{ fontSize: 15, fontWeight: 800 }}>{item.name}</Typography>
+                    <Typography sx={nameSx}>{item.name}</Typography>
                     <CleaningTemplateChips
                       item={item}
                       sx={{ mt: 0.5 }}
                     />
                   </TableCell>
                   <TableCell>
-                    <Chip
+                    <JacoStatusChip
                       label={getCategoryName(categories, item.categoryId)}
-                      size="small"
-                      sx={{ height: 24, bgcolor: "surface.subtle", fontWeight: 700 }}
+                      tone="neutral"
+                      variant="soft"
+                      sx={wrappingChipSx}
                     />
                   </TableCell>
                   <TableCell>
-                    <Chip
+                    <JacoStatusChip
                       label={item.role}
-                      size="small"
+                      tone="neutral"
                       variant="outlined"
-                      sx={{ height: 24, fontWeight: 700 }}
+                      sx={wrappingChipSx}
                     />
                   </TableCell>
                   <TableCell>
@@ -284,17 +264,13 @@ export default function CleaningsListPage({
                       sx={{
                         width: 58,
                         py: 0.5,
-                        borderRadius: "8px",
-                        bgcolor: "surface.muted",
+                        borderRadius: uiRadii.sm,
+                        bgcolor: uiColors.surfaceMuted,
                         textAlign: "center",
                       }}
                     >
-                      <Typography sx={{ fontSize: 16, fontWeight: 800, lineHeight: "18px" }}>
-                        {item.duration}
-                      </Typography>
-                      <Typography
-                        sx={{ color: "text.secondary", fontSize: 11, lineHeight: "14px" }}
-                      >
+                      <Typography sx={nameSx}>{item.duration}</Typography>
+                      <Typography sx={{ ...uiTypography.compactLabel, color: uiColors.textMuted }}>
                         мин
                       </Typography>
                     </Box>
@@ -305,29 +281,25 @@ export default function CleaningsListPage({
                         display: "flex",
                         alignItems: "center",
                         gap: 1,
-                        color: "text.secondary",
+                        color: uiColors.textMuted,
                       }}
                     >
                       <ScheduleOutlinedIcon sx={{ fontSize: 18 }} />
-                      <Typography sx={{ fontSize: 14 }}>
+                      <Typography sx={cellTextSx}>
                         {getScheduleText(item, scheduleTypeOptions)}
                       </Typography>
                     </Box>
                   </TableCell>
                   <TableCell align="center">
-                    <Chip
+                    <JacoStatusChip
                       label={item.locationIds.length}
-                      size="small"
-                      sx={{ fontWeight: 700, minWidth: 32, height: 22 }}
+                      tone="neutral"
+                      variant="soft"
+                      sx={{ minWidth: 32 }}
                     />
                   </TableCell>
                   <TableCell>
-                    <Chip
-                      label={STATUS_LABELS[item.status] || STATUS_LABELS.active}
-                      color={item.status === "archive" ? "default" : "success"}
-                      size="small"
-                      sx={{ fontWeight: 700, height: 22 }}
-                    />
+                    <TemplateStatusChip status={item.status} />
                   </TableCell>
                   <TableCell align="right">
                     <CleaningActions
@@ -345,46 +317,45 @@ export default function CleaningsListPage({
           </Table>
         </TableContainer>
 
-        <Box sx={{ display: { xs: "grid", md: "none" }, gap: 1.75, p: 0 }}>
+        <Box
+            sx={{
+              display: { xs: "grid", md: "none" },
+              gridTemplateColumns: "minmax(0, 1fr)",
+              gap: 1.75,
+              p: 0,
+            }}
+          >
           {sortedRows.map((item) => (
-            <Paper
+            <JacoSurface
               key={item.id}
-              variant="outlined"
               sx={{
                 p: 1.5,
-                borderRadius: "10px",
-                borderLeft: "3px solid",
-                borderLeftColor: "primary.main",
+                borderLeft: `3px solid ${uiColors.primary}`,
               }}
             >
               <Box sx={{ display: "grid", gap: 0.75, mb: 1 }}>
                 <Box>
-                  <Typography sx={{ fontSize: 16, fontWeight: 800, lineHeight: 1.25 }}>
-                    {item.name}
-                  </Typography>
+                  <Typography sx={nameSx}>{item.name}</Typography>
                   <CleaningTemplateChips
                     item={item}
                     sx={{ mt: 0.75 }}
                   />
                   <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap", mt: 0.75 }}>
-                    <Chip
+                    <JacoStatusChip
                       label={getCategoryName(categories, item.categoryId)}
-                      size="small"
-                      sx={{ height: 22, bgcolor: "surface.subtle", fontWeight: 700 }}
+                      tone="neutral"
+                      variant="soft"
                     />
-                    <Chip
+                    <JacoStatusChip
                       label={item.role}
-                      size="small"
+                      tone="neutral"
                       variant="outlined"
-                      sx={{ height: 22, fontWeight: 700 }}
                     />
                   </Box>
                 </Box>
-                <Chip
-                  label={STATUS_LABELS[item.status] || STATUS_LABELS.active}
-                  color={item.status === "archive" ? "default" : "success"}
-                  size="small"
-                  sx={{ justifySelf: "start", width: "fit-content", height: 22 }}
+                <TemplateStatusChip
+                  status={item.status}
+                  sx={{ justifySelf: "start", width: "fit-content" }}
                 />
               </Box>
               <Box
@@ -392,16 +363,16 @@ export default function CleaningsListPage({
                   display: "flex",
                   alignItems: "center",
                   gap: 1,
-                  color: "text.secondary",
+                  color: uiColors.textMuted,
                   mb: 0.75,
                 }}
               >
                 <ScheduleOutlinedIcon sx={{ fontSize: 18 }} />
-                <Typography sx={{ fontSize: 14 }}>
+                <Typography sx={cellTextSx}>
                   {item.duration} мин · {getScheduleText(item, scheduleTypeOptions)}
                 </Typography>
               </Box>
-              <Typography sx={{ color: "text.secondary", mb: 1, fontSize: 14 }}>
+              <Typography sx={{ ...cellTextSx, mb: 1 }}>
                 Кафе: {item.locationIds.length}
               </Typography>
               <CleaningActions
@@ -412,10 +383,10 @@ export default function CleaningsListPage({
                 onHistory={onHistory}
                 canEdit={canEdit}
               />
-            </Paper>
+            </JacoSurface>
           ))}
         </Box>
-      </Paper>
+      </JacoSurface>
     </Grid>
   );
 }
@@ -440,40 +411,34 @@ export function TemplateStatusConfirmDialog({ open, item, onClose, onConfirm }) 
   const meta = item?.status === "archive" ? templateStatusMeta.restore : templateStatusMeta.archive;
 
   return (
-    <Dialog
+    <JacoModal
       open={open}
       onClose={onClose}
-      fullWidth
+      title={meta.title}
       maxWidth="xs"
-      slotProps={{ paper: { sx: { borderRadius: "12px" } } }}
+      actions={
+        <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 1, width: "100%" }}>
+          <JacoButton
+            tone="secondary"
+            compact
+            onClick={onClose}
+          >
+            Отмена
+          </JacoButton>
+          <JacoButton
+            compact
+            startIcon={meta.icon}
+            onClick={() => runPending(onConfirm)}
+            loading={isPending}
+          >
+            {meta.button}
+          </JacoButton>
+        </Box>
+      }
     >
-      <DialogTitle sx={{ fontWeight: 700 }}>{meta.title}</DialogTitle>
-      <DialogContent>
-        <Typography sx={{ color: "text.secondary", fontSize: 15 }}>
-          {meta.text(item?.name || "")}
-        </Typography>
-      </DialogContent>
-      <DialogActions sx={{ px: 3, pb: 2.5, gap: 1 }}>
-        <Button
-          size="small"
-          variant="outlined"
-          onClick={onClose}
-          sx={actionButtonSx}
-        >
-          Отмена
-        </Button>
-        <Button
-          size="small"
-          variant="contained"
-          startIcon={meta.icon}
-          onClick={() => runPending(onConfirm)}
-          loading={isPending}
-          loadingPosition="start"
-          sx={actionButtonSx}
-        >
-          {meta.button}
-        </Button>
-      </DialogActions>
-    </Dialog>
+      <Typography sx={{ ...uiTypography.body, color: uiColors.text }}>
+        {meta.text(item?.name || "")}
+      </Typography>
+    </JacoModal>
   );
 }

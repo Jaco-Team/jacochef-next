@@ -1,23 +1,12 @@
 import {
   Box,
-  Button,
-  Chip,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
   Grid,
-  InputAdornment,
-  Paper,
   Table,
   TableBody,
   TableCell,
   TableContainer,
   TableHead,
   TableRow,
-  TextField,
-  ToggleButton,
-  ToggleButtonGroup,
   Tooltip,
   Typography,
 } from "@mui/material";
@@ -26,9 +15,19 @@ import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutlined";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutlined";
 import PersonRemoveOutlinedIcon from "@mui/icons-material/PersonRemoveOutlined";
 import ReplayIcon from "@mui/icons-material/Replay";
-import SearchIcon from "@mui/icons-material/Search";
-import dayjs from "dayjs";
-import { MyDatePickerNew, MySelect } from "@/ui/Forms";
+import {
+  JacoButton,
+  JacoDatePicker,
+  JacoModal,
+  JacoSearchField,
+  JacoSegmentedTabs,
+  JacoSelect,
+  JacoStatusChip,
+  JacoSurface,
+  uiColors,
+  uiRadii,
+  uiTypography,
+} from "@/design-system/shared/ui";
 import {
   formatControlTime,
   getControlStatusKey,
@@ -40,6 +39,7 @@ import {
   isDateInRange,
   tableHeaderSx,
   tableRowSx,
+  wrappingChipSx,
 } from "./helpers";
 import {
   ControlHistoryButton,
@@ -49,20 +49,18 @@ import {
 } from "./shared";
 
 const actionButtonSx = {
-  borderRadius: "8px",
-  fontWeight: 700,
-  minHeight: 36,
-  lineHeight: "20px",
-  alignItems: "center",
-  justifyContent: "center",
   whiteSpace: "nowrap",
 };
 
-const statusChipSx = {
-  height: 24,
-  border: "1px solid",
-  fontWeight: 700,
+const cellTextSx = {
+  ...uiTypography.label,
+  color: uiColors.text,
 };
+
+// Date picker change → «YYYY-MM-DD» or "" for a cleared / invalid value.
+function toDateValue(value) {
+  return value?.isValid?.() ? value.format("YYYY-MM-DD") : "";
+}
 
 function countByStatusKey(items) {
   return items.reduce((counts, item) => {
@@ -76,25 +74,21 @@ function ControlStatusChip({ item, sx }) {
   const statusMeta = getControlStatusMeta(getControlStatusKey(item));
 
   return (
-    <Chip
+    <JacoStatusChip
       label={statusMeta.label}
-      size="small"
-      sx={{
-        ...statusChipSx,
-        color: statusMeta.color,
-        bgcolor: statusMeta.bgcolor,
-        borderColor: statusMeta.borderColor,
-        ...sx,
-      }}
+      tone={statusMeta.tone}
+      variant={statusMeta.variant}
+      sx={sx}
     />
   );
 }
 
 const deleteInfoSx = {
+  ...uiTypography.compactLabel,
   mt: 0.5,
   maxWidth: 280,
-  color: "text.secondary",
   fontSize: 13,
+  color: uiColors.textMuted,
 };
 
 // «2026-11-21 10:05:04» → «10:05» on the row's own date, «22.11 10:05» on another one.
@@ -189,6 +183,9 @@ export default function ControlView({
     id: location.id,
     name: getLocationName(location),
   }));
+  // JacoSelect reports string values; the page keeps location ids as they came from the API.
+  const toLocationId = (value) =>
+    locationOptions.find((option) => String(option.id) === String(value))?.id ?? value;
   const filteredByContext = items.filter(
     (item) =>
       isSameId(item.locationId, selectedCafeId) && isDateInRange(item.date, dateFrom, dateTo),
@@ -221,10 +218,7 @@ export default function ControlView({
       spacing={2.5}
     >
       <Grid size={12}>
-        <Paper
-          variant="outlined"
-          sx={{ borderRadius: "8px", overflow: "hidden" }}
-        >
+        <JacoSurface sx={{ overflow: "hidden" }}>
           <Box
             sx={{
               p: 1.5,
@@ -234,25 +228,25 @@ export default function ControlView({
               alignItems: "center",
             }}
           >
-            <MySelect
+            <JacoSelect
               label="Кафе"
               data={locationOptions}
               value={selectedCafeId}
-              func={(event) => onCafeChange(event.target.value)}
-              is_none={false}
+              onChange={(event) => onCafeChange(toLocationId(event.target.value))}
+              allowNone={false}
               disabled={locationOptions.length <= 1}
             />
-            <MyDatePickerNew
+            <JacoDatePicker
               label="Дата от"
               value={dateFrom}
-              maxDate={dateTo ? dayjs(dateTo) : null}
-              func={(value) => onDateFromChange(value ? value.format("YYYY-MM-DD") : "")}
+              maxDate={dateTo || undefined}
+              onChange={(value) => onDateFromChange(toDateValue(value))}
             />
-            <MyDatePickerNew
+            <JacoDatePicker
               label="Дата до"
               value={dateTo}
-              minDate={dateFrom ? dayjs(dateFrom) : null}
-              func={(value) => onDateToChange(value ? value.format("YYYY-MM-DD") : "")}
+              minDate={dateFrom || undefined}
+              onChange={(value) => onDateToChange(toDateValue(value))}
             />
             <Box
               sx={{
@@ -270,80 +264,64 @@ export default function ControlView({
                 updatedAt={updatedAt}
                 error={refreshError}
               />
-              <Button
-                size="small"
-                variant="contained"
+              <JacoButton
+                compact
                 startIcon={<AddIcon />}
                 onClick={onAddManualOpen}
                 disabled={!canEdit}
                 sx={actionButtonSx}
               >
                 Добавить уборку
-              </Button>
+              </JacoButton>
             </Box>
           </Box>
-        </Paper>
+        </JacoSurface>
       </Grid>
 
       <Grid size={12}>
-        <Paper
-          variant="outlined"
+        <JacoSurface
           sx={{
-            borderRadius: { xs: 0, md: "12px" },
+            borderRadius: { xs: 0, md: uiRadii.lg },
             overflow: "hidden",
-            border: { xs: 0, md: "1px solid #e0e0e0" },
-            bgcolor: { xs: "transparent", md: "background.paper" },
+            border: { xs: 0, md: `1px solid ${uiColors.border}` },
+            bgcolor: { xs: "transparent", md: uiColors.surface },
           }}
         >
           <Box
             sx={{
-              display: "flex",
-              gap: 1,
               p: { xs: 0, md: 1.5 },
               mb: { xs: 1.75, md: 0 },
-              overflowX: { xs: "auto", md: "visible" },
-              borderBottom: { xs: 0, md: "1px solid #e0e0e0" },
-              "&::-webkit-scrollbar": { display: "none" },
+              borderBottom: { xs: 0, md: `1px solid ${uiColors.borderLight}` },
             }}
           >
-            <ToggleButtonGroup
-              size="small"
-              exclusive
+            <JacoSegmentedTabs
+              size="compact"
+              variant="scrollable"
+              scrollButtons={false}
               value={filter}
               onChange={(_, value) => value && onFilterChange(value)}
-              sx={{
-                "& .MuiToggleButton-root": {
-                  minHeight: 36,
-                  minWidth: { xs: 104, md: "auto" },
-                  flexShrink: 0,
-                  px: 1.5,
-                  py: 0,
-                  whiteSpace: "nowrap",
-                  textTransform: "none",
-                  fontSize: 14,
-                  fontWeight: 600,
-                },
-                "& .MuiChip-root": {
-                  flexShrink: 0,
-                },
-              }}
-            >
-              {filterItems.map((item) => (
-                <ToggleButton
-                  key={item.value}
-                  value={item.value}
-                >
-                  {item.label}
-                  {item.count ? (
-                    <Chip
-                      label={item.count}
-                      size="small"
-                      sx={{ ml: 1, height: 20, minWidth: 24, fontWeight: 700 }}
-                    />
-                  ) : null}
-                </ToggleButton>
-              ))}
-            </ToggleButtonGroup>
+              items={filterItems.map((item) => ({
+                id: item.value,
+                label: (
+                  <Box
+                    component="span"
+                    sx={{ display: "inline-flex", alignItems: "center", gap: 0.75, whiteSpace: "nowrap" }}
+                  >
+                    {item.label}
+                    {item.count ? (
+                      <JacoStatusChip
+                        label={item.count}
+                        tone="neutral"
+                        variant="soft"
+                        sx={{ height: 20, minWidth: 24 }}
+                      />
+                    ) : null}
+                  </Box>
+                ),
+              }))}
+              aria-label="Фильтр по статусу"
+              tabSx={{ flexShrink: 0 }}
+            />
           </Box>
 
           <TableContainer sx={{ display: { xs: "none", md: "block" } }}>
@@ -380,7 +358,7 @@ export default function ControlView({
                         className="cleaning-name-cell"
                         sx={{ borderLeft: "3px solid transparent" }}
                       >
-                        <Typography sx={{ fontSize: 15, fontWeight: 800 }}>
+                        <Typography sx={{ ...uiTypography.bodyMedium, color: uiColors.textStrong }}>
                           {cleaningName}
                         </Typography>
                         <ControlReturnsBadge
@@ -388,23 +366,26 @@ export default function ControlView({
                           sx={{ mt: 0.5 }}
                         />
                       </TableCell>
-                      <TableCell sx={{ color: "text.secondary", fontSize: 14 }}>
+                      <TableCell sx={cellTextSx}>
                         {person.employee}
                       </TableCell>
-                      <TableCell sx={{ color: "text.secondary", fontSize: 14 }}>
+                      <TableCell sx={cellTextSx}>
                         {person.startedAt}
                       </TableCell>
-                      <TableCell sx={{ color: "text.secondary", fontSize: 14 }}>
+                      <TableCell sx={cellTextSx}>
                         {item.finishedAt || "—"}
                       </TableCell>
-                      <TableCell sx={{ color: "text.secondary", fontSize: 14 }}>
+                      <TableCell sx={cellTextSx}>
                         {confirmation.confirmedAt}
                       </TableCell>
-                      <TableCell sx={{ color: "text.secondary", fontSize: 14 }}>
+                      <TableCell sx={cellTextSx}>
                         {confirmation.confirmer}
                       </TableCell>
-                      <TableCell>
-                        <ControlStatusChip item={item} />
+                      <TableCell sx={{ maxWidth: 240 }}>
+                        <ControlStatusChip
+                          item={item}
+                          sx={wrappingChipSx}
+                        />
                         <ControlDeleteInfo item={item} />
                       </TableCell>
                       <TableCell align="right">
@@ -425,7 +406,7 @@ export default function ControlView({
                   <TableRow>
                     <TableCell
                       colSpan={8}
-                      sx={{ py: 4, textAlign: "center", color: "text.secondary" }}
+                      sx={{ ...cellTextSx, py: 4, textAlign: "center" }}
                     >
                       Нет уборок по выбранным фильтрам
                     </TableCell>
@@ -435,7 +416,14 @@ export default function ControlView({
             </Table>
           </TableContainer>
 
-          <Box sx={{ display: { xs: "grid", md: "none" }, gap: 1.75, p: 0 }}>
+          <Box
+            sx={{
+              display: { xs: "grid", md: "none" },
+              gridTemplateColumns: "minmax(0, 1fr)",
+              gap: 1.75,
+              p: 0,
+            }}
+          >
             {visibleItems.map((item) => {
               const cleaning = getCleaning(item.cleaningId);
               const cleaningName = item.workName || item.name || cleaning?.name || "Уборка";
@@ -443,40 +431,29 @@ export default function ControlView({
               const confirmation = getControlConfirmation(item);
 
               return (
-                <Paper
+                <JacoSurface
                   key={item.id}
-                  variant="outlined"
                   sx={{
                     p: 1.5,
-                    borderRadius: "10px",
-                    borderLeft: "3px solid",
-                    borderLeftColor: "primary.main",
+                    borderLeft: `3px solid ${uiColors.primary}`,
                   }}
                 >
                   <Box sx={{ display: "grid", gap: 0.75, mb: 1 }}>
                     <Box>
-                      <Typography sx={{ fontSize: 16, fontWeight: 800, lineHeight: 1.25 }}>
+                      <Typography sx={{ ...uiTypography.bodyMedium, color: uiColors.textStrong }}>
                         {cleaningName}
                       </Typography>
-                      <Typography sx={{ color: "text.secondary", fontSize: 14 }}>
+                      <Typography sx={cellTextSx}>
                         {person.employee} · {person.startedAt} — {item.finishedAt || "—"}
                       </Typography>
-                      <Typography sx={{ color: "text.secondary", fontSize: 14 }}>
+                      <Typography sx={cellTextSx}>
                         Подтвердили: {confirmation.confirmedAt} · {confirmation.confirmer}
                       </Typography>
                     </Box>
                     <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.75 }}>
                       <ControlStatusChip
                         item={item}
-                        sx={{
-                          maxWidth: "100%",
-                          height: 22,
-                          "& .MuiChip-label": {
-                            px: 1.25,
-                            overflow: "hidden",
-                            textOverflow: "ellipsis",
-                          },
-                        }}
+                        sx={wrappingChipSx}
                       />
                       <ControlReturnsBadge count={item.returnsCount} />
                     </Box>
@@ -492,11 +469,11 @@ export default function ControlView({
                     canEdit={canEdit}
                     mobile
                   />
-                </Paper>
+                </JacoSurface>
               );
             })}
           </Box>
-        </Paper>
+        </JacoSurface>
       </Grid>
     </Grid>
   );
@@ -519,82 +496,62 @@ function ControlRowActions({
         gridTemplateColumns: { xs: "repeat(2, minmax(0, 1fr))", sm: "repeat(3, auto)" },
         gap: 1,
       }
-    : { display: "flex", justifyContent: "flex-end", alignItems: "center", gap: 1 };
-  const buttonSx = mobile ? { ...actionButtonSx, minHeight: 44, width: "100%" } : actionButtonSx;
+    : { display: "flex", flexWrap: "wrap", justifyContent: "flex-end", alignItems: "center", gap: 1 };
+  const buttonSx = mobile ? { ...actionButtonSx, width: "100%" } : actionButtonSx;
   const canChange = canEdit && item.status !== "approved" && item.status !== "deleted";
   const isPending = item.status === "pending";
   const canDetach = item.status === "in_progress" || isPending;
   const hasHistory = item.eventsCount > 0;
 
   if (!canChange && !hasHistory) {
-    return <Typography sx={{ color: "text.disabled", fontSize: 14 }}>—</Typography>;
+    return <Typography sx={{ ...uiTypography.label, color: uiColors.textSubtle }}>—</Typography>;
   }
 
   return (
     <Box sx={gridSx}>
       {canChange && isPending ? (
         <>
-          <Button
-            size="small"
-            variant="contained"
+          <JacoButton
+            tone="warning"
+            compact={!mobile}
             startIcon={<ReplayIcon />}
             onClick={() => onReturn(item.id)}
-            sx={{
-              ...buttonSx,
-              bgcolor: "#f59e0b",
-              color: "#fff",
-              "&:hover": { bgcolor: "#d97706" },
-            }}
+            sx={buttonSx}
           >
             Вернуть
-          </Button>
-          <Button
-            size="small"
-            variant="contained"
+          </JacoButton>
+          <JacoButton
+            tone="success"
+            compact={!mobile}
             startIcon={<CheckCircleOutlineIcon />}
             onClick={() => onApprove(item.id)}
-            sx={{
-              ...buttonSx,
-              bgcolor: "#16a34a",
-              color: "#fff",
-              "&:hover": { bgcolor: "#15803d" },
-            }}
+            sx={buttonSx}
           >
             Подтвердить
-          </Button>
+          </JacoButton>
         </>
       ) : null}
       {canChange && canDetach ? (
-        <Button
-          size="small"
-          variant="outlined"
+        <JacoButton
+          tone="secondary"
+          compact={!mobile}
           startIcon={<PersonRemoveOutlinedIcon />}
           onClick={() => onDetach(item.id)}
-          sx={{
-            ...buttonSx,
-            color: "#b45309",
-            borderColor: "#f59e0b",
-            "&:hover": { borderColor: "#d97706", bgcolor: "#fff7ed" },
-          }}
+          sx={buttonSx}
         >
           Снять
-        </Button>
+        </JacoButton>
       ) : null}
       {canChange ? (
-        <Button
-          size="small"
-          variant="contained"
+        <JacoButton
+          tone="danger"
+          compact={!mobile}
           startIcon={<DeleteOutlineIcon />}
           onClick={() => onDelete(item.id)}
-          sx={{
-            ...buttonSx,
-            bgcolor: "primary.main",
-            color: "#fff",
-            "&:hover": { bgcolor: "primary.dark" },
-          }}
+          sx={buttonSx}
         >
           Удалить
-        </Button>
+        </JacoButton>
       ) : null}
       {hasHistory ? (
         <ControlHistoryButton
@@ -644,34 +601,31 @@ export function AddManualCleaningDialog({
       : "Нет ручных уборок для выбранного кафе";
 
   return (
-    <Dialog
+    <JacoModal
       open={open}
       onClose={onClose}
-      fullWidth
+      title="Добавить уборку"
       maxWidth="sm"
-      slotProps={{ paper: { sx: { borderRadius: "12px" } } }}
+      actions={
+        <JacoButton
+          tone="secondary"
+          compact
+          onClick={onClose}
+        >
+          Закрыть
+        </JacoButton>
+      }
     >
-      <DialogTitle sx={{ fontWeight: 700 }}>
-        Добавить уборку
-        <Typography sx={{ color: "text.secondary", fontSize: 14, mt: 0.5 }}>
+      <Box sx={{ display: "grid", gap: 1.5 }}>
+        <Typography sx={{ ...uiTypography.label, color: uiColors.textMuted }}>
           {getLocationNameById(cafeId, locations)}
         </Typography>
-      </DialogTitle>
-      <DialogContent sx={{ display: "grid", gap: 1.5 }}>
-        <TextField
-          size="small"
+        <JacoSearchField
           value={query}
+          onValueChange={onQueryChange}
+          minLength={1}
+          debounceMs={150}
           placeholder="Поиск по объекту, должности или виду уборки"
-          onChange={(event) => onQueryChange(event.target.value)}
-          slotProps={{
-            input: {
-              startAdornment: (
-                <InputAdornment position="start">
-                  <SearchIcon fontSize="small" />
-                </InputAdornment>
-              ),
-            },
-          }}
         />
 
         <Box sx={{ display: "grid", gap: 1, maxHeight: 420, overflow: "auto" }}>
@@ -680,49 +634,38 @@ export function AddManualCleaningDialog({
               const details = getManualTemplateDetails(item);
 
               return (
-                <Paper
+                <JacoSurface
                   key={item.id}
-                  variant="outlined"
                   sx={{
                     p: 1.5,
                     display: "grid",
-                    gridTemplateColumns: { xs: "minmax(0, 1fr) 40px", sm: "minmax(0, 1fr) auto" },
+                    gridTemplateColumns: { xs: "minmax(0, 1fr) 44px", sm: "minmax(0, 1fr) auto" },
                     alignItems: "center",
                     gap: { xs: 1.25, sm: 2 },
-                    borderRadius: "8px",
+                    borderRadius: uiRadii.md,
                   }}
                 >
                   <Box sx={{ minWidth: 0 }}>
-                    <Typography sx={{ fontSize: 15, fontWeight: 700, lineHeight: 1.3 }}>
+                    <Typography sx={{ ...uiTypography.bodyMedium, color: uiColors.textStrong }}>
                       {item.name}
                     </Typography>
-                    {details ? (
-                      <Typography sx={{ color: "text.secondary", fontSize: 14 }}>
-                        {details}
-                      </Typography>
-                    ) : null}
-                    <Typography sx={{ color: "text.secondary", fontSize: 14 }}>
+                    {details ? <Typography sx={cellTextSx}>{details}</Typography> : null}
+                    <Typography sx={cellTextSx}>
                       Сегодня: {item.todayCount} из {item.maxCount}
                     </Typography>
                   </Box>
-                  <Button
-                    size="small"
-                    variant="outlined"
+                  <JacoButton
+                    tone="outlinePrimary"
+                    compact
+                    aria-label="Добавить"
                     startIcon={<AddIcon />}
                     onClick={() => runPending(() => onAdd(item.id), item.id)}
                     disabled={isPending || isManualTemplateLimitReached(item)}
                     loading={pendingKey === item.id}
-                    loadingPosition="start"
                     sx={{
-                      minWidth: { xs: 40, sm: 96 },
-                      width: { xs: 40, sm: "auto" },
-                      height: 40,
-                      px: { xs: 0, sm: 1.5 },
-                      borderRadius: "8px",
-                      whiteSpace: "nowrap",
-                      "& .MuiButton-startIcon": {
-                        m: { xs: 0, sm: "0 8px 0 -4px" },
-                      },
+                      minWidth: { xs: 44, sm: 112 },
+                      px: { xs: 0, sm: 2 },
+                      "& .MuiButton-startIcon": { m: { xs: 0, sm: "0 8px 0 -4px" } },
                     }}
                   >
                     <Box
@@ -731,25 +674,15 @@ export function AddManualCleaningDialog({
                     >
                       Добавить
                     </Box>
-                  </Button>
-                </Paper>
+                  </JacoButton>
+                </JacoSurface>
               );
             })
           ) : (
-            <Typography sx={{ color: "text.secondary", fontSize: 14 }}>{emptyText}</Typography>
+            <Typography sx={cellTextSx}>{emptyText}</Typography>
           )}
         </Box>
-      </DialogContent>
-      <DialogActions sx={{ px: 3, pb: 2.5 }}>
-        <Button
-          size="small"
-          variant="outlined"
-          onClick={onClose}
-          sx={actionButtonSx}
-        >
-          Закрыть
-        </Button>
-      </DialogActions>
-    </Dialog>
+      </Box>
+    </JacoModal>
   );
 }
