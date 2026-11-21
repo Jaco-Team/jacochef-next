@@ -9,6 +9,7 @@ export const uiColors = {
   dangerHover: "#B81429",
   dangerSoft: "rgba(221, 26, 50, 0.08)",
   warning: "#F59E0B",
+  warningHover: "#D97706",
   warningSoft: "#FFF7E6",
   border: "#E5E5E5",
   borderLight: "#F0F0F0",

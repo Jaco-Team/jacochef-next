@@ -1,45 +1,8 @@
-import { days, defaultForm } from "./constants";
+import { LEGACY_ONLY_OPTION_VALUE, defaultForm } from "./constants";
 
 const PREPARATION_STATUS_FALLBACK = "pending";
 const CLEANING_STATUS_FALLBACK = "active";
-const LEGACY_DOW_TO_SCHEDULE = {
-  1: "mon",
-  2: "tue",
-  3: "wed",
-  4: "thu",
-  5: "fri",
-  6: "sat",
-  7: "sun",
-  10: "other",
-  11: "every_day",
-  12: "every_day_shift_end",
-  13: "manual",
-  14: "after_cleaning",
-};
-const FALLBACK_SCHEDULE_LABELS = {
-  other: "По дням",
-  every_day: "Ежедневно",
-  every_day_shift_end: "Каждый день после смены",
-  manual: "Вручную",
-  after_cleaning: "После другой уборки",
-};
-const FALLBACK_ADDITION_TYPE_LABELS = {
-  other: "Без ограничений",
-  single_active: "Одна активная",
-  unlimited: "Без ограничений",
-};
-const TEMPLATE_HISTORY_LABELS = {
-  name: "Название",
-  status: "Статус",
-  category: "Категория",
-  role: "Роль",
-  duration: "Длительность",
-  activationCount: "Количество активаций",
-  schedule: "Расписание",
-  deleteTimes: "Время удаления",
-  additionType: "Тип добавления",
-  locations: "Локации",
-};
+const CONTROL_DELETED_BY = ["system", "manager"];
 
 function toArray(value) {
   return Array.isArray(value) ? value : [];
@@ -60,6 +23,16 @@ function toStringArray(value) {
     .filter(Boolean);
 }
 
+// BE accepts strictly HH:MM: legacy "9:05" / "10:00:00" become "09:05" / "10:00", anything else is left for validation.
+function toShortTime(value) {
+  const match = /^(\d{1,2}):(\d{2})(?::\d{2})?$/.exec(value);
+  return match ? `${match[1].padStart(2, "0")}:${match[2]}` : value;
+}
+
+function toTimeList(value) {
+  return toStringArray(value).map((time) => toShortTime(time.trim()));
+}
+
 function normalizeLocationIds(value) {
   return [...new Set(toArray(value).map((locationId) => toNumber(locationId, locationId)))].filter(
     (locationId) =>
@@ -67,10 +40,15 @@ function normalizeLocationIds(value) {
   );
 }
 
+// Older BE sends options without `description` / `selectable`: every option except "other" stays selectable.
 function normalizeOption(item = {}) {
+  const value = item?.value ?? item?.id ?? "";
+
   return {
-    value: item?.value ?? item?.id ?? "",
+    value,
     label: item?.label ?? item?.name ?? "",
+    description: item?.description ? String(item.description) : "",
+    selectable: toBoolean(item?.selectable, value !== LEGACY_ONLY_OPTION_VALUE),
   };
 }
 
@@ -111,216 +89,6 @@ function unwrapData(response) {
   }
 
   return response || {};
-}
-
-function parseJsonObject(value) {
-  if (!value) {
-    return {};
-  }
-
-  if (typeof value === "object" && !Array.isArray(value)) {
-    return value;
-  }
-
-  if (typeof value !== "string") {
-    return {};
-  }
-
-  try {
-    const parsed = JSON.parse(value);
-    return parsed && typeof parsed === "object" && !Array.isArray(parsed) ? parsed : {};
-  } catch {
-    return {};
-  }
-}
-
-function formatHistoryDiffValue(value) {
-  if (value === null || value === undefined || value === "") {
-    return "";
-  }
-
-  if (typeof value === "string" || typeof value === "number" || typeof value === "boolean") {
-    return String(value);
-  }
-
-  try {
-    return JSON.stringify(value, null, 2);
-  } catch {
-    return String(value);
-  }
-}
-
-function normalizeHistoryDiffJson(diffJson) {
-  if (!diffJson) {
-    return "{}";
-  }
-
-  let parsed = diffJson;
-
-  if (typeof diffJson === "string") {
-    try {
-      parsed = JSON.parse(diffJson);
-    } catch {
-      return diffJson;
-    }
-  }
-
-  if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
-    return "{}";
-  }
-
-  const normalized = Object.fromEntries(
-    Object.entries(parsed).map(([field, value]) => [
-      field,
-      {
-        from: formatHistoryDiffValue(value?.from),
-        to: formatHistoryDiffValue(value?.to),
-      },
-    ]),
-  );
-
-  return JSON.stringify(normalized);
-}
-
-function getScheduleLabelByDow(dow, scheduleTypeOptions = []) {
-  const scheduleType = LEGACY_DOW_TO_SCHEDULE[toNumber(dow, dow)];
-
-  if (!scheduleType) {
-    return "";
-  }
-
-  const optionLabel = scheduleTypeOptions.find((option) => option.value === scheduleType)?.label;
-  if (optionLabel) {
-    return optionLabel;
-  }
-
-  return (
-    days.find((day) => day.value === scheduleType)?.label ||
-    FALLBACK_SCHEDULE_LABELS[scheduleType] ||
-    ""
-  );
-}
-
-function getAdditionTypeLabel(typeTime, additionTypeOptions = []) {
-  const additionType =
-    {
-      0: "other",
-      1: "single_active",
-      2: "unlimited",
-    }[toNumber(typeTime, typeTime)] || "";
-
-  if (!additionType) {
-    return "";
-  }
-
-  return (
-    additionTypeOptions.find((option) => option.value === additionType)?.label ||
-    FALLBACK_ADDITION_TYPE_LABELS[additionType] ||
-    ""
-  );
-}
-
-function getRoleLabel(roleId, roles = []) {
-  return roles.find((role) => String(role.id) === String(roleId))?.name || "";
-}
-
-function getCategoryLabel(categoryId, categories = []) {
-  return categories.find((category) => String(category.id) === String(categoryId))?.name || "";
-}
-
-function getLocationLabel(locationId, locations = []) {
-  return locations.find((location) => String(location.id) === String(locationId))?.name || "";
-}
-
-function sortTimes(left, right) {
-  return String(left).localeCompare(String(right));
-}
-
-function formatTimeList(times = []) {
-  const normalizedTimes = toArray(times)
-    .filter(Boolean)
-    .map((time) => String(time))
-    .sort(sortTimes);
-
-  return normalizedTimes.length ? normalizedTimes.join(", ") : "";
-}
-
-function formatPointSummary(points = [], locations = []) {
-  const labels = toArray(points)
-    .map((point) => {
-      const locationName = getLocationLabel(point?.point_id, locations);
-      const dopTime = toNumber(point?.dop_time, 0) || 0;
-
-      if (!locationName) {
-        return "";
-      }
-
-      return dopTime > 0 ? `${locationName} (+${dopTime} мин)` : locationName;
-    })
-    .filter(Boolean);
-
-  return labels.join(", ");
-}
-
-function normalizeTemplateHistorySnapshot(snapshot, context = {}) {
-  const template =
-    snapshot?.template && typeof snapshot.template === "object" ? snapshot.template : {};
-  const times = toArray(snapshot?.times);
-  const startTimes = formatTimeList(
-    times
-      .filter((item) => toNumber(item?.type_action, item?.type_action) === 1)
-      .map((item) => item?.time_action),
-  );
-  const deleteTimes = formatTimeList(
-    times
-      .filter((item) => toNumber(item?.type_action, item?.type_action) === 2)
-      .map((item) => item?.time_action),
-  );
-  const scheduleLabel = getScheduleLabelByDow(template?.dow, context.scheduleTypeOptions);
-
-  return {
-    name: template?.name ? String(template.name) : "",
-    status: toBoolean(template?.is_active, true) ? "Активная" : "Архив",
-    category: getCategoryLabel(template?.type_new, context.categories),
-    role: getRoleLabel(template?.app_id, context.roles),
-    duration:
-      template?.time_min != null && template?.time_min !== "" ? `${template.time_min} мин` : "",
-    activationCount:
-      template?.max_count != null && template?.max_count !== "" ? String(template.max_count) : "",
-    schedule: `${scheduleLabel || "Без дней"} · ${startTimes || "Без времени"}`,
-    deleteTimes: deleteTimes || "",
-    additionType: getAdditionTypeLabel(template?.type_time, context.additionTypeOptions),
-    locations: formatPointSummary(snapshot?.points, context.locations),
-  };
-}
-
-function buildTemplateHistoryDiffJson(item, context = {}) {
-  const beforeSnapshot = normalizeTemplateHistorySnapshot(
-    parseJsonObject(item?.before_json),
-    context,
-  );
-  const afterSnapshot = normalizeTemplateHistorySnapshot(
-    parseJsonObject(item?.after_json),
-    context,
-  );
-
-  const diffEntries = Object.entries(TEMPLATE_HISTORY_LABELS).reduce((acc, [key, label]) => {
-    const from = beforeSnapshot[key] || "";
-    const to = afterSnapshot[key] || "";
-
-    if (from === to || (!from && !to)) {
-      return acc;
-    }
-
-    acc[label] = { from, to };
-    return acc;
-  }, {});
-
-  if (Object.keys(diffEntries).length > 0) {
-    return JSON.stringify(diffEntries);
-  }
-
-  return null;
 }
 
 function normalizeTemplateStatus(status) {
@@ -374,38 +142,52 @@ export function getTodayDate() {
   return `${year}-${month}-${day}`;
 }
 
-export function normalizeLocation(item = {}) {
+// `fallbackCityId` comes from raw bootstrap `points` for BE versions without `cityId`.
+export function normalizeLocation(item = {}, fallbackCityId = null) {
   return {
     id: toNumber(item.id, item.id),
     name: item.name ? String(item.name) : "",
     base: item.base ? String(item.base) : "",
-    cityId: toNumber(item.city_id, item.city_id ?? null),
+    cityId: toNumber(item.cityId ?? item.city_id ?? item.legacy?.city_id, null) ?? fallbackCityId,
+    city: item.city ? String(item.city) : "",
   };
 }
 
-export function createLocationCities(locations = []) {
-  return Object.values(
-    locations.reduce((acc, location) => {
-      if (!location?.city) {
-        return acc;
-      }
+function getCityNameFromLocation(location) {
+  if (location.city) {
+    return location.city;
+  }
 
-      if (!acc[location.city]) {
-        acc[location.city] = {
-          id: location.city,
-          name: location.city,
-          cafes: [],
-        };
-      }
+  const [prefix, rest] = location.name.split(",");
+  return rest ? prefix.trim() : "";
+}
 
-      acc[location.city].cafes.push({
-        id: location.id,
-        name: location.name,
-      });
+// Bootstrap `cities`; without them the list is derived from the locations themselves.
+function normalizeCities(value, locations = []) {
+  const cities = toArray(value)
+    .map((city) => ({
+      id: toNumber(city?.id, null),
+      name: city?.name ? String(city.name) : "",
+    }))
+    .filter((city) => city.id != null && city.name);
 
-      return acc;
-    }, {}),
-  );
+  if (cities.length) {
+    return cities;
+  }
+
+  const derived = new Map();
+  locations.forEach((location) => {
+    if (location.cityId == null || derived.has(location.cityId)) {
+      return;
+    }
+
+    derived.set(location.cityId, {
+      id: location.cityId,
+      name: getCityNameFromLocation(location) || "Без города",
+    });
+  });
+
+  return [...derived.values()];
 }
 
 export function normalizeTemplate(item = {}) {
@@ -433,12 +215,26 @@ export function normalizeTemplate(item = {}) {
       item.triggerCleaningId ?? item.trigger_cleaning_id ?? null,
     ),
     days: toStringArray(item.days),
-    times: toStringArray(item.times),
-    deleteTimes: toStringArray(item.deleteTimes ?? item.delete_times),
+    times: toTimeList(item.times),
+    deleteTimes: toTimeList(item.deleteTimes ?? item.delete_times),
     is_not_del: toBoolean(item.is_not_del, false),
     is_need: toBoolean(item.is_need, false),
     locationIds: normalizeLocationIds(item.locationIds ?? item.location_ids),
     status: normalizeTemplateStatus(item.status),
+  };
+}
+
+export function normalizeManualTemplate(item = {}) {
+  return {
+    id: toNumber(item.id, item.id),
+    name: item.name ? String(item.name) : "",
+    roleId: toNumber(item.roleId, null),
+    role: item.role ? String(item.role) : "",
+    categoryId: toNumber(item.categoryId, null),
+    category: item.category ? String(item.category) : "",
+    duration: toNumber(item.duration, null),
+    maxCount: toNumber(item.maxCount, 0) || 0,
+    todayCount: toNumber(item.todayCount, 0) || 0,
   };
 }
 
@@ -455,6 +251,7 @@ export function normalizeCategory(item = {}) {
 export function normalizeControlItem(item = {}) {
   const workNameSource = item.name ?? item.name_work ?? item.legacy?.name_work;
   const workName = workNameSource ? String(workNameSource) : "";
+  const startedAt = item.startedAt || item.started_at || item.date_time_start || "";
 
   return {
     id: toNumber(item.id, item.id),
@@ -470,7 +267,7 @@ export function normalizeControlItem(item = {}) {
     ),
     date: item.date ? String(item.date) : item.date_start_work ? String(item.date_start_work) : "",
     employee: item.employee ? String(item.employee) : item.user_name ? String(item.user_name) : "",
-    startedAt: item.startedAt || item.started_at || item.date_time_start || "",
+    startedAt,
     finishedAt: item.finishedAt || item.finished_at || item.date_time_end || "",
     confirmedAt: item.confirmedAt || item.confirmed_at || item.manager_time || "",
     confirmer: item.confirmer
@@ -479,6 +276,11 @@ export function normalizeControlItem(item = {}) {
         ? String(item.manager_name)
         : "",
     status: normalizeControlStatus(item.status || normalizeLegacyControlStatus(item)),
+    deletedBy: CONTROL_DELETED_BY.includes(item.deletedBy) ? item.deletedBy : null,
+    deleteReason: item.deleteReason ? String(item.deleteReason).trim() : "",
+    wasStarted: toBoolean(item.wasStarted, Boolean(startedAt)),
+    returnsCount: toNumber(item.returnsCount, 0) || 0,
+    eventsCount: toNumber(item.eventsCount, 0) || 0,
   };
 }
 
@@ -496,6 +298,7 @@ export function normalizePreparationItem(item = {}) {
     confirmedAt: item.confirmedAt || item.confirmed_at || "",
     confirmer: item.confirmer ? String(item.confirmer) : "",
     status: normalizePreparationStatus(item.status),
+    eventsCount: toNumber(item.eventsCount, 0) || 0,
   };
 }
 
@@ -539,36 +342,25 @@ export function normalizePreparationEditItem(item = {}) {
   };
 }
 
-export function normalizeHistoryRows(response, context = {}) {
-  const data = unwrapData(response);
-  return toArray(data.history)
-    .map((item) => {
-      const diffJson =
-        item?.scope === "templates"
-          ? buildTemplateHistoryDiffJson(item, context)
-          : normalizeHistoryDiffJson(item?.diff_json);
-
-      if (item?.scope === "templates" && !diffJson) {
-        return null;
-      }
-
-      return {
-        id: item?.id ?? `${item?.created_at || ""}-${item?.event_type || ""}`,
-        created_at: item?.created_at || "",
-        actor_name: item?.actor_name || "",
-        event_type: item?.event_type || "",
-        diff_json: diffJson,
-      };
-    })
-    .filter(Boolean);
+// Raw `history` rows; labels are resolved at render time by `cleaningsHistoryPresenter`.
+export function normalizeHistoryResponse(response) {
+  return toArray(unwrapData(response).history);
 }
 
 export function normalizeBootstrap(response) {
   const data = unwrapData(response);
 
+  const pointCityIds = new Map(
+    toArray(data.points).map((point) => [String(point?.id), toNumber(point?.city_id, null)]),
+  );
+  const locations = toArray(data.locations).map((location) =>
+    normalizeLocation(location, pointCityIds.get(String(location?.id)) ?? null),
+  );
+
   return {
     moduleInfo: data.module_info || {},
-    locations: toArray(data.locations).map(normalizeLocation),
+    locations,
+    cities: normalizeCities(data.cities, locations),
     roles: toArray(data.roles)
       .map(normalizeRole)
       .filter((item) => item.name),
@@ -633,12 +425,8 @@ export function normalizeControlResponse(response) {
     preparations: toArray(data.preparations?.length ? data.preparations : data.pf_list).map(
       normalizePreparationItem,
     ),
-    manualTemplates: toArray(
-      data.availableManualCleanings ??
-        data.manualTemplates ??
-        data.manual_templates ??
-        data.all_work,
-    ).map(normalizeTemplate),
+    manualTemplates: toArray(data.manualTemplates).map(normalizeManualTemplate),
+    manualTemplatesSupported: Array.isArray(data.manualTemplates),
     permissions: data.permissions && typeof data.permissions === "object" ? data.permissions : {},
   };
 }
