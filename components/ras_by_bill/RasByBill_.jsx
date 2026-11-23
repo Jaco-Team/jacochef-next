@@ -9,17 +9,22 @@ import {
   TableContainer,
   TableHead,
   TableRow,
-  Paper,
   Accordion,
   AccordionSummary,
   AccordionDetails,
-  Backdrop,
-  CircularProgress,
-  Button,
-  IconButton,
 } from "@mui/material";
 
-import { MyAutocomplite, MyDatePickerNew } from "@/ui/Forms";
+import {
+  JacoAlert,
+  JacoAutocomplete,
+  JacoBackdropLoader,
+  JacoButton,
+  JacoCityCafe,
+  JacoDatePicker,
+  JacoIconButton,
+  JacoSurface,
+  uiColors,
+} from "@/design-system/shared/ui";
 
 import dayjs from "dayjs";
 
@@ -30,7 +35,6 @@ import { formatNumber } from "@/src/helpers/utils/i18n";
 import { Component, Fragment } from "react";
 import { ExpandMore } from "@mui/icons-material";
 import { formatDate } from "@/src/helpers/ui/formatDate";
-import MyAlert from "@/ui/MyAlert";
 
 export default class RasByBill_ extends Component {
   constructor(props) {
@@ -106,12 +110,6 @@ export default class RasByBill_ extends Component {
     } finally {
       this.setState({ is_load: false });
     }
-  }
-
-  changePoint(_, value) {
-    this.setState({
-      point: value,
-    });
   }
 
   changeItems(event, data) {
@@ -207,13 +205,8 @@ export default class RasByBill_ extends Component {
   render() {
     return (
       <>
-        <Backdrop
-          style={{ zIndex: 99 }}
-          open={this.state.is_load}
-        >
-          <CircularProgress color="inherit" />
-        </Backdrop>
-        <MyAlert
+        <JacoBackdropLoader open={this.state.is_load} />
+        <JacoAlert
           isOpen={this.state.openAlert}
           onClose={() => this.setState({ openAlert: false })}
           status={this.state.err_status}
@@ -239,19 +232,14 @@ export default class RasByBill_ extends Component {
               sm: 3,
             }}
           >
-            {/* <MySelect
-              data={this.state.points}
-              multiple={true}
+            <JacoCityCafe
+              points={this.state.points}
               value={this.state.point}
-              func={this.changePoint.bind(this)}
-              label="Точка"
-            /> */}
-            <MyAutocomplite
-              data={this.state.points || []}
-              multiple={true}
-              value={this.state.point || []}
-              func={this.changePoint.bind(this)}
+              onChange={(points) => this.setState({ point: points })}
               label="Кафе"
+              placeholder="Выберите кафе"
+              withAll={this.state.points.length > 0}
+              withOrganizationMode={false}
             />
           </Grid>
 
@@ -261,10 +249,10 @@ export default class RasByBill_ extends Component {
               sm: 3,
             }}
           >
-            <MyDatePickerNew
+            <JacoDatePicker
               label="Дата от"
               value={this.state.date_start}
-              func={this.changeDateRange.bind(this, "date_start")}
+              onChange={this.changeDateRange.bind(this, "date_start")}
             />
           </Grid>
           <Grid
@@ -273,10 +261,10 @@ export default class RasByBill_ extends Component {
               sm: 3,
             }}
           >
-            <MyDatePickerNew
+            <JacoDatePicker
               label="Дата до"
               value={this.state.date_end}
-              func={this.changeDateRange.bind(this, "date_end")}
+              onChange={this.changeDateRange.bind(this, "date_end")}
             />
           </Grid>
 
@@ -286,12 +274,13 @@ export default class RasByBill_ extends Component {
               sm: 3,
             }}
           >
-            <MyAutocomplite
-              data={this.state.items_cat || []}
+            <JacoAutocomplete
+              options={this.state.items_cat}
+              isOptionEqualToValue={(option, value) => Number(option.id) === Number(value.id)}
               multiple={false}
               disableCloseOnSelect={false}
               value={this.state.item_cat || null}
-              func={(_, value) => {
+              onChange={(_, value) => {
                 this.setState({ item_cat: value });
               }}
               label="Категория товара"
@@ -304,11 +293,14 @@ export default class RasByBill_ extends Component {
               sm: 12,
             }}
           >
-            <MyAutocomplite
-              data={this.state.items}
-              multiple={true}
+            <JacoAutocomplete
+              options={this.state.items}
+              isOptionEqualToValue={(option, value) => Number(option.id) === Number(value.id)}
+              multiple
+              disableCloseOnSelect
+              filterSelectedOptions
               value={this.state.myItems}
-              func={this.changeItems.bind(this)}
+              onChange={this.changeItems.bind(this)}
               label="Заготовки"
             />
           </Grid>
@@ -318,12 +310,12 @@ export default class RasByBill_ extends Component {
               sm: 3,
             }}
           >
-            <Button
+            <JacoButton
               variant="contained"
               onClick={this.getItems.bind(this)}
             >
               Показать заготовки
-            </Button>
+            </JacoButton>
           </Grid>
           <Grid
             size={{
@@ -331,12 +323,12 @@ export default class RasByBill_ extends Component {
               sm: 3,
             }}
           >
-            <Button
+            <JacoButton
               variant="contained"
               onClick={this.getCats.bind(this)}
             >
               Показать категории
-            </Button>
+            </JacoButton>
           </Grid>
 
           {this.state.resItems && this.state.resItems.items_ras ? (
@@ -347,7 +339,7 @@ export default class RasByBill_ extends Component {
                 }}
               >
                 <h1>Куплено по накладным</h1>
-                <TableContainer component={Paper}>
+                <TableContainer component={JacoSurface}>
                   <Table aria-label="a dense table">
                     <TableHead>
                       <TableRow>
@@ -363,8 +355,8 @@ export default class RasByBill_ extends Component {
                         <Fragment key={item.item_id}>
                           <TableRow>
                             <TableCell>
-                              <IconButton
-                                size="small"
+                              <JacoIconButton
+                                sx={{ mr: 0.5 }}
                                 aria-label={`${this.state.openSuppliers[item.item_id] ? "Скрыть" : "Показать"} поставщиков: ${item.name}`}
                                 aria-expanded={Boolean(this.state.openSuppliers[item.item_id])}
                                 onClick={() =>
@@ -377,7 +369,7 @@ export default class RasByBill_ extends Component {
                                 }
                               >
                                 <ExpandMore />
-                              </IconButton>
+                              </JacoIconButton>
                               {item.name}
                             </TableCell>
                             <TableCell>
@@ -391,7 +383,7 @@ export default class RasByBill_ extends Component {
                           </TableRow>
                           {this.state.openSuppliers[item.item_id] && (
                             <>
-                              <TableRow sx={{ bgcolor: "warning.50" }}>
+                              <TableRow sx={{ bgcolor: uiColors.warningSoft }}>
                                 <TableCell
                                   component="th"
                                   scope="col"
@@ -399,31 +391,16 @@ export default class RasByBill_ extends Component {
                                 >
                                   Поставщик
                                 </TableCell>
-                                <TableCell
-                                  component="th"
-                                  scope="col"
-                                >
-                                  Объем товара
-                                </TableCell>
                                 <TableCell />
-                                <TableCell
-                                  component="th"
-                                  scope="col"
-                                >
-                                  Сумма
-                                </TableCell>
-                                <TableCell
-                                  component="th"
-                                  scope="col"
-                                >
-                                  Кол-во накладных
-                                </TableCell>
+                                <TableCell />
+                                <TableCell />
+                                <TableCell />
                               </TableRow>
                               {item.suppliers?.length ? (
                                 item.suppliers.map((supplier) => (
                                   <TableRow
                                     key={supplier.vendor_id ?? "unknown"}
-                                    sx={{ bgcolor: "warning.50" }}
+                                    sx={{ bgcolor: uiColors.warningSoft }}
                                   >
                                     <TableCell sx={{ pl: 6 }}>{supplier.name}</TableCell>
                                     <TableCell>
@@ -435,7 +412,7 @@ export default class RasByBill_ extends Component {
                                   </TableRow>
                                 ))
                               ) : (
-                                <TableRow sx={{ bgcolor: "warning.50" }}>
+                                <TableRow sx={{ bgcolor: uiColors.warningSoft }}>
                                   <TableCell
                                     colSpan={5}
                                     sx={{ pl: 6 }}
@@ -461,69 +438,72 @@ export default class RasByBill_ extends Component {
                 </TableContainer>
               </Grid>
 
-              <Grid
-                size={{
-                  xs: 12,
-                }}
-              >
-                <h1>Расход заготовок (включая рецепты)</h1>
-                <TableContainer component={Paper}>
-                  <Table aria-label="a dense table">
-                    <TableHead>
-                      <TableRow>
-                        <TableCell>Наименование заготовки</TableCell>
-                        <TableCell>Объем заготовок</TableCell>
-                        <TableCell>Кол-во роллов</TableCell>
-                        <TableCell>Сумма роллов (примерно)</TableCell>
-                      </TableRow>
-                    </TableHead>
-                    <TableBody>
-                      {this.state.resItems.pf_ras.map((item, key) => (
-                        <TableRow key={key}>
-                          <TableCell> {item.pf_name} </TableCell>
-                          <TableCell>
-                            {" "}
-                            {formatNumber(item.count_pf) + " " + item.ei_name}{" "}
-                          </TableCell>
-                          <TableCell> {formatNumber(item.count_rolls)} </TableCell>
-                          <TableCell> {formatNumber(item.price_rolls)} </TableCell>
+              {this.state.resItems.pf_ras?.length > 0 && (
+                <Grid
+                  size={{
+                    xs: 12,
+                  }}
+                >
+                  <h1>Расход заготовок (включая рецепты)</h1>
+                  <TableContainer component={JacoSurface}>
+                    <Table aria-label="a dense table">
+                      <TableHead>
+                        <TableRow>
+                          <TableCell>Наименование заготовки</TableCell>
+                          <TableCell>Объем заготовок</TableCell>
+                          <TableCell>Кол-во роллов</TableCell>
+                          <TableCell>Сумма роллов (примерно)</TableCell>
                         </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </TableContainer>
-              </Grid>
-
-              <Grid
-                size={{
-                  xs: 12,
-                }}
-              >
-                <h1>Расход рецептов</h1>
-                <TableContainer component={Paper}>
-                  <Table aria-label="a dense table">
-                    <TableHead>
-                      <TableRow>
-                        <TableCell>Наименование заготовки</TableCell>
-                        <TableCell>Объем заготовок</TableCell>
-                        <TableCell>Кол-во роллов</TableCell>
-                      </TableRow>
-                    </TableHead>
-                    <TableBody>
-                      {this.state.resItems.rec_ras.map((item, key) => (
-                        <TableRow key={key}>
-                          <TableCell> {item.pf_name} </TableCell>
-                          <TableCell>
-                            {" "}
-                            {formatNumber(item.count_pf) + " " + item.ei_name}{" "}
-                          </TableCell>
-                          <TableCell> {formatNumber(item.count_rolls)} </TableCell>
+                      </TableHead>
+                      <TableBody>
+                        {this.state.resItems.pf_ras.map((item, key) => (
+                          <TableRow key={key}>
+                            <TableCell> {item.pf_name} </TableCell>
+                            <TableCell>
+                              {" "}
+                              {formatNumber(item.count_pf) + " " + item.ei_name}{" "}
+                            </TableCell>
+                            <TableCell> {formatNumber(item.count_rolls)} </TableCell>
+                            <TableCell> {formatNumber(item.price_rolls)} </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </TableContainer>
+                </Grid>
+              )}
+              {this.state.resItems.rec_ras?.length > 0 && (
+                <Grid
+                  size={{
+                    xs: 12,
+                  }}
+                >
+                  <h1>Расход рецептов</h1>
+                  <TableContainer component={JacoSurface}>
+                    <Table aria-label="a dense table">
+                      <TableHead>
+                        <TableRow>
+                          <TableCell>Наименование заготовки</TableCell>
+                          <TableCell>Объем заготовок</TableCell>
+                          <TableCell>Кол-во роллов</TableCell>
                         </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </TableContainer>
-              </Grid>
+                      </TableHead>
+                      <TableBody>
+                        {this.state.resItems.rec_ras.map((item, key) => (
+                          <TableRow key={key}>
+                            <TableCell> {item.pf_name} </TableCell>
+                            <TableCell>
+                              {" "}
+                              {formatNumber(item.count_pf) + " " + item.ei_name}{" "}
+                            </TableCell>
+                            <TableCell> {formatNumber(item.count_rolls)} </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </TableContainer>
+                </Grid>
+              )}
             </>
           ) : null}
 
@@ -536,7 +516,7 @@ export default class RasByBill_ extends Component {
             >
               <Accordion
                 disabled
-                style={{ backgroundColor: "#fff", opacity: 1 }}
+                sx={{ "&.Mui-disabled": { backgroundColor: uiColors.surface, opacity: 1 } }}
               >
                 <AccordionSummary>
                   <Typography style={{ width: "50%" }}>
@@ -582,7 +562,9 @@ export default class RasByBill_ extends Component {
                         <AccordionDetails>
                           <Accordion
                             disabled
-                            style={{ backgroundColor: "#fff", opacity: 1 }}
+                            sx={{
+                              "&.Mui-disabled": { backgroundColor: uiColors.surface, opacity: 1 },
+                            }}
                           >
                             <AccordionSummary>
                               <Typography style={{ width: "20%", paddingLeft: 40 }}>
@@ -607,7 +589,9 @@ export default class RasByBill_ extends Component {
                             <Accordion
                               key={parent_key}
                               disabled
-                              style={{ backgroundColor: "#fff", opacity: 1 }}
+                              sx={{
+                                "&.Mui-disabled": { backgroundColor: uiColors.surface, opacity: 1 },
+                              }}
                             >
                               <AccordionSummary>
                                 <Typography style={{ width: "20%", paddingLeft: 40 }}>
@@ -637,7 +621,7 @@ export default class RasByBill_ extends Component {
 
               <Accordion
                 disabled
-                style={{ backgroundColor: "#fff", opacity: 1 }}
+                sx={{ "&.Mui-disabled": { backgroundColor: uiColors.surface, opacity: 1 } }}
               >
                 <AccordionSummary>
                   <Typography style={{ width: "60%", marginRight: -15 }}>Всего:</Typography>
