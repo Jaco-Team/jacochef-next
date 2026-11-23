@@ -16,6 +16,7 @@ import {
   Backdrop,
   CircularProgress,
   Button,
+  IconButton,
 } from "@mui/material";
 
 import { MyAutocomplite, MyDatePickerNew } from "@/ui/Forms";
@@ -26,7 +27,7 @@ import dayjs from "dayjs";
 import { api_laravel } from "@/src/api_new";
 import { formatNumber } from "@/src/helpers/utils/i18n";
 
-import { Component } from "react";
+import { Component, Fragment } from "react";
 import { ExpandMore } from "@mui/icons-material";
 import { formatDate } from "@/src/helpers/ui/formatDate";
 import MyAlert from "@/ui/MyAlert";
@@ -60,6 +61,7 @@ export default class RasByBill_ extends Component {
       myItems: [],
 
       calendar: [],
+      openSuppliers: {},
     };
   }
 
@@ -152,6 +154,7 @@ export default class RasByBill_ extends Component {
         full_sum: summ.toFixed(2),
       },
       catItems: null,
+      openSuppliers: {},
     });
   }
 
@@ -356,18 +359,94 @@ export default class RasByBill_ extends Component {
                       </TableRow>
                     </TableHead>
                     <TableBody>
-                      {this.state.resItems.items_ras.map((item, key) => (
-                        <TableRow key={key}>
-                          <TableCell> {item.name} </TableCell>
-                          <TableCell>
-                            {formatNumber(item.count_item) + " " + item.ei_name}
-                          </TableCell>
-                          <TableCell>
-                            {formatNumber(item.count_pf) + " " + item.ei_name_pf}
-                          </TableCell>
-                          <TableCell> {formatNumber(item.sum)} </TableCell>
-                          <TableCell> {formatNumber(item.count_bill, 0, 0)} </TableCell>
-                        </TableRow>
+                      {this.state.resItems.items_ras.map((item) => (
+                        <Fragment key={item.item_id}>
+                          <TableRow>
+                            <TableCell>
+                              <IconButton
+                                size="small"
+                                aria-label={`${this.state.openSuppliers[item.item_id] ? "Скрыть" : "Показать"} поставщиков: ${item.name}`}
+                                aria-expanded={Boolean(this.state.openSuppliers[item.item_id])}
+                                onClick={() =>
+                                  this.setState((state) => ({
+                                    openSuppliers: {
+                                      ...state.openSuppliers,
+                                      [item.item_id]: !state.openSuppliers[item.item_id],
+                                    },
+                                  }))
+                                }
+                              >
+                                <ExpandMore />
+                              </IconButton>
+                              {item.name}
+                            </TableCell>
+                            <TableCell>
+                              {formatNumber(item.count_item)} {item.ei_name}
+                            </TableCell>
+                            <TableCell>
+                              {formatNumber(item.count_pf)} {item.ei_name_pf}
+                            </TableCell>
+                            <TableCell>{formatNumber(item.sum)}</TableCell>
+                            <TableCell>{formatNumber(item.count_bill, 0, 0)}</TableCell>
+                          </TableRow>
+                          {this.state.openSuppliers[item.item_id] && (
+                            <>
+                              <TableRow sx={{ bgcolor: "warning.50" }}>
+                                <TableCell
+                                  component="th"
+                                  scope="col"
+                                  sx={{ pl: 6 }}
+                                >
+                                  Поставщик
+                                </TableCell>
+                                <TableCell
+                                  component="th"
+                                  scope="col"
+                                >
+                                  Объем товара
+                                </TableCell>
+                                <TableCell />
+                                <TableCell
+                                  component="th"
+                                  scope="col"
+                                >
+                                  Сумма
+                                </TableCell>
+                                <TableCell
+                                  component="th"
+                                  scope="col"
+                                >
+                                  Кол-во накладных
+                                </TableCell>
+                              </TableRow>
+                              {item.suppliers?.length ? (
+                                item.suppliers.map((supplier) => (
+                                  <TableRow
+                                    key={supplier.vendor_id ?? "unknown"}
+                                    sx={{ bgcolor: "warning.50" }}
+                                  >
+                                    <TableCell sx={{ pl: 6 }}>{supplier.name}</TableCell>
+                                    <TableCell>
+                                      {formatNumber(supplier.count_item)} {item.ei_name}
+                                    </TableCell>
+                                    <TableCell />
+                                    <TableCell>{formatNumber(supplier.sum)}</TableCell>
+                                    <TableCell>{formatNumber(supplier.count_bill, 0, 0)}</TableCell>
+                                  </TableRow>
+                                ))
+                              ) : (
+                                <TableRow sx={{ bgcolor: "warning.50" }}>
+                                  <TableCell
+                                    colSpan={5}
+                                    sx={{ pl: 6 }}
+                                  >
+                                    Нет данных о поставщиках
+                                  </TableCell>
+                                </TableRow>
+                              )}
+                            </>
+                          )}
+                        </Fragment>
                       ))}
 
                       <TableRow>
