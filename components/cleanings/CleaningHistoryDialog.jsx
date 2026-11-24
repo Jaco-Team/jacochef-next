@@ -1,14 +1,6 @@
-import {
-  Box,
-  CircularProgress,
-  Dialog,
-  DialogContent,
-  DialogTitle,
-  IconButton,
-  Typography,
-} from "@mui/material";
-import CloseIcon from "@mui/icons-material/Close";
+import { Box, CircularProgress, Typography } from "@mui/material";
 import HistoryLog from "@/ui/history/HistoryLog";
+import { JacoModal, uiColors, uiTypography } from "@/design-system/shared/ui";
 
 export default function CleaningHistoryDialog({
   open,
@@ -16,48 +8,33 @@ export default function CleaningHistoryDialog({
   history = [],
   loading = false,
   onClose,
+  title = "История изменений",
+  dateLabel,
 }) {
   return (
-    <Dialog
+    <JacoModal
       open={open}
       onClose={onClose}
-      fullWidth
+      title={title}
       maxWidth="md"
-      slotProps={{
-        paper: {
-          sx: {
-            borderRadius: "12px",
-          },
-        },
-      }}
     >
-      <DialogTitle
-        sx={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 2 }}
-      >
-        <Box>
-          <Typography sx={{ fontSize: 20, fontWeight: 800 }}>История изменений</Typography>
-          <Typography sx={{ color: "text.secondary", fontSize: 14 }}>{item?.name || ""}</Typography>
+      {item?.name ? (
+        <Typography sx={{ ...uiTypography.label, color: uiColors.textMuted, mb: 1.5 }}>
+          {item.name}
+        </Typography>
+      ) : null}
+      {loading ? (
+        <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}>
+          <CircularProgress size={28} />
         </Box>
-        <IconButton
-          size="small"
-          onClick={onClose}
-        >
-          <CloseIcon fontSize="small" />
-        </IconButton>
-      </DialogTitle>
-
-      <DialogContent sx={{ pt: 0, pb: 2 }}>
-        {loading ? (
-          <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}>
-            <CircularProgress size={28} />
-          </Box>
-        ) : (
-          <HistoryLog
-            history={history}
-            defaultExpanded
-          />
-        )}
-      </DialogContent>
-    </Dialog>
+      ) : (
+        <HistoryLog
+          history={history}
+          title={title}
+          dateLabel={dateLabel}
+          defaultExpanded
+        />
+      )}
+    </JacoModal>
   );
 }

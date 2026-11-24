@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import useMyAlert from "@/src/hooks/useMyAlert";
 import handleUserAccess from "@/src/helpers/access/handleUserAccess";
 import {
@@ -8,13 +8,32 @@ import {
   normalizeCategoryPayload,
   normalizeCafesResponse,
   normalizeControlResponse,
-  normalizeHistoryRows,
+  normalizeHistoryResponse,
   normalizePreparationEditResponse,
   normalizeTemplatePayload,
   normalizeTemplatesResponse,
 } from "./cleaningsNormalizers";
 import useCleaningsApi from "./useCleaningsApi";
-import { getCategoryName } from "./helpers";
+import { CLEANINGS_MODULE_NAME } from "./constants";
+import {
+  getCategoryName,
+  getCategoryTemplateIds,
+  getSavedDopTime,
+  getVisibleControlKindTabs,
+  getVisibleSectionTabs,
+  isSameId,
+  isSameIdSet,
+  resolveCleaningsRoute,
+} from "./helpers";
+import {
+  presentCafeHistory,
+  presentCategoryHistory,
+  presentTemplateHistory,
+} from "./cleaningsHistoryPresenter.mjs";
+import { getRichTextBaseline, isRichTextChanged, settleRichTextBaseline } from "./richText.mjs";
+import { getControlHistorySubject, presentControlHistory } from "./controlHistoryPresenter.mjs";
+import { useBeforeUnloadGuard } from "./shared";
+import useControlPolling from "./useControlPolling";
 
 const cleaningsSessionCache = {
   bootstrap: null,
@@ -23,7 +42,7 @@ const cleaningsSessionCache = {
   cafesByLocation: {},
   templateHistoryById: {},
   categoryHistoryById: {},
-  controlByFilters: {},
+  cafeHistoryByLocation: {},
   inFlightControlRequest: null,
   controlFilters: null,
   preparationFilters: null,
@@ -37,9 +56,48 @@ function getCacheKey(value) {
   return value == null || value === "" ? "" : String(value);
 }
 
+
+// Template, вид уборки and cafe saves also write events of related templates, categories and cafes.
+function invalidateHistoryCache() {
+  cleaningsSessionCache.templateHistoryById = {};
+  cleaningsSessionCache.categoryHistoryById = {};
+  cleaningsSessionCache.cafeHistoryByLocation = {};
+}
+
+const NEW_CATEGORY_KEY = "new";
+const EMPTY_CATEGORY_CHANGES = {};
+const EMPTY_CATEGORY = {
+  id: null,
+  name: "",
+  instruction: "",
+  templatesCount: 0,
+  deletable: true,
+};
+
+// Dop. time drafts are numbers or "" (an emptied input, saved as 0).
+function isSavedDopTime(draftValue, template) {
+  const draftMinutes = draftValue === "" || draftValue == null ? 0 : Number(draftValue);
+
+  return draftMinutes === Number(getSavedDopTime(template));
+}
+
+// Keeps unsaved dop. time edits of templates that are still assigned and still differ from the stored value.
+function pickPendingDopTimeDrafts(drafts, assignedTemplates) {
+  return Object.fromEntries(
+    Object.entries(drafts).filter(([templateId, value]) => {
+      const template = assignedTemplates.find((item) => isSameId(item.id, templateId));
+      return template && !isSavedDopTime(value, template);
+    }),
+  );
+}
+
+// `requestedPath` / `requestedKind` are raw URL segments; the active section is resolved against access.
+// `confirmDiscardChanges` resolves to true when the user agrees to drop unsaved changes.
 export default function useCleaningsPage({
-  initialSection = "templates",
-  initialControlKind = "cleanings",
+  requestedPath = null,
+  requestedKind = null,
+  routeReady = false,
+  confirmDiscardChanges = null,
 } = {}) {
   const cleaningsApi = useCleaningsApi();
   const { isAlert, showAlert, closeAlert, alertStatus, alertMessage } = useMyAlert();
@@ -47,16 +105,21 @@ export default function useCleaningsPage({
   const cachedBootstrap = cleaningsSessionCache.bootstrap;
   const cachedLocations = cachedBootstrap?.locations || [];
 
-  const [section, setSection] = useState(initialSection);
-  const [controlKind, setControlKind] = useState(initialControlKind);
+  const [bootstrapReady, setBootstrapReady] = useState(Boolean(cachedBootstrap));
   const [bootstrapLoading, setBootstrapLoading] = useState(false);
   const [controlLoading, setControlLoading] = useState(false);
+  const [controlRefreshing, setControlRefreshing] = useState(false);
+  const [controlUpdatedAt, setControlUpdatedAt] = useState(null);
+  const [controlCheckedAt, setControlCheckedAt] = useState(null);
+  const [controlRefreshError, setControlRefreshError] = useState("");
+  const controlRequestRef = useRef(0);
   const [mutationLoading, setMutationLoading] = useState(false);
 
   const [moduleInfo, setModuleInfo] = useState(cachedBootstrap?.moduleInfo || {});
   const [templates, setTemplates] = useState(cleaningsSessionCache.templates || []);
   const [categories, setCategories] = useState(cleaningsSessionCache.categories || []);
   const [locations, setLocations] = useState(cachedLocations);
+  const [cities, setCities] = useState(cachedBootstrap?.cities || []);
   const [roles, setRoles] = useState(cachedBootstrap?.roles || []);
   const [scheduleTypeOptions, setScheduleTypeOptions] = useState(
     cachedBootstrap?.scheduleTypeOptions || [],
@@ -66,9 +129,27 @@ export default function useCleaningsPage({
   );
   const [access, setAccess] = useState(cachedBootstrap?.access || {});
 
+  const accessApi = useMemo(() => handleUserAccess(access), [access]);
+  const canView = useCallback((key) => accessApi.userCan("view", key), [accessApi]);
+  const canEdit = useCallback((key) => accessApi.userCan("edit", key), [accessApi]);
+  const canAccess = useCallback((key) => accessApi.userCan("access", key), [accessApi]);
+
+  const sectionTabs = useMemo(() => getVisibleSectionTabs(canView), [canView]);
+  const controlKindTabs = useMemo(() => getVisibleControlKindTabs(canView), [canView]);
+  const route = useMemo(
+    () =>
+      bootstrapReady && routeReady
+        ? resolveCleaningsRoute([requestedPath, requestedKind], canView)
+        : null,
+    [bootstrapReady, canView, requestedKind, requestedPath, routeReady],
+  );
+  const section = route?.section ?? null;
+  const controlKind = route?.controlKind ?? null;
+
   const [controlItems, setControlItems] = useState([]);
   const [preparationItems, setPreparationItems] = useState([]);
   const [manualTemplates, setManualTemplates] = useState([]);
+  const [manualTemplatesSupported, setManualTemplatesSupported] = useState(true);
   const [controlPermissions, setControlPermissions] = useState({});
 
   const [cafeAssignedTemplates, setCafeAssignedTemplates] = useState([]);
@@ -77,7 +158,11 @@ export default function useCleaningsPage({
   const [selectedCategoryId, setSelectedCategoryId] = useState(
     cleaningsSessionCache.categories?.[0]?.id ?? "",
   );
+  const [isCreatingCategory, setIsCreatingCategory] = useState(false);
+  // Unsaved card fields, bound to the category they were made for (`key`).
   const [categoryDraft, setCategoryDraft] = useState(null);
+  // Editor re-serialization of the stored instruction (`settleRichTextBaseline`); outlives draft discards.
+  const [instructionBaseline, setInstructionBaseline] = useState(null);
   const [categoryQuery, setCategoryQuery] = useState("");
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState("active");
@@ -111,25 +196,28 @@ export default function useCleaningsPage({
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
   const [historyItem, setHistoryItem] = useState(null);
-  const [historyRows, setHistoryRows] = useState([]);
+  const [templateHistoryRawRows, setTemplateHistoryRawRows] = useState([]);
   const [historyLoading, setHistoryLoading] = useState(false);
   const [deleteCategoryId, setDeleteCategoryId] = useState(null);
-  const [categoryHistoryRows, setCategoryHistoryRows] = useState([]);
+  const [categoryHistoryRawRows, setCategoryHistoryRawRows] = useState([]);
   const [categoryHistoryLoading, setCategoryHistoryLoading] = useState(false);
+  const [categoryHistoryVersion, setCategoryHistoryVersion] = useState(0);
+  const [cafeHistoryLocation, setCafeHistoryLocation] = useState(null);
+  const [cafeHistoryRawRows, setCafeHistoryRawRows] = useState([]);
+  const [cafeHistoryLoading, setCafeHistoryLoading] = useState(false);
+  const cafeHistoryRequestRef = useRef(0);
+  const [controlHistoryTarget, setControlHistoryTarget] = useState(null);
+  const [controlHistoryRawRows, setControlHistoryRawRows] = useState([]);
+  const [controlHistoryLoading, setControlHistoryLoading] = useState(false);
+  const controlHistoryRequestRef = useRef(0);
   const [addCafeDialogOpen, setAddCafeDialogOpen] = useState(false);
   const [addManualDialogOpen, setAddManualDialogOpen] = useState(false);
   const [removeCafeCleaningId, setRemoveCafeCleaningId] = useState(null);
+  const [archiveToggleId, setArchiveToggleId] = useState(null);
   const [controlAction, setControlAction] = useState(null);
   const [preparationAction, setPreparationAction] = useState(null);
   const [editingPreparation, setEditingPreparation] = useState(null);
-
-  useEffect(() => {
-    setSection(initialSection);
-  }, [initialSection]);
-
-  useEffect(() => {
-    setControlKind(initialControlKind);
-  }, [initialControlKind]);
+  const cafeDraftsLocationRef = useRef(null);
 
   useEffect(() => {
     cleaningsSessionCache.controlFilters = {
@@ -161,27 +249,11 @@ export default function useCleaningsPage({
     );
   }, []);
 
+  // A reload keeps unsaved card changes: they are bound to their category and re-applied on fresh data.
   const syncCategorySelection = useCallback((nextCategories) => {
-    const fallbackCategoryId = nextCategories[0]?.id ?? "";
-
-    setSelectedCategoryId((prev) => {
-      const nextSelectedCategoryId = nextCategories.some((category) => category.id === prev)
-        ? prev
-        : fallbackCategoryId;
-
-      setCategoryDraft((currentDraft) => {
-        if (currentDraft && currentDraft.id == null) {
-          return currentDraft;
-        }
-
-        return (
-          nextCategories.find((category) => category.id === nextSelectedCategoryId) ||
-          (nextSelectedCategoryId ? null : null)
-        );
-      });
-
-      return nextSelectedCategoryId;
-    });
+    setSelectedCategoryId((prev) =>
+      nextCategories.some((category) => category.id === prev) ? prev : (nextCategories[0]?.id ?? ""),
+    );
   }, []);
 
   const applyBootstrap = useCallback(
@@ -191,11 +263,13 @@ export default function useCleaningsPage({
 
       setModuleInfo(normalized.moduleInfo);
       setLocations(normalized.locations);
+      setCities(normalized.cities);
       setRoles(normalized.roles);
       setScheduleTypeOptions(normalized.scheduleTypeOptions);
       setAdditionTypeOptions(normalized.additionTypeOptions);
       setAccess(normalized.access);
       syncLocationFilters(normalized.locations);
+      setBootstrapReady(true);
     },
     [syncLocationFilters],
   );
@@ -232,10 +306,16 @@ export default function useCleaningsPage({
         cleaningsSessionCache.cafesByLocation[cacheKey] = normalized;
       }
 
+      const isSameLocation =
+        getCacheKey(cafeDraftsLocationRef.current) === getCacheKey(nextLocationId);
+      cafeDraftsLocationRef.current = nextLocationId;
+
       setSelectedCafeId(nextLocationId || "");
       setCafeAssignedTemplates(normalized.assignedTemplates);
       setCafeAvailableTemplates(normalized.availableTemplates);
-      setCafeDopTimeDrafts({});
+      setCafeDopTimeDrafts((prev) =>
+        isSameLocation ? pickPendingDopTimeDrafts(prev, normalized.assignedTemplates) : {},
+      );
 
       return normalized;
     },
@@ -302,12 +382,12 @@ export default function useCleaningsPage({
       try {
         const response = await cleaningsApi.getCategories();
         if (!response?.st) {
-          throw new Error(response?.text || "Ошибка загрузки категорий");
+          throw new Error(response?.text || "Ошибка загрузки видов уборок");
         }
 
         return applyCategories(response);
       } catch (error) {
-        showAlert(error?.message || "Ошибка загрузки категорий");
+        showAlert(error?.message || "Ошибка загрузки видов уборок");
         return [];
       } finally {
         setBootstrapLoading(false);
@@ -353,8 +433,11 @@ export default function useCleaningsPage({
     [applyCafes, cleaningsApi, locations, selectedCafeId, cachedLocations],
   );
 
+  // `mode`: "load" — filters changed or after an action (full loader, alert on error);
+  // "refresh" — the refresh button (spinner, alert); "poll" — background poll (spinner, soft hint only).
+  // A response of a request superseded by a newer one is dropped.
   const loadControl = useCallback(
-    async ({ force = false } = {}) => {
+    async ({ force = false, mode = "load" } = {}) => {
       if (section !== "control") {
         return;
       }
@@ -368,17 +451,16 @@ export default function useCleaningsPage({
       }
 
       const requestKey = [activeLocationId, activeDateFrom, activeDateTo].join(":");
+      const requestId = controlRequestRef.current + 1;
+      const isCurrent = () => controlRequestRef.current === requestId;
+      controlRequestRef.current = requestId;
 
-      if (!force && cleaningsSessionCache.controlByFilters[requestKey]) {
-        const normalized = cleaningsSessionCache.controlByFilters[requestKey];
-        setControlItems(normalized.cleanings);
-        setPreparationItems(normalized.preparations);
-        setManualTemplates(normalized.manualTemplates);
-        setControlPermissions(normalized.permissions);
-        return normalized;
+      if (mode === "load") {
+        setControlLoading(true);
+      } else {
+        setControlRefreshing(true);
       }
 
-      setControlLoading(true);
       try {
         let requestPromise = !force
           ? cleaningsSessionCache.inFlightControlRequest?.promise || null
@@ -396,12 +478,10 @@ export default function useCleaningsPage({
               dateTo: activeDateTo,
             });
             if (!response?.st) {
-              throw new Error(response?.text || "Ошибка загрузки данных контроля");
+              throw new Error(response?.text || "Ошибка загрузки данных проверки");
             }
 
-            const normalized = normalizeControlResponse(response);
-            cleaningsSessionCache.controlByFilters[requestKey] = normalized;
-            return normalized;
+            return normalizeControlResponse(response);
           })();
 
           cleaningsSessionCache.inFlightControlRequest = {
@@ -411,17 +491,36 @@ export default function useCleaningsPage({
         }
 
         const normalized = await requestPromise;
+        if (!isCurrent()) {
+          return;
+        }
+
         setControlItems(normalized.cleanings);
         setPreparationItems(normalized.preparations);
         setManualTemplates(normalized.manualTemplates);
+        setManualTemplatesSupported(normalized.manualTemplatesSupported);
         setControlPermissions(normalized.permissions);
+        setControlUpdatedAt(Date.now());
+        setControlRefreshError("");
       } catch (error) {
-        showAlert(error?.message || "Ошибка загрузки данных контроля");
+        if (!isCurrent()) {
+          return;
+        }
+
+        const message = error?.message || "Ошибка загрузки данных проверки";
+        setControlRefreshError(message);
+        if (mode !== "poll") {
+          showAlert(message);
+        }
       } finally {
         if (cleaningsSessionCache.inFlightControlRequest?.key === requestKey) {
           cleaningsSessionCache.inFlightControlRequest = null;
         }
-        setControlLoading(false);
+        if (isCurrent()) {
+          setControlLoading(false);
+          setControlRefreshing(false);
+          setControlCheckedAt(Date.now());
+        }
       }
     },
     [
@@ -437,7 +536,20 @@ export default function useCleaningsPage({
     ],
   );
 
-  const refreshControl = useCallback(() => loadControl({ force: true }), [loadControl]);
+  const refreshControl = useCallback(
+    () => loadControl({ force: true, mode: "refresh" }),
+    [loadControl],
+  );
+  const pollControl = useCallback(
+    () => loadControl({ force: true, mode: "poll" }),
+    [loadControl],
+  );
+
+  useControlPolling({
+    enabled: section === "control" && !controlLoading && !mutationLoading,
+    lastCheckedAt: controlCheckedAt,
+    onPoll: pollControl,
+  });
 
   useEffect(() => {
     loadBootstrap();
@@ -468,36 +580,86 @@ export default function useCleaningsPage({
   }, [loadCafes, section, selectedCafeId]);
 
   useEffect(() => {
-    if (section === "control" && addManualDialogOpen) {
-      loadCategories();
-    }
-  }, [addManualDialogOpen, loadCategories, section]);
-
-  useEffect(() => {
     loadControl();
   }, [loadControl]);
 
-  const selectedCategory = useMemo(
-    () =>
-      categoryDraft || categories.find((category) => category.id === selectedCategoryId) || null,
-    [categories, categoryDraft, selectedCategoryId],
+  const historyContext = useMemo(
+    () => ({
+      categories,
+      templates,
+      roles,
+      locations,
+      scheduleTypeOptions,
+      additionTypeOptions,
+    }),
+    [additionTypeOptions, categories, locations, roles, scheduleTypeOptions, templates],
   );
 
-  const accessApi = useMemo(() => handleUserAccess(access), [access]);
-  const canView = useCallback((key) => accessApi.userCan("view", key), [accessApi]);
-  const canEdit = useCallback((key) => accessApi.userCan("edit", key), [accessApi]);
-  const canAccess = useCallback((key) => accessApi.userCan("access", key), [accessApi]);
+  const activeCategory = useMemo(
+    () => categories.find((category) => category.id === selectedCategoryId) || null,
+    [categories, selectedCategoryId],
+  );
+  const categoryDraftKey = isCreatingCategory ? NEW_CATEGORY_KEY : getCacheKey(activeCategory?.id);
+  const categoryChanges =
+    categoryDraft && categoryDraft.key === categoryDraftKey
+      ? categoryDraft.changes
+      : EMPTY_CATEGORY_CHANGES;
+  // Stored state of the card: the selected category with its templates, or an empty new one.
+  const categoryBase = useMemo(() => {
+    if (isCreatingCategory) {
+      return { ...EMPTY_CATEGORY, templateIds: [] };
+    }
+
+    return activeCategory
+      ? { ...activeCategory, templateIds: getCategoryTemplateIds(templates, activeCategory.id) }
+      : null;
+  }, [activeCategory, isCreatingCategory, templates]);
+  const categoryCard = useMemo(() => {
+    if (!categoryBase) {
+      return null;
+    }
+
+    const card = { ...categoryBase, ...categoryChanges };
+    // Templates gone after a reload drop out of the drafted set (counter and save).
+    if (categoryChanges.templateIds) {
+      const templateIds = new Set(templates.map((template) => String(template.id)));
+      card.templateIds = categoryChanges.templateIds.filter((templateId) =>
+        templateIds.has(String(templateId)),
+      );
+    }
+
+    return card;
+  }, [categoryBase, categoryChanges, templates]);
+  // One rule for the unsaved-changes hint and for choosing what `saveCategory` sends.
+  const categoryChangedFields = useMemo(() => {
+    if (!categoryCard || categoryChanges === EMPTY_CATEGORY_CHANGES) {
+      return { name: false, instruction: false, templates: false };
+    }
+
+    return {
+      name: String(categoryCard.name ?? "").trim() !== String(categoryBase.name ?? "").trim(),
+      instruction: isRichTextChanged(
+        categoryCard.instruction,
+        categoryBase.instruction,
+        getRichTextBaseline(instructionBaseline, categoryDraftKey, categoryBase.instruction),
+      ),
+      templates: !isSameIdSet(categoryCard.templateIds, categoryBase.templateIds),
+    };
+  }, [categoryBase, categoryCard, categoryChanges, categoryDraftKey, instructionBaseline]);
+  const isCategoryDirty =
+    categoryChangedFields.name || categoryChangedFields.instruction || categoryChangedFields.templates;
+  const historyCategoryId = isCreatingCategory ? null : (activeCategory?.id ?? null);
 
   useEffect(() => {
-    if (section !== "categories" || !selectedCategory?.id) {
+    if (section !== "categories" || !historyCategoryId) {
       setCategoryHistoryLoading(false);
-      setCategoryHistoryRows([]);
+      setCategoryHistoryRawRows([]);
       return;
     }
 
-    const cacheKey = getCacheKey(selectedCategory.id);
+    const cacheKey = getCacheKey(historyCategoryId);
     if (cleaningsSessionCache.categoryHistoryById[cacheKey]) {
-      setCategoryHistoryRows(cleaningsSessionCache.categoryHistoryById[cacheKey]);
+      setCategoryHistoryRawRows(cleaningsSessionCache.categoryHistoryById[cacheKey]);
       setCategoryHistoryLoading(false);
       return;
     }
@@ -507,26 +669,20 @@ export default function useCleaningsPage({
     const run = async () => {
       setCategoryHistoryLoading(true);
       try {
-        const response = await cleaningsApi.getCategoryHistory(selectedCategory.id);
+        const response = await cleaningsApi.getCategoryHistory(historyCategoryId);
         if (!response?.st) {
           throw new Error(response?.text || "Ошибка загрузки истории");
         }
 
-        const normalizedRows = normalizeHistoryRows(response, {
-          categories,
-          roles,
-          locations,
-          scheduleTypeOptions,
-          additionTypeOptions,
-        });
-        cleaningsSessionCache.categoryHistoryById[cacheKey] = normalizedRows;
+        const rawRows = normalizeHistoryResponse(response);
+        cleaningsSessionCache.categoryHistoryById[cacheKey] = rawRows;
 
         if (!cancelled) {
-          setCategoryHistoryRows(normalizedRows);
+          setCategoryHistoryRawRows(rawRows);
         }
       } catch (error) {
         if (!cancelled) {
-          setCategoryHistoryRows([]);
+          setCategoryHistoryRawRows([]);
           showAlert(error?.message || "Ошибка загрузки истории");
         }
       } finally {
@@ -541,16 +697,25 @@ export default function useCleaningsPage({
     return () => {
       cancelled = true;
     };
-  }, [
-    additionTypeOptions,
-    categories,
-    cleaningsApi,
-    locations,
-    roles,
-    scheduleTypeOptions,
-    section,
-    selectedCategory?.id,
-  ]);
+  }, [categoryHistoryVersion, cleaningsApi, historyCategoryId, section]);
+
+  const categoryHistoryRows = useMemo(
+    () => presentCategoryHistory(categoryHistoryRawRows, historyContext),
+    [categoryHistoryRawRows, historyContext],
+  );
+  const historyRows = useMemo(
+    () => presentTemplateHistory(templateHistoryRawRows, historyContext),
+    [historyContext, templateHistoryRawRows],
+  );
+  // «Уборки Кафе» does not load `templates`; the cafe slices hold every template as well.
+  const cafeHistoryRows = useMemo(
+    () =>
+      presentCafeHistory(cafeHistoryRawRows, {
+        ...historyContext,
+        templates: [...templates, ...cafeAssignedTemplates, ...cafeAvailableTemplates],
+      }),
+    [cafeAssignedTemplates, cafeAvailableTemplates, cafeHistoryRawRows, historyContext, templates],
+  );
 
   const filteredTemplates = useMemo(() => {
     const search = query.trim().toLowerCase();
@@ -569,6 +734,7 @@ export default function useCleaningsPage({
 
   const selectedCafe =
     locations.find((location) => location.id === selectedCafeId) || locations[0] || null;
+  const archiveToggleCandidate = templates.find((template) => template.id === archiveToggleId) || null;
   const removeCafeCleaningCandidate =
     cafeAssignedTemplates.find((template) => template.id === removeCafeCleaningId) || null;
   const deleteCategoryCandidate =
@@ -588,6 +754,7 @@ export default function useCleaningsPage({
     (template) => template.status === "active",
   );
 
+  // Never rejects: shows the error and resolves to null, so callers keep their dialog open.
   const runMutation = useCallback(async (callback, successMessage) => {
     setMutationLoading(true);
     try {
@@ -603,7 +770,7 @@ export default function useCleaningsPage({
       return response;
     } catch (error) {
       showAlert(error?.message || "Ошибка сохранения");
-      throw error;
+      return null;
     } finally {
       setMutationLoading(false);
     }
@@ -628,18 +795,23 @@ export default function useCleaningsPage({
     async (template) => {
       const payload = normalizeTemplatePayload(template);
 
-      await runMutation(async () => {
-        const response = template.id
+      const response = await runMutation(async () => {
+        const result = template.id
           ? await cleaningsApi.updateTemplate(template.id, payload)
           : await cleaningsApi.createTemplate(payload);
 
+        invalidateHistoryCache();
         await loadTemplates({ force: true });
         await loadCategories({ force: true });
         if (section === "cafes" && selectedCafeId) {
           await loadCafes(selectedCafeId, { force: true });
         }
-        return response;
+        return result;
       });
+
+      if (!response) {
+        return;
+      }
 
       closeDialog();
     },
@@ -664,8 +836,9 @@ export default function useCleaningsPage({
 
       const nextStatus = template.status === "archive" ? "active" : "archive";
 
-      await runMutation(async () => {
+      return runMutation(async () => {
         const response = await cleaningsApi.updateTemplateStatus(id, nextStatus);
+        invalidateHistoryCache();
         await loadTemplates({ force: true });
         if (section === "cafes" && selectedCafeId) {
           await loadCafes(selectedCafeId, { force: true });
@@ -676,10 +849,22 @@ export default function useCleaningsPage({
     [cleaningsApi, loadCafes, loadTemplates, runMutation, section, selectedCafeId, templates],
   );
 
+  const confirmArchiveToggle = useCallback(async () => {
+    if (!archiveToggleId) {
+      return;
+    }
+
+    const response = await toggleArchive(archiveToggleId);
+    if (response) {
+      setArchiveToggleId(null);
+    }
+  }, [archiveToggleId, toggleArchive]);
+
   const removeTemplate = useCallback(
     async (id) => {
       await runMutation(async () => {
         const response = await cleaningsApi.deleteTemplate(id);
+        invalidateHistoryCache();
         await loadTemplates({ force: true });
         await loadCategories({ force: true });
         if (section === "cafes" && selectedCafeId) {
@@ -691,71 +876,200 @@ export default function useCleaningsPage({
     [cleaningsApi, loadCafes, loadCategories, loadTemplates, runMutation, section, selectedCafeId],
   );
 
-  const createCategory = useCallback(() => {
-    setCategoryDraft({
-      id: null,
-      name: "",
-      instruction: "",
-      templatesCount: 0,
-      deletable: true,
-    });
-    setSection("categories");
-  }, []);
+  const confirmDiscard = useCallback(
+    async () => (confirmDiscardChanges ? Boolean(await confirmDiscardChanges()) : true),
+    [confirmDiscardChanges],
+  );
 
-  const saveCategory = useCallback(async () => {
-    if (!categoryDraft) {
-      return;
-    }
-
-    const payload = normalizeCategoryPayload(categoryDraft);
-
-    const response = await runMutation(async () => {
-      const result = categoryDraft.id
-        ? await cleaningsApi.updateCategory(categoryDraft.id, payload)
-        : await cleaningsApi.createCategory(payload);
-
-      await loadCategories({ force: true });
-      return result;
-    });
-
+  const discardCategoryChanges = useCallback(() => {
     setCategoryDraft(null);
-    const createdCategoryId = response?.data?.category?.id ?? response?.category?.id;
-    if (!categoryDraft.id && createdCategoryId != null) {
-      setSelectedCategoryId(createdCategoryId);
-    }
-  }, [categoryDraft, cleaningsApi, loadCategories, runMutation]);
-
-  const updateCategoryDraft = useCallback((nextValue) => {
-    if (!nextValue) {
-      return;
-    }
-
-    if (typeof nextValue === "function") {
-      setCategoryDraft((prev) => nextValue(prev));
-      return;
-    }
-
-    setCategoryDraft(nextValue);
+    setIsCreatingCategory(false);
   }, []);
+
+  // Resolves to false when the user keeps editing.
+  const confirmCategoryLeave = useCallback(async () => {
+    if (isCategoryDirty && !(await confirmDiscard())) {
+      return false;
+    }
+
+    discardCategoryChanges();
+    return true;
+  }, [confirmDiscard, discardCategoryChanges, isCategoryDirty]);
+
+  // `userEdit` (instruction only): false for the editor's own emission on load, see `settleRichTextBaseline`.
+  const changeCategoryCard = useCallback(
+    (field, value, { userEdit = true } = {}) => {
+      if (field === "instruction" && categoryBase) {
+        setInstructionBaseline((prev) =>
+          settleRichTextBaseline(prev, {
+            key: categoryDraftKey,
+            stored: categoryBase.instruction,
+            value,
+            userEdit,
+          }),
+        );
+      }
+
+      setCategoryDraft((prev) => ({
+        key: categoryDraftKey,
+        changes: { ...(prev?.key === categoryDraftKey ? prev.changes : {}), [field]: value },
+      }));
+    },
+    [categoryBase, categoryDraftKey],
+  );
 
   const selectCategory = useCallback(
-    (id) => {
+    async (id) => {
+      if (!isCreatingCategory && isSameId(id, selectedCategoryId)) {
+        return true;
+      }
+
+      if (!(await confirmCategoryLeave())) {
+        return false;
+      }
+
       setSelectedCategoryId(id);
-      setCategoryDraft(categories.find((category) => category.id === id) || null);
+      return true;
     },
-    [categories],
+    [confirmCategoryLeave, isCreatingCategory, selectedCategoryId],
   );
+
+  const createCategory = useCallback(async () => {
+    if (!(await confirmCategoryLeave())) {
+      return false;
+    }
+
+    setIsCreatingCategory(true);
+    return true;
+  }, [confirmCategoryLeave]);
+
+  // `categories/save_*` only for changed name/instruction, `categories/templates/save` only for a changed template set.
+  const saveCategory = useCallback(async () => {
+    if (!categoryCard || !categoryBase) {
+      return false;
+    }
+
+    const isNew = categoryCard.id == null;
+    // An instruction only re-serialized by the editor is sent as stored, so BE records no fake change.
+    const payload = normalizeCategoryPayload({
+      name: categoryCard.name,
+      instruction: categoryChangedFields.instruction
+        ? categoryCard.instruction
+        : categoryBase.instruction,
+    });
+    const fieldsChanged =
+      isNew || categoryChangedFields.name || categoryChangedFields.instruction;
+    const templateIds = categoryCard.templateIds.map((templateId) => Number(templateId));
+    const templatesChanged = categoryChangedFields.templates;
+
+    if (!fieldsChanged && !templatesChanged) {
+      discardCategoryChanges();
+      return true;
+    }
+
+    const progress = {
+      categoryId: categoryCard.id,
+      fieldsSaved: false,
+      templatesSaved: false,
+      nextCategories: [],
+    };
+
+    const response = await runMutation(async () => {
+      try {
+        let result = null;
+
+        if (fieldsChanged) {
+          result = isNew
+            ? await cleaningsApi.createCategory(payload)
+            : await cleaningsApi.updateCategory(categoryCard.id, payload);
+          if (!result?.st) {
+            return result;
+          }
+
+          progress.fieldsSaved = true;
+          progress.categoryId =
+            result?.id ?? result?.data?.category?.id ?? result?.category?.id ?? progress.categoryId;
+        }
+
+        if (templatesChanged) {
+          if (progress.categoryId == null) {
+            return { st: false, text: "Не удалось определить вид уборки" };
+          }
+
+          result = await cleaningsApi.saveCategoryTemplates(progress.categoryId, templateIds);
+          if (!result?.st) {
+            return result;
+          }
+
+          progress.templatesSaved = true;
+        }
+
+        return result;
+      } finally {
+        if (progress.fieldsSaved || progress.templatesSaved) {
+          invalidateHistoryCache();
+          if (progress.templatesSaved) {
+                cleaningsSessionCache.cafesByLocation = {};
+            await loadTemplates({ force: true });
+          }
+          progress.nextCategories = await loadCategories({ force: true });
+        }
+      }
+    });
+
+    if (progress.fieldsSaved || progress.templatesSaved) {
+      setCategoryHistoryVersion((version) => version + 1);
+    }
+
+    const savedCategoryId =
+      progress.nextCategories.find((category) => isSameId(category.id, progress.categoryId))?.id ??
+      progress.categoryId;
+
+    if (isNew && progress.fieldsSaved) {
+      setIsCreatingCategory(false);
+      setSelectedCategoryId(savedCategoryId);
+    }
+
+    if (response) {
+      setCategoryDraft(null);
+      return true;
+    }
+
+    // Name and instruction are stored; the template set stays as an unsaved change of the stored category.
+    if (progress.fieldsSaved) {
+      setCategoryDraft({
+        key: getCacheKey(savedCategoryId),
+        changes: { templateIds: categoryCard.templateIds },
+      });
+    }
+
+    return false;
+  }, [
+    categoryBase,
+    categoryCard,
+    categoryChangedFields,
+    cleaningsApi,
+    discardCategoryChanges,
+    loadCategories,
+    loadTemplates,
+    runMutation,
+  ]);
 
   const deleteCategory = useCallback(async () => {
     if (!deleteCategoryId) {
       return;
     }
 
-    await runMutation(async () => {
-      const response = await cleaningsApi.deleteCategory(deleteCategoryId);
+    const response = await runMutation(async () => {
+      const result = await cleaningsApi.deleteCategory(deleteCategoryId);
+      invalidateHistoryCache();
       await loadCategories({ force: true });
-      return response;
+      return result;
     });
+
+    if (!response) {
+      return;
+    }
 
     setDeleteCategoryId(null);
   }, [cleaningsApi, deleteCategoryId, loadCategories, runMutation]);
@@ -763,12 +1077,12 @@ export default function useCleaningsPage({
   const openTemplateHistory = useCallback(
     async (item) => {
       setHistoryItem(item);
-      setHistoryRows([]);
+      setTemplateHistoryRawRows([]);
       setHistoryLoading(true);
 
       const cacheKey = getCacheKey(item?.id);
       if (cacheKey && cleaningsSessionCache.templateHistoryById[cacheKey]) {
-        setHistoryRows(cleaningsSessionCache.templateHistoryById[cacheKey]);
+        setTemplateHistoryRawRows(cleaningsSessionCache.templateHistoryById[cacheKey]);
         setHistoryLoading(false);
         return;
       }
@@ -779,32 +1093,141 @@ export default function useCleaningsPage({
           throw new Error(response?.text || "Ошибка загрузки истории");
         }
 
-        const normalizedRows = normalizeHistoryRows(response, {
-          categories,
-          roles,
-          locations,
-          scheduleTypeOptions,
-          additionTypeOptions,
-        });
+        const rawRows = normalizeHistoryResponse(response);
         if (cacheKey) {
-          cleaningsSessionCache.templateHistoryById[cacheKey] = normalizedRows;
+          cleaningsSessionCache.templateHistoryById[cacheKey] = rawRows;
         }
-        setHistoryRows(normalizedRows);
+        setTemplateHistoryRawRows(rawRows);
       } catch (error) {
-        setHistoryRows([]);
+        setTemplateHistoryRawRows([]);
         showAlert(error?.message || "Ошибка загрузки истории");
       } finally {
         setHistoryLoading(false);
       }
     },
-    [additionTypeOptions, categories, cleaningsApi, locations, roles, scheduleTypeOptions],
+    [cleaningsApi],
   );
 
   const closeTemplateHistory = useCallback(() => {
     setHistoryItem(null);
-    setHistoryRows([]);
+    setTemplateHistoryRawRows([]);
     setHistoryLoading(false);
   }, []);
+
+  // Rows of a request that finished after the dialog was closed or reopened are not shown.
+  const openCafeHistory = useCallback(async () => {
+    const location = selectedCafe;
+    if (!location) {
+      return;
+    }
+
+    const requestId = cafeHistoryRequestRef.current + 1;
+    const isCurrent = () => cafeHistoryRequestRef.current === requestId;
+    cafeHistoryRequestRef.current = requestId;
+    setCafeHistoryLocation(location);
+
+    const cacheKey = getCacheKey(location.id);
+    const cachedRows = cleaningsSessionCache.cafeHistoryByLocation[cacheKey];
+    if (cachedRows) {
+      setCafeHistoryRawRows(cachedRows);
+      setCafeHistoryLoading(false);
+      return;
+    }
+
+    setCafeHistoryRawRows([]);
+    setCafeHistoryLoading(true);
+    try {
+      const response = await cleaningsApi.getCafeHistory(location.id);
+      if (!response?.st) {
+        throw new Error(response?.text || "Ошибка загрузки истории");
+      }
+
+      const rawRows = normalizeHistoryResponse(response);
+      cleaningsSessionCache.cafeHistoryByLocation[cacheKey] = rawRows;
+      if (isCurrent()) {
+        setCafeHistoryRawRows(rawRows);
+      }
+    } catch (error) {
+      if (isCurrent()) {
+        setCafeHistoryRawRows([]);
+        showAlert(error?.message || "Ошибка загрузки истории");
+      }
+    } finally {
+      if (isCurrent()) {
+        setCafeHistoryLoading(false);
+      }
+    }
+  }, [cleaningsApi, selectedCafe]);
+
+  const closeCafeHistory = useCallback(() => {
+    cafeHistoryRequestRef.current += 1;
+    setCafeHistoryLocation(null);
+    setCafeHistoryRawRows([]);
+    setCafeHistoryLoading(false);
+  }, []);
+
+  // Journal of one control row; `kind` is "cleaning" or "preparation". Never cached: rows change with every action.
+  const openControlHistory = useCallback(
+    async (kind, id) => {
+      const isPreparation = kind === "preparation";
+      const item = (isPreparation ? preparationItems : controlItems).find((row) =>
+        isSameId(row.id, id),
+      );
+      const locationId = item?.locationId || (isPreparation ? preparationCafeId : controlCafeId);
+      if (!locationId) {
+        return;
+      }
+
+      const requestId = controlHistoryRequestRef.current + 1;
+      const isCurrent = () => controlHistoryRequestRef.current === requestId;
+      controlHistoryRequestRef.current = requestId;
+      setControlHistoryTarget({ kind: isPreparation ? "preparation" : "cleaning", item: item || { id } });
+      setControlHistoryRawRows([]);
+      setControlHistoryLoading(true);
+
+      try {
+        const response = await cleaningsApi.getControlHistory(
+          locationId,
+          id,
+          isPreparation ? "preparation" : "cleaning",
+        );
+        if (!response?.st) {
+          throw new Error(response?.text || "Ошибка загрузки истории действий");
+        }
+        if (isCurrent()) {
+          setControlHistoryRawRows(normalizeHistoryResponse(response));
+        }
+      } catch (error) {
+        if (isCurrent()) {
+          showAlert(error?.message || "Ошибка загрузки истории действий");
+        }
+      } finally {
+        if (isCurrent()) {
+          setControlHistoryLoading(false);
+        }
+      }
+    },
+    [cleaningsApi, controlCafeId, controlItems, preparationCafeId, preparationItems],
+  );
+
+  const closeControlHistory = useCallback(() => {
+    controlHistoryRequestRef.current += 1;
+    setControlHistoryTarget(null);
+    setControlHistoryRawRows([]);
+    setControlHistoryLoading(false);
+  }, []);
+
+  const controlHistoryRows = useMemo(
+    () => presentControlHistory(controlHistoryRawRows),
+    [controlHistoryRawRows],
+  );
+  const controlHistorySubject = useMemo(
+    () =>
+      controlHistoryTarget
+        ? getControlHistorySubject(controlHistoryTarget.item, controlHistoryRawRows)
+        : null,
+    [controlHistoryRawRows, controlHistoryTarget],
+  );
 
   const addCleaningToCafe = useCallback(
     async (templateId) => {
@@ -812,12 +1235,17 @@ export default function useCleaningsPage({
         return;
       }
 
-      await runMutation(async () => {
-        const response = await cleaningsApi.assignTemplateToCafe(selectedCafeId, templateId);
+      const response = await runMutation(async () => {
+        const result = await cleaningsApi.assignTemplateToCafe(selectedCafeId, templateId, 0);
+        invalidateHistoryCache();
         await loadCafes(selectedCafeId, { force: true });
         await loadTemplates({ force: true });
-        return response;
+        return result;
       });
+
+      if (!response) {
+        return;
+      }
 
       setAddCafeDialogOpen(false);
       setAddCafeQuery("");
@@ -827,14 +1255,14 @@ export default function useCleaningsPage({
 
   const setCafeDopTimeDraft = useCallback(
     (templateId, value) => {
-      const normalizedValue = value === "" ? "" : value.replace(/\D/g, "");
+      // "015" from the number input is kept as 15, so it matches the saved value after a reload.
+      const digits = String(value ?? "").replace(/\D/g, "");
+      const normalizedValue = digits === "" ? "" : Number(digits);
 
       setCafeDopTimeDrafts((prev) => {
         const template = cafeAssignedTemplates.find((item) => item.id === templateId);
-        const currentValue = String(template?.dopTime ?? template?.extraTime ?? 0);
-        const nextValue = normalizedValue === "" ? "0" : normalizedValue;
 
-        if (nextValue === currentValue) {
+        if (isSavedDopTime(normalizedValue, template)) {
           if (!Object.prototype.hasOwnProperty.call(prev, templateId)) {
             return prev;
           }
@@ -858,15 +1286,20 @@ export default function useCleaningsPage({
       return;
     }
 
-    await runMutation(async () => {
-      const response = await cleaningsApi.removeTemplateFromCafe(
+    const response = await runMutation(async () => {
+      const result = await cleaningsApi.removeTemplateFromCafe(
         selectedCafeId,
         removeCafeCleaningId,
       );
+      invalidateHistoryCache();
       await loadCafes(selectedCafeId, { force: true });
       await loadTemplates({ force: true });
-      return response;
+      return result;
     });
+
+    if (!response) {
+      return;
+    }
 
     setRemoveCafeCleaningId(null);
   }, [cleaningsApi, loadCafes, loadTemplates, removeCafeCleaningId, runMutation, selectedCafeId]);
@@ -876,19 +1309,77 @@ export default function useCleaningsPage({
       return;
     }
 
-    await runMutation(async () => {
-      const items = Object.entries(cafeDopTimeDrafts).map(([id, value]) => ({
-        id: Number(id),
-        dop_time: value === "" ? 0 : Number(value),
-      }));
-      const response = await cleaningsApi.saveCafeAssignments({
-        locationId: selectedCafeId,
-        items,
-      });
+    const items = Object.entries(cafeDopTimeDrafts).map(([templateId, value]) => ({
+      templateId: Number(templateId),
+      dop_time: value === "" ? 0 : Number(value),
+    }));
+
+    const response = await runMutation(async () => {
+      const result = await cleaningsApi.saveCafeDopTimes(selectedCafeId, items);
+      invalidateHistoryCache();
       await loadCafes(selectedCafeId, { force: true });
-      return response;
+      return result;
     });
-  }, [cafeDopTimeDrafts, cleaningsApi, loadCafes, runMutation, selectedCafeId]);
+
+    if (!response) {
+      return;
+    }
+
+    const skippedTemplateIds = Array.isArray(response?.skippedTemplateIds)
+      ? response.skippedTemplateIds
+      : [];
+    if (skippedTemplateIds.length) {
+      const skippedNames = skippedTemplateIds.map(
+        (templateId) =>
+          cafeAssignedTemplates.find((template) => String(template.id) === String(templateId))
+            ?.name || `#${templateId}`,
+      );
+      showAlert(`Доп. время не сохранено: ${skippedNames.join(", ")}`);
+    }
+  }, [
+    cafeAssignedTemplates,
+    cafeDopTimeDrafts,
+    cleaningsApi,
+    loadCafes,
+    runMutation,
+    selectedCafeId,
+  ]);
+
+  const selectCafe = useCallback(
+    async (locationId) => {
+      if (isSameId(locationId, selectedCafeId)) {
+        return;
+      }
+
+      if (Object.keys(cafeDopTimeDrafts).length && !(await confirmDiscard())) {
+        return;
+      }
+
+      setCafeDopTimeDrafts({});
+      setSelectedCafeId(locationId);
+    },
+    [cafeDopTimeDrafts, confirmDiscard, selectedCafeId],
+  );
+
+  // Tab switch inside the module: resolves to false when the user stays with unsaved changes.
+  const confirmSectionLeave = useCallback(async () => {
+    if (section === "categories") {
+      return confirmCategoryLeave();
+    }
+
+    if (section === "cafes" && Object.keys(cafeDopTimeDrafts).length) {
+      if (!(await confirmDiscard())) {
+        return false;
+      }
+
+      setCafeDopTimeDrafts({});
+    }
+
+    return true;
+  }, [cafeDopTimeDrafts, confirmCategoryLeave, confirmDiscard, section]);
+
+  // Reload / tab close; links out of the module and browser back/forward are not guarded.
+  useBeforeUnloadGuard(isCategoryDirty || Object.keys(cafeDopTimeDrafts).length > 0);
 
   const addManualCleaning = useCallback(
     async (templateId) => {
@@ -896,71 +1387,96 @@ export default function useCleaningsPage({
         return;
       }
 
-      await runMutation(async () => {
-        const response = await cleaningsApi.addManualCleaning({
-          templateId,
-          locationId: controlCafeId,
-          date: controlDateFrom || getTodayDate(),
-        });
+      const response = await runMutation(async () => {
+        const result = await cleaningsApi.addManualCleaning(controlCafeId, templateId);
         await loadControl({ force: true });
-        return response;
+        return result;
       });
+
+      if (!response) {
+        return;
+      }
 
       setAddManualDialogOpen(false);
       setAddManualQuery("");
     },
-    [cleaningsApi, controlCafeId, controlDateFrom, loadControl, runMutation],
+    [cleaningsApi, controlCafeId, loadControl, runMutation],
   );
 
-  const confirmControlAction = useCallback(async () => {
-    if (!controlAction) {
-      return;
-    }
+  const confirmControlAction = useCallback(
+    async (reason = "") => {
+      if (!controlAction) {
+        return;
+      }
 
-    const actions = {
-      approve: () => cleaningsApi.approveControlCleaning(controlAction.id),
-      return: () => cleaningsApi.returnControlCleaning(controlAction.id),
-      detach: () => cleaningsApi.detachControlCleaning(controlAction.id),
-      delete: () => cleaningsApi.deleteControlCleaning(controlAction.id, ""),
-    };
+      const { id } = controlAction;
+      const locationId = controlActionCandidate?.locationId || controlCafeId;
+      const actions = {
+        approve: () => cleaningsApi.approveControlCleaning(locationId, id),
+        return: () => cleaningsApi.returnControlCleaning(locationId, id),
+        detach: () => cleaningsApi.detachControlCleaning(locationId, id),
+        delete: () => cleaningsApi.deleteControlCleaning(locationId, id, reason),
+      };
 
-    const actionRunner = actions[controlAction.type];
-    if (!actionRunner) {
-      return;
-    }
+      const actionRunner = actions[controlAction.type];
+      if (!actionRunner || !locationId) {
+        return;
+      }
 
-    await runMutation(async () => {
-      const response = await actionRunner();
-      await loadControl({ force: true });
-      return response;
-    });
+      const response = await runMutation(async () => {
+        const result = await actionRunner();
+        await loadControl({ force: true });
+        return result;
+      });
 
-    setControlAction(null);
-  }, [cleaningsApi, controlAction, loadControl, runMutation]);
+      if (!response) {
+        return;
+      }
 
-  const confirmPreparationAction = useCallback(async () => {
-    if (!preparationAction) {
-      return;
-    }
+      setControlAction(null);
+    },
+    [cleaningsApi, controlAction, controlActionCandidate, controlCafeId, loadControl, runMutation],
+  );
 
-    const actions = {
-      approve: () => cleaningsApi.approvePreparation(preparationAction.id),
-      delete: () => cleaningsApi.deletePreparation(preparationAction.id, ""),
-    };
+  const confirmPreparationAction = useCallback(
+    async (reason = "") => {
+      if (!preparationAction) {
+        return;
+      }
 
-    const actionRunner = actions[preparationAction.type];
-    if (!actionRunner) {
-      return;
-    }
+      const { id } = preparationAction;
+      const locationId = preparationActionCandidate?.locationId || preparationCafeId;
+      const actions = {
+        approve: () => cleaningsApi.approvePreparation(locationId, id),
+        delete: () => cleaningsApi.deletePreparation(locationId, id, reason),
+      };
 
-    await runMutation(async () => {
-      const response = await actionRunner();
-      await loadControl({ force: true });
-      return response;
-    });
+      const actionRunner = actions[preparationAction.type];
+      if (!actionRunner || !locationId) {
+        return;
+      }
 
-    setPreparationAction(null);
-  }, [cleaningsApi, loadControl, preparationAction, runMutation]);
+      const response = await runMutation(async () => {
+        const result = await actionRunner();
+        await loadControl({ force: true });
+        return result;
+      });
+
+      if (!response) {
+        return;
+      }
+
+      setPreparationAction(null);
+    },
+    [
+      cleaningsApi,
+      loadControl,
+      preparationAction,
+      preparationActionCandidate,
+      preparationCafeId,
+      runMutation,
+    ],
+  );
 
   const openPreparationEdit = useCallback(
     async (id) => {
@@ -1005,8 +1521,8 @@ export default function useCleaningsPage({
         return;
       }
 
-      await runMutation(async () => {
-        const response = await cleaningsApi.savePreparationEdit({
+      const response = await runMutation(async () => {
+        const result = await cleaningsApi.savePreparationEdit({
           point_id: {
             id: location.id,
             base: location.base,
@@ -1017,32 +1533,19 @@ export default function useCleaningsPage({
           count_trash: preparation.waste,
         });
         await loadControl({ force: true });
-        return response;
+        return result;
       });
+
+      if (!response) {
+        return;
+      }
 
       setEditingPreparation(null);
     },
     [cleaningsApi, loadControl, locations, runMutation, showAlert],
   );
 
-  const pageTitle =
-    section === "categories"
-      ? "Категории уборок"
-      : section === "cafes"
-        ? "Кафе"
-        : section === "control"
-          ? controlKind === "preparations"
-            ? "Контроль - заготовки"
-            : "Контроль - уборки"
-          : moduleInfo?.name || "Уборки";
-  const pageSubtitle =
-    section === "categories"
-      ? "Группируйте уборки по типу работ. В каждой категории — инструкция для сотрудника."
-      : section === "cafes"
-        ? "Просматривайте уборки, назначенные на выбранное кафе."
-        : section === "control"
-          ? "Подтверждайте выполненные уборки и заготовки."
-          : "Создавайте и настраивайте уборки. Назначьте их на локации во вкладке «Кафе».";
+  const moduleName = moduleInfo?.name || CLEANINGS_MODULE_NAME;
 
   return {
     access,
@@ -1054,18 +1557,28 @@ export default function useCleaningsPage({
     additionTypeOptions,
     alertMessage,
     alertStatus,
+    archiveToggleCandidate,
     bootstrapLoading,
+    bootstrapReady,
     cafeAssignedTemplates,
     cafeAvailableTemplates,
+    cafeHistoryLoading,
+    cafeHistoryLocation,
+    cafeHistoryRows,
     cafeRoleFilter,
     categories,
-    categoryDraft,
+    categoryCard,
     categoryHistoryLoading,
     categoryHistoryRows,
     categoryQuery,
+    cities,
     closeAlert,
+    closeCafeHistory,
     closeDialog,
     closeTemplateHistory,
+    confirmArchiveToggle,
+    confirmCategoryLeave,
+    confirmSectionLeave,
     confirmControlAction,
     confirmPreparationAction,
     controlAction,
@@ -1078,6 +1591,15 @@ export default function useCleaningsPage({
     controlItems,
     controlKind,
     controlLoading,
+    controlRefreshing,
+    controlUpdatedAt,
+    controlRefreshError,
+    controlHistoryTarget,
+    controlHistorySubject,
+    controlHistoryRows,
+    controlHistoryLoading,
+    openControlHistory,
+    closeControlHistory,
     deleteCategory,
     deleteCategoryCandidate,
     deleteCategoryId,
@@ -1090,18 +1612,19 @@ export default function useCleaningsPage({
     historyItem,
     historyLoading,
     historyRows,
-    initialSection,
     isAlert,
+    isCategoryDirty,
     loading: bootstrapLoading || mutationLoading,
     locations,
     manualTemplates,
+    manualTemplatesSupported,
+    moduleName,
     mutationLoading,
+    openCafeHistory,
     openCreate,
     openEdit,
     openPreparationEdit,
     openTemplateHistory,
-    pageSubtitle,
-    pageTitle,
     preparationAction,
     preparationActionCandidate,
     preparationCafeId,
@@ -1115,7 +1638,10 @@ export default function useCleaningsPage({
     savePreparation,
     saveTemplate,
     scheduleTypeOptions,
+    route,
     section,
+    sectionTabs,
+    controlKindTabs,
     selectedCafe,
     selectedCafeId,
     selectedCategoryId,
@@ -1124,13 +1650,13 @@ export default function useCleaningsPage({
     setAddCafeRoleFilter,
     setAddManualDialogOpen,
     setAddManualQuery,
+    setArchiveToggleId,
     setCategoryQuery,
     setControlAction,
     setControlCafeId,
     setControlDateFrom,
     setControlDateTo,
     setControlFilter,
-    setControlKind,
     setDeleteCategoryId,
     setEditingPreparation,
     setFilter,
@@ -1140,13 +1666,9 @@ export default function useCleaningsPage({
     setPreparationDateTo,
     setQuery,
     setRemoveCafeCleaningId,
-    setSection,
-    setSelectedCafeId,
-    setCategoryDraft: updateCategoryDraft,
+    selectCafe,
     setCafeRoleFilter,
-    setSelectedCategoryId,
     selectCategory,
-    selectedCategory,
     canAccess,
     canEdit,
     canView,
@@ -1156,7 +1678,7 @@ export default function useCleaningsPage({
     templates,
     toggleArchive,
     removeTemplate,
-    updateCategoryDraft,
+    changeCategoryCard,
     createCategory,
     addableCafeCleanings,
     addCleaningToCafe,
