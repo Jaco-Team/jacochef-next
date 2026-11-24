@@ -12,6 +12,7 @@ import {
   JacoCityCafe,
   JacoDatePicker,
   JacoSegmentedTabs,
+  JacoSelect,
   JacoSurface,
   uiColors,
 } from "@/design-system/shared/ui";
@@ -23,7 +24,14 @@ import DashboardHoursHeatmap from "./DashboardHoursHeatmap";
 import DashboardKpiCards from "./DashboardKpiCards";
 import DashboardSalesTable from "./DashboardSalesTable";
 import DashboardTrendChart, { TrendLegend } from "./DashboardTrendChart";
-import { CHART_PALETTE, formatDecimal, formatInt, OTHER_COLOR, pluralRu, roundShares } from "./dashboardFormat";
+import {
+  CHART_PALETTE,
+  formatDecimal,
+  formatInt,
+  OTHER_COLOR,
+  pluralRu,
+  roundShares,
+} from "./dashboardFormat";
 
 const MODULE = "stat_sale";
 const MONTHS = ["янв", "фев", "мар", "апр", "мая", "июн", "июл", "авг", "сен", "окт", "ноя", "дек"];
@@ -35,7 +43,8 @@ const SALES_TABS = [
 ];
 
 const SALES_NOTES = {
-  categories: "Доля в количестве. Роллы и Пицца — те же цифры, что в карточках. Блюда — без соусов и напитков.",
+  categories:
+    "Доля в количестве. Роллы и Пицца — те же цифры, что в карточках. Блюда — без соусов и напитков.",
   subcategories: "Доля в количестве. Позиции меню как на сайте, сет считается одной позицией.",
   items: "Топ-10 по количеству, без соусов. Доля — от всех проданных позиций.",
 };
@@ -67,7 +76,10 @@ const COUNT_COLUMN = { header: "Кол-во, шт", format: formatInt };
 const SOURCE_VALUE_COLUMNS = {
   revenue: { header: "Выручка, ₽", format: formatInt },
   avg_check: { header: "Ср. чек, ₽", format: formatInt },
-  orders_per_client: { header: "Ср. заказ на акт. акк.", format: (value) => formatDecimal(value, 2) },
+  orders_per_client: {
+    header: "Ср. заказ на акт. акк.",
+    format: (value) => formatDecimal(value, 2),
+  },
 };
 
 function sourceUnit(metric, count) {
@@ -87,6 +99,14 @@ const GRANULARITY_LABELS = {
   week: "По неделям",
   month: "По месяцам",
 };
+
+const GRANULARITY_AUTO = "auto";
+const GRANULARITY_OPTIONS = [
+  { id: GRANULARITY_AUTO, name: "Авто" },
+  { id: "day", name: GRANULARITY_LABELS.day },
+  { id: "week", name: GRANULARITY_LABELS.week },
+  { id: "month", name: GRANULARITY_LABELS.month },
+];
 
 const emptyBlock = { data: null, loading: false, error: "" };
 
@@ -138,11 +158,23 @@ export default function StatSaleTabDashboard({ points, openAlert }) {
   const [salesTab, setSalesTab] = useState("categories");
   const [hoursMetric, setHoursMetric] = useState("orders");
   const [chartSource, setChartSource] = useState("total");
+  const [granularity, setGranularity] = useState(GRANULARITY_AUTO);
   const [overview, setOverview] = useState(emptyBlock);
   const [sales, setSales] = useState(emptyBlock);
   const [hours, setHours] = useState(emptyBlock);
   const requestId = useRef(0);
+  const overviewRequestId = useRef(0);
+  const granularityRef = useRef(GRANULARITY_AUTO);
+  const lastQuery = useRef(null);
   const loadedOnce = useRef(false);
+
+  const buildOverviewPayload = useCallback(
+    (payload) =>
+      granularityRef.current === GRANULARITY_AUTO
+        ? payload
+        : { ...payload, granularity: granularityRef.current },
+    [],
+  );
 
   const load = useCallback(
     (pointList, start, end) => {
@@ -162,15 +194,17 @@ export default function StatSaleTabDashboard({ points, openAlert }) {
         date_end: end,
       };
       let alerted = false;
+      lastQuery.current = payload;
+      const overviewId = ++overviewRequestId.current;
 
-      const run = (method, setBlock) => {
+      const run = (method, setBlock, body, isActual) => {
         setBlock((prev) => ({ ...prev, loading: true, error: "" }));
-        requestBlock(method, payload)
+        requestBlock(method, body)
           .then((data) => {
-            if (id === requestId.current) setBlock({ data, loading: false, error: "" });
+            if (isActual()) setBlock({ data, loading: false, error: "" });
           })
           .catch((error) => {
-            if (id !== requestId.current) return;
+            if (!isActual()) return;
             setBlock({ data: null, loading: false, error: error.message });
             if (!alerted) {
               alerted = true;
@@ -179,11 +213,41 @@ export default function StatSaleTabDashboard({ points, openAlert }) {
           });
       };
 
-      run("get_dashboard", setOverview);
-      run("get_dashboard_sales", setSales);
-      run("get_dashboard_hours", setHours);
+      const isCurrent = () => id === requestId.current;
+      run(
+        "get_dashboard",
+        setOverview,
+        buildOverviewPayload(payload),
+        () => overviewId === overviewRequestId.current,
+      );
+      run("get_dashboard_sales", setSales, payload, isCurrent);
+      run("get_dashboard_hours", setHours, payload, isCurrent);
     },
-    [openAlert],
+    [openAlert, buildOverviewPayload],
+  );
+
+  // Группировка графика меняет только блок «Динамика», остальные блоки не перезагружаются.
+  const changeGranularity = useCallback(
+    (value) => {
+      granularityRef.current = value;
+      setGranularity(value);
+      if (!lastQuery.current) return;
+
+      const overviewId = ++overviewRequestId.current;
+      setOverview((prev) => ({ ...prev, loading: true, error: "" }));
+      requestBlock("get_dashboard", buildOverviewPayload(lastQuery.current))
+        .then((data) => {
+          if (overviewId === overviewRequestId.current) {
+            setOverview({ data, loading: false, error: "" });
+          }
+        })
+        .catch((error) => {
+          if (overviewId !== overviewRequestId.current) return;
+          setOverview({ data: null, loading: false, error: error.message });
+          openAlert?.(false, error.message);
+        });
+    },
+    [openAlert, buildOverviewPayload],
   );
 
   useEffect(() => {
@@ -207,7 +271,9 @@ export default function StatSaleTabDashboard({ points, openAlert }) {
     const list = overviewData?.sources ?? [];
     const additive = ADDITIVE_METRICS.includes(metricKey);
     const shareMetric = additive ? metricKey : "orders";
-    const tableShares = additive ? roundShares(list.map((source) => source.metrics?.[metricKey]?.share)) : [];
+    const tableShares = additive
+      ? roundShares(list.map((source) => source.metrics?.[metricKey]?.share))
+      : [];
     const donutShares = roundShares(list.map((source) => source.metrics?.[shareMetric]?.share));
 
     return {
@@ -257,7 +323,8 @@ export default function StatSaleTabDashboard({ points, openAlert }) {
     const rows = list.map((row, index) => {
       let hint;
       if (salesTabConfig.id === "items") hint = row.category_name;
-      if (salesTabConfig.id === "subcategories" && row.parent_name !== row.name) hint = row.parent_name;
+      if (salesTabConfig.id === "subcategories" && row.parent_name !== row.name)
+        hint = row.parent_name;
       return {
         key: `${salesTabConfig.id}-${row.key ?? row.id}`,
         name: row.name,
@@ -400,13 +467,31 @@ export default function StatSaleTabDashboard({ points, openAlert }) {
                 ) : null
               }
               toolbar={
-                <JacoSegmentedTabs
-                  size="compact"
-                  items={CHART_SOURCE_TABS}
-                  value={chartSource}
-                  onChange={(_, value) => setChartSource(value)}
-                  sx={segmentedSx(420)}
-                />
+                <Box
+                  sx={{
+                    display: "flex",
+                    flexWrap: "wrap",
+                    alignItems: "center",
+                    gap: 1.5,
+                    width: "100%",
+                  }}
+                >
+                  <JacoSegmentedTabs
+                    size="compact"
+                    items={CHART_SOURCE_TABS}
+                    value={chartSource}
+                    onChange={(_, value) => setChartSource(value)}
+                    sx={segmentedSx(420)}
+                  />
+                  <JacoSelect
+                    label="Группировка"
+                    allowNone={false}
+                    options={GRANULARITY_OPTIONS}
+                    value={granularity}
+                    onChange={(event) => changeGranularity(event.target.value)}
+                    sx={{ width: { xs: "100%", sm: 200 } }}
+                  />
+                </Box>
               }
               loading={overview.loading}
               error={overview.error}
@@ -441,7 +526,10 @@ export default function StatSaleTabDashboard({ points, openAlert }) {
                 metric={metricKey}
                 ratingBy={selectedCard?.rating_by}
               />
-              <Typography component="div" sx={{ mt: 2, fontSize: 12, lineHeight: 1.45, color: uiColors.text }}>
+              <Typography
+                component="div"
+                sx={{ mt: 2, fontSize: 12, lineHeight: 1.45, color: uiColors.text }}
+              >
                 {ratingByEfficiency
                   ? "Черта показывает 100% доли кафе в месячном плане сети за выбранные дни."
                   : "Для показателей без цели — изменение к тому же периоду прошлого года."}
@@ -477,7 +565,11 @@ export default function StatSaleTabDashboard({ points, openAlert }) {
             <DashboardBlock
               title="Структура по направлениям"
               subtitle={
-                selectedCard ? (sourceView.additive ? `Доля · ${selectedCard.title}` : "Доля заказов") : undefined
+                selectedCard
+                  ? sourceView.additive
+                    ? `Доля · ${selectedCard.title}`
+                    : "Доля заказов"
+                  : undefined
               }
               loading={overview.loading}
               error={overview.error}
