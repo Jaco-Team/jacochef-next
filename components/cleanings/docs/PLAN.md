@@ -1,5 +1,45 @@
 # План модуля Cleanings
 
+## Повторная итерация обратной связи — 2026-11-24
+
+1. Сверить требования и текущие FE/BE контракты; результаты и открытые вопросы вести в `test-app-site/app/Chef/Cleanings/docs/feedback/TASK.md` и `PLAN.md`.
+2. Исправлять подтверждённые пробелы и регрессии, проверять затронутые сценарии тестами и в Chrome. Названия уборок в диалоге ручного добавления на локальных данных уже отображаются; повторить проверку при приёмке.
+3. До решения пользователя не менять область G8 (горизонтальная прокрутка) и существующую интеграцию ламп G9.
+4. Название модуля управляется в админ-панели; не создавать и не запускать миграции. Изменения оставить без коммита для проверки.
+
+В этой итерации нейтральное обозначение «Особый день» проверено в расписании через локальный Chrome. BE учитывает удалённые невзятые уборки с нулевой отметкой начала по дате уборки; адресный изолированный тест прошёл, фикстура истории использует SQLite в памяти.
+
+Прежний план ниже сохранён как история предыдущей итерации; он не определяет решение по G9 для текущей задачи.
+
+## Follow-up: объединение с журналом бактерицидных ламп
+
+Chef-only task: [`TASK.md`](TASK.md).
+
+### Цель
+
+Добавить действующий `journal_of_work_of_bactericidal_lamps` внутрь `/cleanings`, сохранив
+standalone route и его текущий CRUD/export contract. Верхняя навигация и Control subtabs
+должны иметь короткие подсказки о содержимом.
+
+### Порядок действий
+
+1. Сохранить локальный `src/api_new.js` override и подтвердить API/DB target.
+2. Подключить lamp section к существующим point-based `lamps`/`lamps_active` данным.
+3. Перенести lamp permissions в отдельную категорию Cleanings
+   `Журнал замены бактерицидных ламп`: `lamps` для раздела/CRUD и
+   `lamps_export_excel` для XLS.
+4. Проверить Control actions на локальном наборе данных и отдельно зафиксировать destructive
+   smoke limits.
+
+### Проверки
+
+- local API only: `http://localhost:8000`;
+- local MariaDB only: `127.0.0.1:3307`;
+- templates/categories/control response and selected point/date filters;
+- lamp load, edit/add activity and export visibility;
+- lamp access visibility, CRUD and export visibility for migrated role flags;
+- desktop/mobile and empty/loading/error states.
+
 ## Текущее состояние
 
 `app/Chef/Cleanings` до этого плана не существовал.

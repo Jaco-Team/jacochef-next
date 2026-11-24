@@ -8,6 +8,12 @@ import TextDiff from "./diffs/TextDiff";
 
 const HTML_FIELDS = ["content", "description", "text"];
 
+const USER_FIELD_LABELS = {
+  shift_manager_id: "Менеджер смены",
+  entered_by_user_id: "Добавил активность",
+  updated_by_user_id: "Изменил активность",
+};
+
 function safeParse(v) {
   if (!v) return {};
   if (typeof v === "object") return v;
@@ -35,7 +41,16 @@ function normalizeField(key) {
     return key.split(".")[0];
   }
 
-  return last;
+  return USER_FIELD_LABELS[last] || last;
+}
+
+function formatUserValue(field, value, userFields, side) {
+  const reference = userFields?.[field]?.[side];
+  if (reference?.name) {
+    return `${reference.name} (ID ${reference.id})`;
+  }
+
+  return value;
 }
 
 function isJpg(name) {
@@ -45,19 +60,24 @@ function isJpg(name) {
   );
 }
 
-export default function SmartDiff({ item }) {
+export default function SmartDiff({ item, hiddenFields = [] }) {
   const diffRaw = useMemo(() => safeParse(item?.diff_json), [item?.diff_json]);
 
   const meta = useMemo(() => safeParse(item?.meta_json), [item?.meta_json]);
+  const userFields = meta?.user_fields || {};
 
   const html = [];
   const media = [];
   const text = [];
 
   Object.entries(diffRaw).forEach(([key, value]) => {
+    if (hiddenFields.includes(key.split(".").pop())) {
+      return;
+    }
+
     const field = normalizeField(key);
-    const from = value?.from ?? "";
-    const to = value?.to ?? "";
+    const from = formatUserValue(key, value?.from ?? "", userFields, "from");
+    const to = formatUserValue(key, value?.to ?? "", userFields, "to");
 
     // upload event → only jpg media
     if (item?.event_type === "upload") {

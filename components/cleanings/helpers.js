@@ -154,6 +154,24 @@ export function getCategoryName(categories, categoryId) {
   return categories.find((category) => category.id === categoryId)?.name || "Без вида уборки";
 }
 
+// asPath is the requested URL after router readiness; catch-all query can lag hydration.
+export function getRouteSegments(section, asPath) {
+  const path = typeof asPath === "string" ? asPath.split(/[?#]/, 1)[0] : "";
+  if (path === "/cleanings" || path.startsWith("/cleanings/")) {
+    const segments = path.slice("/cleanings".length).split("/").filter(Boolean);
+    if (!segments.some((segment) => segment.startsWith("["))) {
+      try {
+        return segments.map(decodeURIComponent);
+      } catch {
+        return segments;
+      }
+    }
+  }
+
+  if (Array.isArray(section)) return section;
+  return section ? [section] : [];
+}
+
 export function getVisibleSectionTabs(canView) {
   return cleaningSectionTabs.filter((tab) => tab.accessKeys.some((key) => canView(key)));
 }

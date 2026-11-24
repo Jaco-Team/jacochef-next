@@ -40,6 +40,13 @@ export const cleaningSectionTabs = [
     description: "Подтверждайте выполненные уборки и заготовки в выбранном кафе",
     accessKeys: ["control_cleanings", "control_pf"],
   },
+  {
+    value: "lamps",
+    path: "lamps",
+    label: "Лампы",
+    description: "Журнал работы бактерицидных ламп, активации и экспорт XLS.",
+    accessKeys: ["lamps"],
+  },
 ];
 
 // Second URL segment under /cleanings/control.

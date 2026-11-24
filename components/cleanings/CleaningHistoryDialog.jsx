@@ -10,6 +10,7 @@ export default function CleaningHistoryDialog({
   onClose,
   title = "История изменений",
   dateLabel,
+  hiddenFields = [],
 }) {
   return (
     <JacoModal
@@ -32,6 +33,7 @@ export default function CleaningHistoryDialog({
           history={history}
           title={title}
           dateLabel={dateLabel}
+          hiddenFields={hiddenFields}
           defaultExpanded
         />
       )}

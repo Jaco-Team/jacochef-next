@@ -24,6 +24,7 @@ function HistoryLog({
   title = "История изменений",
   restoreFunc = null,
   defaultExpanded = false,
+  hiddenFields = [],
   dateLabel = "Дата изменения",
 }) {
   return (
@@ -66,7 +67,10 @@ function HistoryLog({
                       </TableCell>
                       <TableCell>{item.actor_name}</TableCell>
                       <TableCell>
-                        <SmartDiff item={item} />
+                        <SmartDiff
+                          item={item}
+                          hiddenFields={hiddenFields}
+                        />
                       </TableCell>
                       {!!restoreFunc && (
                         <TableCell>

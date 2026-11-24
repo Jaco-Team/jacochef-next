@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect } from "react";
+import React, { useCallback, useEffect, useRef } from "react";
 import Head from "next/head";
 import { useRouter } from "next/router";
 import { Box, Grid, Typography } from "@mui/material";
@@ -15,7 +15,7 @@ import {
 } from "@/design-system/shared/ui";
 import { useConfirm } from "@/src/hooks/useConfirm";
 import { UNSAVED_CHANGES_CONFIRM } from "./constants";
-import { getSectionSegments } from "./helpers";
+import { getRouteSegments, getSectionSegments } from "./helpers";
 import CleaningTemplateDialog from "./CleaningTemplateDialog";
 import CleaningHistoryDialog from "./CleaningHistoryDialog";
 import CleaningsListPage, { TemplateStatusConfirmDialog } from "./CleaningsListPage";
@@ -25,16 +25,9 @@ import ControlView, { AddManualCleaningDialog } from "./ControlCleaningsPage";
 import PreparationControlView, { PreparationEditDialog } from "./ControlPreparationsPage";
 import { ControlActionConfirmDialog, PreparationActionConfirmDialog } from "./ControlDialogs";
 import useCleaningsPage from "./useCleaningsPage";
+import CleaningsLampsView from "./CleaningsLampsView";
 
 const PAGE_PATHNAME = "/cleanings/[[...section]]";
-
-function getRouteSegments(section) {
-  if (Array.isArray(section)) {
-    return section;
-  }
-
-  return section ? [section] : [];
-}
 
 function sectionUrl(query, segments) {
   const { section, ...otherQuery } = query;
@@ -47,7 +40,7 @@ function sectionUrl(query, segments) {
 
 export default function CleaningsPage() {
   const router = useRouter();
-  const routeSegments = getRouteSegments(router.query.section);
+  const routeSegments = getRouteSegments(router.query.section, router.asPath);
   const routeKey = routeSegments.join("/");
   const {
     confirm: confirmUnsaved,
@@ -67,6 +60,9 @@ export default function CleaningsPage() {
   // Legacy confirm only for the full delete: its 3-second undo countdown has no DS equivalent yet.
   const { withConfirm, ConfirmDialog } = useConfirm();
   const { route, showAlert } = page;
+  const showAlertRef = useRef(showAlert);
+  showAlertRef.current = showAlert;
+  const showLampAlert = useCallback((...args) => showAlertRef.current(...args), []);
   const canonicalKey = route ? route.segments.join("/") : null;
   const activeTab = page.sectionTabs.find((tab) => tab.value === page.section) || null;
 
@@ -325,6 +321,16 @@ export default function CleaningsPage() {
                 canEdit={page.canEdit("control_pf")}
               />
             ) : null}
+          </Grid>
+        ) : null}
+        {page.section === "lamps" ? (
+          <Grid size={12}>
+            <CleaningsLampsView
+              locations={page.locations}
+              canEdit={page.canEdit("lamps")}
+              canExport={page.canAccess("lamps_export_excel")}
+              showAlert={showLampAlert}
+            />
           </Grid>
         ) : null}
       </Grid>
