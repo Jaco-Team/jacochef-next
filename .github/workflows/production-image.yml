@@ -98,7 +98,9 @@ jobs:
     name: Publish frontend image and metadata
     needs: required_checks
     if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main' && github.sha == inputs.source_sha && needs.required_checks.result == 'success'
-    runs-on: ubuntu-24.04
+    runs-on:
+      group: chef-frontend-pilot
+      labels: jaco-build
     timeout-minutes: 30
     permissions:
       contents: read
