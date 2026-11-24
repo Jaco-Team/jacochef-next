@@ -65,8 +65,10 @@ export default function EndAnalyticsColumnsDialog({
             >
               <Typography
                 variant="subtitle2"
-                fontWeight={700}
-                sx={{ mb: 0.5 }}
+                sx={{
+                  fontWeight: 700,
+                  mb: 0.5,
+                }}
               >
                 {group.label}
               </Typography>

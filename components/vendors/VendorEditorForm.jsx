@@ -51,11 +51,12 @@ function VendorEditorForm({
         onAddMail={onAddMail}
         onRemoveMail={onRemoveMail}
       />
-
       <Stack
         direction={{ xs: "column-reverse", sm: "row" }}
         spacing={2}
-        justifyContent="flex-end"
+        sx={{
+          justifyContent: "flex-end",
+        }}
       >
         {onCancel ? <Button onClick={onCancel}>Отмена</Button> : null}
         <Button

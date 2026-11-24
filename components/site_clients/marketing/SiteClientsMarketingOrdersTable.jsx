@@ -193,9 +193,11 @@ function SiteClientsMarketingOrdersTable({
                   sx={{ cursor: "pointer", userSelect: "none" }}
                 >
                   <Box
-                    display="flex"
-                    alignItems="center"
-                    px={1}
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      px: 1,
+                    }}
                   >
                     <Typography sx={{ mr: 1 }}>{col.label}</Typography>
                     <IconButton
@@ -258,9 +260,11 @@ function SiteClientsMarketingOrdersTable({
                   >
                     <ClickAwayListener onClickAway={() => handleToggleFilter(col.key, false)}>
                       <Box
-                        px={1}
-                        pb={1}
                         onMouseLeave={() => handleToggleFilter(col.key, false)}
+                        sx={{
+                          px: 1,
+                          pb: 1,
+                        }}
                       >
                         {col.filterType === "boolean" ? (
                           <RadioGroup

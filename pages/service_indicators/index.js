@@ -586,7 +586,11 @@ function IndicatorsPage() {
                                   <Tooltip
                                     key={k}
                                     title={
-                                      <Typography color="inherit">
+                                      <Typography
+                                        sx={{
+                                          color: "inherit",
+                                        }}
+                                      >
                                         Редактировать данные в ячейке
                                       </Typography>
                                     }
@@ -1009,7 +1013,11 @@ function IndicatorsPage() {
                                   <Tooltip
                                     key={k}
                                     title={
-                                      <Typography color="inherit">
+                                      <Typography
+                                        sx={{
+                                          color: "inherit",
+                                        }}
+                                      >
                                         Редактировать данные в ячейке
                                       </Typography>
                                     }

@@ -21,6 +21,7 @@ import StatSale_Tab_Clients from "./StatSaleTabClients";
 import StatSale_Tab_Dynamic from "./StatSaleTabDynamic";
 import StatSale_Tab_DynamicSale from "./StatSaleTabDynamicSale";
 import StatSale_Tab_Sett from "./settings/StatSaleSettingsTab";
+import StatSaleTabDashboard from "./dashboard/StatSaleTabDashboard";
 
 dayjs.locale("ru");
 
@@ -41,6 +42,7 @@ class StatSale_ extends React.Component {
       activeTab: 0,
       data_sett_limit_dynamic: [],
       data_sett_limit_dynamic_pay: [],
+      data_sett_limit_dynamic_pay_by_source: {},
 
       data_sett_rate: [],
       data_sett_points: [],
@@ -67,9 +69,7 @@ class StatSale_ extends React.Component {
       points: data.points,
       cities: data.cities,
       acces: data.acces ?? {},
-      activeTab: availableTabs.includes(this.state.activeTab)
-        ? this.state.activeTab
-        : (availableTabs[0] ?? 0),
+      activeTab: availableTabs[0] ?? 0,
     });
 
     document.title = data.module_info?.name;
@@ -87,6 +87,7 @@ class StatSale_ extends React.Component {
     const canAccess = (key) => userCan("access", key);
     const tabs = [];
 
+    if (canAccess("dashboard")) tabs.push(5);
     if (canAccess("sale")) tabs.push(0);
     if (canAccess("client")) tabs.push(1);
     if (canAccess("dynamic")) tabs.push(2);
@@ -145,6 +146,7 @@ class StatSale_ extends React.Component {
       data_sett_rate_clients: res.data_sett_rate_clients,
       data_sett_limit_dynamic: res.data_sett_limit_dynamic,
       data_sett_limit_dynamic_pay: res.data_sett_limit_dynamic_pay,
+      data_sett_limit_dynamic_pay_by_source: res.data_sett_limit_dynamic_pay_by_source ?? {},
     });
   };
 
@@ -154,6 +156,7 @@ class StatSale_ extends React.Component {
     this.setState({
       data_sett_limit_dynamic: res.data_sett_limit_dynamic,
       data_sett_limit_dynamic_pay: res.data_sett_limit_dynamic_pay,
+      data_sett_limit_dynamic_pay_by_source: res.data_sett_limit_dynamic_pay_by_source ?? {},
     });
   };
 
@@ -430,6 +433,13 @@ class StatSale_ extends React.Component {
             />
           </Grid>
 
+          {/* Дашборд */}
+          {this.state.activeTab === 5 && (
+            <StatSaleTabDashboard
+              points={this.state.points}
+              openAlert={this.openAlert}
+            />
+          )}
           {/* Продажи */}
           {this.state.activeTab === 0 && (
             <StatSale_Tab_Sale
@@ -490,6 +500,7 @@ class StatSale_ extends React.Component {
               rows={this.state.data_sett_rate}
               dynamics={this.state.data_sett_limit_dynamic}
               dynamics_pay={this.state.data_sett_limit_dynamic_pay}
+              dynamics_pay_by_source={this.state.data_sett_limit_dynamic_pay_by_source}
               rows_clietns={this.state.data_sett_rate_clients}
               getDataSet={this.getDataSet}
               pointsCurrent={this.state.points}

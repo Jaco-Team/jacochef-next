@@ -537,7 +537,13 @@ class SkladModules_ extends React.Component {
               }}
             >
               {list.length === 0 ? (
-                <Typography color="text.secondary">{emptyText}</Typography>
+                <Typography
+                  sx={{
+                    color: "text.secondary",
+                  }}
+                >
+                  {emptyText}
+                </Typography>
               ) : parseInt(this.state.acces?.view_pos_access) == 1 ? (
                 <TableContainer>
                   <Table size="small">
@@ -719,7 +725,11 @@ class SkladModules_ extends React.Component {
                                           {this.canEdit("app_params") && (
                                             <Tooltip
                                               title={
-                                                <Typography color="inherit">
+                                                <Typography
+                                                  sx={{
+                                                    color: "inherit",
+                                                  }}
+                                                >
                                                   Редактирование параметра
                                                 </Typography>
                                               }
@@ -995,7 +1005,11 @@ class SkladModules_ extends React.Component {
                                       >
                                         <Tooltip
                                           title={
-                                            <Typography color="inherit">
+                                            <Typography
+                                              sx={{
+                                                color: "inherit",
+                                              }}
+                                            >
                                               Редактирование параметра
                                             </Typography>
                                           }

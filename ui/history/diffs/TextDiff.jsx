@@ -23,9 +23,9 @@ export default function TextDiff({ items }) {
           >
             <Stack
               direction="row"
-              alignItems="baseline"
               spacing={2}
               sx={{
+                alignItems: "baseline",
                 px: 2,
                 py: 1,
                 borderBottom: 1,
@@ -34,7 +34,9 @@ export default function TextDiff({ items }) {
             >
               <Typography
                 variant="body2"
-                fontWeight={600}
+                sx={{
+                  fontWeight: 600,
+                }}
               >
                 {field}:
               </Typography>
@@ -50,7 +52,9 @@ export default function TextDiff({ items }) {
 
                   <Typography
                     variant="body2"
-                    color="text.secondary"
+                    sx={{
+                      color: "text.secondary",
+                    }}
                   >
                     →
                   </Typography>
@@ -59,7 +63,9 @@ export default function TextDiff({ items }) {
 
               <Typography
                 variant="body2"
-                fontWeight={500}
+                sx={{
+                  fontWeight: 500,
+                }}
               >
                 {formatValue(to)}
               </Typography>

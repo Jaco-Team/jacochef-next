@@ -142,7 +142,9 @@ function MetricValueHeader({
     return (
       <Typography
         variant="body2"
-        color="text.secondary"
+        sx={{
+          color: "text.secondary",
+        }}
       >
         {emptyText}
       </Typography>
@@ -160,8 +162,10 @@ function MetricValueHeader({
       {label ? (
         <Typography
           variant="caption"
-          color="text.secondary"
-          sx={{ fontWeight: 600 }}
+          sx={{
+            color: "text.secondary",
+            fontWeight: 600,
+          }}
         >
           {label}
         </Typography>
@@ -169,8 +173,10 @@ function MetricValueHeader({
       <Stack
         direction="row"
         spacing={CP_SPACE.related}
-        alignItems="baseline"
-        flexWrap="wrap"
+        sx={{
+          alignItems: "baseline",
+          flexWrap: "wrap",
+        }}
       >
         <Typography
           variant="h4"
@@ -675,9 +681,11 @@ export default function MetricDetailsModal({
       <DialogContent>
         {loading ? (
           <Stack
-            alignItems="center"
-            justifyContent="center"
-            sx={{ minHeight: 240 }}
+            sx={{
+              alignItems: "center",
+              justifyContent: "center",
+              minHeight: 240,
+            }}
           >
             <CircularProgress size={28} />
           </Stack>

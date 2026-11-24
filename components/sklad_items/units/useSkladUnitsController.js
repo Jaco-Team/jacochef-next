@@ -1,0 +1,581 @@
+"use client";
+
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import AddIcon from "@mui/icons-material/Add";
+import DeleteOutlineIcon from "@mui/icons-material/DeleteOutlined";
+import HistoryOutlinedIcon from "@mui/icons-material/HistoryOutlined";
+import {
+  Box,
+  Chip,
+  Stack,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Tooltip,
+  Typography,
+} from "@mui/material";
+
+import { useConfirm } from "@/src/hooks/useConfirm";
+import {
+  JacoButton,
+  JacoIconButton,
+  JacoSegmentedTabs,
+  JacoSearchField,
+  JacoSurface,
+} from "@/design-system/shared/ui";
+
+import { useSkladStore } from "../useSkladStore";
+import useSkladListLoading from "../useSkladListLoading";
+import useSkladAccess from "../useSkladAccess";
+import useSkladApi from "../useSkladApi";
+import { getDefaultUnitDraft, useSkladUnitsStore } from "./useSkladUnitsStore";
+import SkladUnitDialog from "./SkladUnitDialog";
+import { interactiveRowProps } from "../table/interactiveRow";
+
+function normalizeNumber(value, fallback = 0) {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : fallback;
+}
+
+function normalizeUnitDraft(draft) {
+  return {
+    id: draft?.id ?? null,
+    name: String(draft?.name || "").trim(),
+    con_id: normalizeNumber(draft?.con_id, 0),
+    main_count: normalizeNumber(draft?.main_count, 1),
+    con_count: normalizeNumber(draft?.con_count, 1),
+  };
+}
+
+function getDeleteHint(row) {
+  const activeCount = row?.delete_usage?.active_relations?.length || 0;
+  const historyCount = row?.delete_usage?.history_relations?.length || 0;
+  const parts = [];
+
+  if (activeCount) {
+    parts.push(`активные связи: ${activeCount}`);
+  }
+
+  if (historyCount) {
+    parts.push(`история: ${historyCount}`);
+  }
+
+  return parts.length ? `Удаление заблокировано, ${parts.join(", ")}` : "Удаление заблокировано";
+}
+
+function buildSavePayload(draft) {
+  const normalizedDraft = normalizeUnitDraft(draft);
+
+  return {
+    name: normalizedDraft.name,
+    con_id: normalizedDraft.con_id,
+    main_count: normalizedDraft.main_count,
+    con_count: normalizedDraft.con_count,
+  };
+}
+
+function formatUnitAmount(value) {
+  return new Intl.NumberFormat("ru-RU", {
+    maximumFractionDigits: 3,
+  }).format(normalizeNumber(value, 0));
+}
+
+export default function useSkladUnitsController({ showAlert }) {
+  const api = useSkladApi();
+  const { beginListLoad, finishListLoad } = useSkladListLoading("units");
+  const { ConfirmDialog, withConfirm } = useConfirm();
+  const { canEdit, canDelete, canCreateUnit, canViewUnitUsage } = useSkladAccess();
+
+  const setShellState = useSkladStore((state) => state.setState);
+  const listPending = useSkladStore((state) => state.listLoading.units.pending);
+  const rows = useSkladUnitsStore((state) => state.rows);
+  const search = useSkladUnitsStore((state) => state.search);
+  const modal = useSkladUnitsStore((state) => state.modal);
+  const draft = useSkladUnitsStore((state) => state.draft);
+  const setState = useSkladUnitsStore((state) => state.setState);
+  const setDraft = useSkladUnitsStore((state) => state.setDraft);
+  const resetDraft = useSkladUnitsStore((state) => state.resetDraft);
+  const detailRequest = useRef(0);
+  const [detail, setDetail] = useState({ loading: false, error: "", history: [] });
+  const [view, setView] = useState("active");
+  useEffect(
+    () => () => {
+      detailRequest.current += 1;
+      resetDraft();
+    },
+    [resetDraft],
+  );
+
+  const isEditable = canEdit("units");
+  const canCreate = canCreateUnit;
+  const canShowUsage = canViewUnitUsage;
+  const canDeleteAction = canDelete("unit");
+
+  const loadDetail = useCallback(
+    async (id) => {
+      const requestId = ++detailRequest.current;
+      setDetail({ loading: true, error: "", history: [] });
+      try {
+        const response = await api.getUnit(id);
+        if (requestId !== detailRequest.current) return;
+        if (!response?.st || !response.item || String(response.item.id) !== String(id)) {
+          throw new Error(response?.text || "Не удалось загрузить единицу и историю");
+        }
+        if (response.history != null && !Array.isArray(response.history)) {
+          throw new Error("Некорректные данные истории");
+        }
+        setDraft(response.item);
+        setDetail({ loading: false, error: "", history: response.history || [] });
+      } catch (error) {
+        if (requestId !== detailRequest.current) return;
+        setDetail({
+          loading: false,
+          error: error?.message || "Не удалось загрузить историю",
+          history: [],
+        });
+      }
+    },
+    [api, setDraft],
+  );
+
+  const loadUnits = useCallback(async () => {
+    const requestId = beginListLoad("units");
+
+    try {
+      const response = await api.getUnits();
+
+      if (useSkladStore.getState().listLoading.units.id !== requestId) return;
+      if (!response?.st) {
+        throw new Error(response?.text || "Ошибка загрузки единиц измерения");
+      }
+
+      const list = response?.list || [];
+
+      setState({ rows: list });
+      setShellState({ units: list });
+    } catch (error) {
+      if (useSkladStore.getState().listLoading.units.id === requestId) {
+        showAlert(error?.message || "Ошибка загрузки единиц измерения", false);
+      }
+    } finally {
+      finishListLoad("units", requestId);
+    }
+  }, [api, beginListLoad, finishListLoad, setShellState, setState, showAlert]);
+
+  const openCreate = useCallback(() => {
+    if (!canCreate) {
+      return;
+    }
+
+    detailRequest.current += 1;
+    setDetail({ loading: false, error: "", history: [] });
+
+    setState({
+      draft: getDefaultUnitDraft(),
+      modal: {
+        open: true,
+        mode: "create",
+      },
+    });
+  }, [canCreate, setState]);
+
+  const openUnit = useCallback(
+    (row, mode = "edit") => {
+      if (mode === "edit" ? !isEditable : !canShowUsage) {
+        return;
+      }
+
+      setState({
+        draft: {
+          id: row?.id ?? null,
+          name: row?.name || "",
+          con_id: row?.con_id ?? 0,
+          main_count: row?.main_count ?? 1,
+          con_count: row?.con_count ?? 1,
+          delete_usage: row?.delete_usage ?? null,
+        },
+        modal: {
+          open: true,
+          mode,
+        },
+      });
+      loadDetail(row.id);
+    },
+    [canShowUsage, isEditable, loadDetail, setState],
+  );
+
+  const closeModal = useCallback(() => {
+    detailRequest.current += 1;
+    setDetail({ loading: false, error: "", history: [] });
+    resetDraft();
+  }, [resetDraft]);
+
+  const saveUnit = useCallback(async () => {
+    const canSave = modal.mode === "create" ? canCreate : modal.mode === "edit" && isEditable;
+
+    if (!canSave) {
+      showAlert("Недостаточно прав", false);
+      return;
+    }
+    if (modal.mode !== "create" && (detail.loading || detail.error)) return;
+
+    const normalizedDraft = normalizeUnitDraft(draft);
+
+    if (!normalizedDraft.name) {
+      showAlert("Заполните название единицы", false);
+      return;
+    }
+
+    if (normalizedDraft.main_count <= 0 || normalizedDraft.con_count <= 0) {
+      showAlert("Количество должно быть больше нуля", false);
+      return;
+    }
+
+    setShellState({ isLoading: true });
+
+    try {
+      const payload = buildSavePayload(normalizedDraft);
+      const response =
+        modal.mode === "edit"
+          ? await api.updateUnit({ id: normalizedDraft.id, ...payload })
+          : await api.createUnit(payload);
+
+      if (!response?.st) {
+        throw new Error(response?.text || "Ошибка сохранения единицы");
+      }
+
+      closeModal();
+      showAlert("Единица сохранена", true);
+      await loadUnits();
+    } catch (error) {
+      showAlert(error?.message || "Ошибка сохранения единицы", false);
+    } finally {
+      setShellState({ isLoading: false });
+    }
+  }, [
+    api,
+    canCreate,
+    closeModal,
+    draft,
+    detail,
+    isEditable,
+    loadUnits,
+    modal.mode,
+    setShellState,
+    showAlert,
+  ]);
+
+  const deleteUnit = useCallback(
+    async (row) => {
+      if (!row?.id || !canDeleteAction) {
+        return;
+      }
+
+      setShellState({ isLoading: true });
+
+      try {
+        const response = await api.deleteUnit(row.id);
+
+        if (!response?.st) {
+          throw new Error(response?.text || "Ошибка удаления единицы");
+        }
+
+        showAlert("Единица удалена", true);
+        await loadUnits();
+      } catch (error) {
+        showAlert(error?.message || "Ошибка удаления единицы", false);
+      } finally {
+        setShellState({ isLoading: false });
+      }
+    },
+    [api, canDeleteAction, loadUnits, setShellState, showAlert],
+  );
+
+  const activeRows = useMemo(
+    () => rows.filter((row) => (row?.delete_usage?.active_relations?.length ?? 0) > 0),
+    [rows],
+  );
+
+  const filteredRows = useMemo(() => {
+    const normalizedSearch = search.trim().toLowerCase();
+    const visibleRows = view === "active" ? activeRows : rows;
+    return visibleRows.filter((row) => {
+      const haystack = [row?.name, row?.main_count, row?.con_count]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase();
+      return haystack.includes(normalizedSearch);
+    });
+  }, [activeRows, rows, search, view]);
+
+  const unitOptions = useMemo(() => {
+    const baseOptions = [{ id: 0, name: "Без привязки" }];
+    const currentId = draft?.id;
+    const selectedId = normalizeNumber(draft?.con_id, 0);
+    const selectedRelation = rows.find((row) => Number(row?.id) === selectedId);
+    const nextOptions = rows
+      .filter((row) => Number(row?.id) !== Number(currentId))
+      .map((row) => ({
+        id: row.id,
+        name: row.name,
+      }));
+
+    if (selectedId && !nextOptions.some((option) => Number(option.id) === selectedId)) {
+      nextOptions.unshift({
+        id: selectedId,
+        name: selectedRelation?.name || `Недоступная единица (${selectedId})`,
+      });
+    }
+
+    return [...baseOptions, ...nextOptions];
+  }, [draft?.id, rows]);
+
+  const isSaveDisabled =
+    (modal.mode !== "create" && (detail.loading || Boolean(detail.error))) ||
+    !String(draft?.name || "").trim() ||
+    normalizeNumber(draft?.main_count, 0) <= 0 ||
+    normalizeNumber(draft?.con_count, 0) <= 0;
+
+  const content = (
+    <JacoSurface
+      sx={{
+        width: "100%",
+        minWidth: 0,
+        boxSizing: "border-box",
+        maxWidth: 1080,
+        mx: "auto",
+        p: { xs: 1.5, sm: 2 },
+        borderRadius: 3,
+      }}
+    >
+      <Stack spacing={1.5}>
+        <Stack
+          direction={{ xs: "column", sm: "row" }}
+          spacing={1.5}
+          sx={{
+            justifyContent: "space-between",
+            alignItems: { xs: "stretch", sm: "center" },
+          }}
+        >
+          <Stack
+            direction="row"
+            spacing={1}
+            sx={{
+              alignItems: "center",
+            }}
+          >
+            <Typography
+              variant="h6"
+              sx={{ fontWeight: 700 }}
+            >
+              Единицы измерения
+            </Typography>
+            <Chip
+              label={listPending ? "…" : rows.length}
+              size="small"
+            />
+          </Stack>
+
+          <JacoButton
+            startIcon={<AddIcon />}
+            sx={{ whiteSpace: "nowrap", alignSelf: { xs: "flex-start", sm: "center" } }}
+            onClick={openCreate}
+            disabled={!canCreate}
+          >
+            Добавить единицу
+          </JacoButton>
+        </Stack>
+
+        <Box sx={{ width: "100%", maxWidth: 420 }}>
+          <JacoSearchField
+            label="Поиск"
+            value={search}
+            onValueChange={(value) => setState({ search: value })}
+          />
+        </Box>
+
+        <JacoSegmentedTabs
+          size="compact"
+          variant="standard"
+          sx={{ width: "fit-content", maxWidth: "100%" }}
+          value={view}
+          onChange={(_, nextView) => setView(nextView)}
+          aria-label="Фильтр единиц измерения"
+          items={[
+            { id: "active", label: listPending ? "Активные" : `Активные (${activeRows.length})` },
+            { id: "all", label: listPending ? "Все" : `Все (${rows.length})` },
+          ]}
+        />
+
+        <TableContainer
+          sx={{
+            maxWidth: "100%",
+            boxSizing: "border-box",
+            border: 1,
+            borderColor: "divider",
+            borderRadius: 2,
+          }}
+        >
+          <Table
+            size="small"
+            sx={{
+              "& .MuiTableCell-root": {
+                px: { xs: 1, sm: 1.5 },
+                py: 0.75,
+              },
+            }}
+          >
+            <TableHead>
+              <TableRow sx={{ bgcolor: "action.hover" }}>
+                <TableCell sx={{ width: "32%", fontWeight: 700 }}>Название</TableCell>
+                <TableCell sx={{ fontWeight: 700 }}>Пересчёт</TableCell>
+                <TableCell
+                  align="right"
+                  sx={{ width: 96, fontWeight: 700 }}
+                >
+                  Действия
+                </TableCell>
+              </TableRow>
+            </TableHead>
+
+            <TableBody>
+              {filteredRows.map((row) => {
+                const relationUnit = rows.find((item) => Number(item.id) === Number(row?.con_id));
+                const deleteBlocked = row?.delete_state === "blocked";
+                const deleteHint = deleteBlocked
+                  ? getDeleteHint(row)
+                  : isEditable && canDeleteAction
+                    ? "Удалить"
+                    : "Недостаточно прав для удаления";
+                const isBaseUnit =
+                  relationUnit &&
+                  Number(row?.id) === Number(row?.con_id) &&
+                  normalizeNumber(row?.main_count, 1) === normalizeNumber(row?.con_count, 1);
+                const conversionLabel = !relationUnit
+                  ? "Без привязки"
+                  : isBaseUnit
+                    ? "Базовая единица"
+                    : `${formatUnitAmount(row?.main_count)} ${row?.name || ""} = ${formatUnitAmount(row?.con_count)} ${relationUnit?.name || ""}`;
+
+                return (
+                  <TableRow
+                    key={row.id}
+                    {...interactiveRowProps(
+                      row?.name,
+                      () => openUnit(row, isEditable ? "edit" : "view"),
+                      isEditable || canShowUsage,
+                    )}
+                  >
+                    <TableCell>
+                      <Typography>{row?.name || "—"}</Typography>
+                    </TableCell>
+                    <TableCell>
+                      <Typography
+                        variant="body2"
+                        color={isBaseUnit || !relationUnit ? "text.secondary" : "text.primary"}
+                      >
+                        {conversionLabel}
+                      </Typography>
+                    </TableCell>
+                    <TableCell
+                      align="right"
+                      onClick={(event) => event.stopPropagation()}
+                    >
+                      <Stack
+                        direction="row"
+                        spacing={0.5}
+                        sx={{
+                          justifyContent: "flex-end",
+                        }}
+                      >
+                        {canShowUsage ? (
+                          <Tooltip title="История">
+                            <JacoIconButton
+                              aria-label="История"
+                              onClick={() => openUnit(row, "view")}
+                            >
+                              <HistoryOutlinedIcon fontSize="small" />
+                            </JacoIconButton>
+                          </Tooltip>
+                        ) : null}
+
+                        {canDeleteAction ? (
+                          <Tooltip
+                            title={
+                              deleteBlocked
+                                ? deleteHint
+                                : isEditable
+                                  ? "Удалить"
+                                  : "Недостаточно прав для удаления"
+                            }
+                          >
+                            <span>
+                              <JacoIconButton
+                                sx={{ color: "error.main" }}
+                                disabled={deleteBlocked || !isEditable}
+                                onClick={withConfirm(
+                                  () => deleteUnit(row),
+                                  `Удалить единицу "${row?.name || ""}"?`,
+                                )}
+                              >
+                                <DeleteOutlineIcon fontSize="small" />
+                              </JacoIconButton>
+                            </span>
+                          </Tooltip>
+                        ) : null}
+                      </Stack>
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+
+              {!listPending && filteredRows.length === 0 ? (
+                <TableRow>
+                  <TableCell
+                    colSpan={3}
+                    align="center"
+                  >
+                    <Typography
+                      sx={{
+                        color: "text.secondary",
+                      }}
+                    >
+                      Ничего не найдено
+                    </Typography>
+                  </TableCell>
+                </TableRow>
+              ) : null}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      </Stack>
+
+      <SkladUnitDialog
+        open={modal.open}
+        mode={modal.mode}
+        draft={draft}
+        unitOptions={unitOptions}
+        onClose={closeModal}
+        onFieldChange={(key, value) => setDraft({ [key]: value })}
+        onSave={saveUnit}
+        isSaveDisabled={isSaveDisabled}
+        showUsage={canShowUsage}
+        history={detail.history}
+        historyLoading={detail.loading}
+        historyError={detail.error}
+        onRetryHistory={() => loadDetail(draft.id)}
+        readOnly={modal.mode === "view"}
+      />
+
+      <ConfirmDialog />
+    </JacoSurface>
+  );
+
+  return {
+    loadUnits,
+    content,
+  };
+}

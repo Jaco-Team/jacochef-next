@@ -1,41 +1,21 @@
-import { Box, Button, FormControl, InputLabel, MenuItem, Select, TextField } from "@mui/material";
+import { Grid } from "@mui/material";
 import FilterAltOutlinedIcon from "@mui/icons-material/FilterAltOutlined";
 import RestartAltIcon from "@mui/icons-material/RestartAlt";
+import {
+  JacoButton,
+  JacoCityCafe,
+  JacoDatePicker,
+  JacoSelect,
+  JacoTextInput,
+} from "@/design-system/shared/ui";
 
-const fieldSx = {
-  "& .MuiOutlinedInput-root": {
-    borderRadius: "12px",
-    backgroundColor: "#FFFFFF",
-  },
-};
-
-function SelectField({ id, label, value, onChange, children, disabled = false }) {
-  return (
-    <FormControl
-      fullWidth
-      size="small"
-      disabled={disabled}
-      sx={fieldSx}
-    >
-      <InputLabel id={`${id}-label`}>{label}</InputLabel>
-      <Select
-        labelId={`${id}-label`}
-        id={id}
-        value={value}
-        label={label}
-        onChange={(event) => onChange(event.target.value)}
-      >
-        {children}
-      </Select>
-    </FormControl>
-  );
-}
+const ALL_VALUE = "__all__";
 
 export default function CafeReviewsFilters({
   filters,
-  cities,
   points,
   dictionaries,
+  showCafeFilter = true,
   onChange,
   onApply,
   onReset,
@@ -43,198 +23,162 @@ export default function CafeReviewsFilters({
   compact = false,
 }) {
   const id = (name) => `${idPrefix}-${name}`;
+  const selectedPoints = points.filter((point) =>
+    (filters.point_ids || []).some((pointId) => String(pointId) === String(point.id)),
+  );
+  const fieldSize = compact ? 12 : { xs: 12, md: 2 };
+
+  // The first option clears the filter; an empty value shows the label as a placeholder.
+  const select = (name, label, options, emptyLabel, { multiple = false, numeric = false } = {}) => (
+    <JacoSelect
+      id={id(name)}
+      label={label}
+      options={[{ id: multiple ? ALL_VALUE : "", name: emptyLabel }, ...options]}
+      value={filters[name]}
+      multiple={multiple}
+      allowNone={false}
+      onChange={(event) => {
+        const value = event.target.value;
+        if (Array.isArray(value)) {
+          onChange(name, value.includes(ALL_VALUE) ? [] : value.filter(Boolean));
+          return;
+        }
+        onChange(name, numeric && value !== "" ? Number(value) : value);
+      }}
+    />
+  );
 
   return (
-    <Box
+    <Grid
+      container
       component="form"
+      spacing={2}
       onSubmit={(event) => {
         event.preventDefault();
         onApply();
       }}
-      sx={{
-        display: "grid",
-        gridTemplateColumns: compact ? "minmax(0, 1fr)" : "repeat(auto-fit, minmax(170px, 1fr))",
-        gap: 1.5,
-        alignItems: "start",
-      }}
+      sx={{ alignItems: "start" }}
     >
-      <TextField
-        id={id("date-from")}
-        label="Дата от"
-        type="date"
-        size="small"
-        value={filters.date_from}
-        onChange={(event) => onChange("date_from", event.target.value)}
-        slotProps={{
-          inputLabel: { shrink: true },
-          htmlInput: { max: filters.date_to || undefined },
-        }}
-        sx={fieldSx}
-      />
-      <TextField
-        id={id("date-to")}
-        label="Дата до"
-        type="date"
-        size="small"
-        value={filters.date_to}
-        onChange={(event) => onChange("date_to", event.target.value)}
-        slotProps={{
-          inputLabel: { shrink: true },
-          htmlInput: { min: filters.date_from || undefined },
-        }}
-        sx={fieldSx}
-      />
-      <SelectField
-        id={id("city")}
-        label="Город"
-        value={filters.city_id}
-        onChange={(value) => onChange("city_id", value)}
+      <Grid size={fieldSize}>
+        <JacoDatePicker
+          label="Дата от"
+          value={filters.date_from}
+          format="DD.MM.YYYY"
+          maxDate={filters.date_to || undefined}
+          onChange={(value) =>
+            onChange("date_from", value?.isValid?.() ? value.format("YYYY-MM-DD") : "")
+          }
+        />
+      </Grid>
+      <Grid size={fieldSize}>
+        <JacoDatePicker
+          label="Дата до"
+          value={filters.date_to}
+          format="DD.MM.YYYY"
+          minDate={filters.date_from || undefined}
+          onChange={(value) =>
+            onChange("date_to", value?.isValid?.() ? value.format("YYYY-MM-DD") : "")
+          }
+        />
+      </Grid>
+      {showCafeFilter ? (
+        <Grid size={compact ? 12 : { xs: 12, md: 4 }}>
+          <JacoCityCafe
+            points={points}
+            value={selectedPoints}
+            label="Город + кафе"
+            placeholder="Все кафе"
+            withAll
+            withOrganizationMode={false}
+            compact={compact}
+            disabled={!points.length}
+            onChange={(value) =>
+              onChange(
+                "point_ids",
+                (value || []).map((point) => point.id),
+              )
+            }
+          />
+        </Grid>
+      ) : null}
+      <Grid size={fieldSize}>
+        {select(
+          "rating",
+          "Оценка",
+          [5, 4, 3, 2, 1].map((rating) => ({ id: rating, name: String(rating) })),
+          "Любая",
+          { numeric: true },
+        )}
+      </Grid>
+      <Grid size={fieldSize}>
+        {select(
+          "status",
+          "Статус",
+          dictionaries.statuses.map((option) => ({ id: option.value, name: option.label })),
+          "Все статусы",
+          { multiple: true },
+        )}
+      </Grid>
+      <Grid size={fieldSize}>
+        {select(
+          "severity",
+          "Критичность",
+          dictionaries.severities.map((option) => ({ id: option.value, name: option.label })),
+          "Любая",
+        )}
+      </Grid>
+      <Grid size={fieldSize}>
+        {select(
+          "issue",
+          "Причина",
+          dictionaries.issues.map((issue) => ({ id: issue.code, name: issue.name })),
+          "Все причины",
+        )}
+      </Grid>
+      <Grid size={fieldSize}>
+        {select(
+          "has_photo",
+          "Фото",
+          [
+            { id: "1", name: "Есть фото" },
+            { id: "0", name: "Без фото" },
+          ],
+          "Неважно",
+        )}
+      </Grid>
+      <Grid size={compact ? 12 : { xs: 12, md: 3 }}>
+        <JacoTextInput
+          id={id("search")}
+          fullWidth
+          label="Поиск"
+          placeholder="ID или текст отзыва"
+          type="search"
+          value={filters.search}
+          onChange={(event) => onChange("search", event.target.value)}
+          inputProps={{ "aria-label": "Поиск по отзывам и инцидентам" }}
+        />
+      </Grid>
+      <Grid
+        size={compact ? 12 : { xs: 12, md: 3 }}
+        sx={{ display: "flex", gap: 1, justifyContent: "flex-end" }}
       >
-        <MenuItem value="">Все города</MenuItem>
-        {cities.map((city) => (
-          <MenuItem
-            key={city.id}
-            value={city.id}
-          >
-            {city.name}
-          </MenuItem>
-        ))}
-      </SelectField>
-      <SelectField
-        id={id("point")}
-        label="Кафе"
-        value={filters.point_id}
-        onChange={(value) => onChange("point_id", value)}
-        disabled={!points.length}
-      >
-        <MenuItem value="">Все кафе</MenuItem>
-        {points.map((point) => (
-          <MenuItem
-            key={point.id}
-            value={point.id}
-          >
-            {point.name}
-          </MenuItem>
-        ))}
-      </SelectField>
-      <SelectField
-        id={id("rating")}
-        label="Оценка"
-        value={filters.rating}
-        onChange={(value) => onChange("rating", value)}
-      >
-        <MenuItem value="">Любая</MenuItem>
-        {[5, 4, 3, 2, 1].map((rating) => (
-          <MenuItem
-            key={rating}
-            value={rating}
-          >
-            {rating}
-          </MenuItem>
-        ))}
-      </SelectField>
-      <SelectField
-        id={id("status")}
-        label="Статус"
-        value={filters.status}
-        onChange={(value) => onChange("status", value)}
-      >
-        <MenuItem value="">Все статусы</MenuItem>
-        {dictionaries.statuses.map((option) => (
-          <MenuItem
-            key={option.value}
-            value={option.value}
-          >
-            {option.label}
-          </MenuItem>
-        ))}
-      </SelectField>
-      <SelectField
-        id={id("severity")}
-        label="Критичность"
-        value={filters.severity}
-        onChange={(value) => onChange("severity", value)}
-      >
-        <MenuItem value="">Любая</MenuItem>
-        {dictionaries.severities.map((option) => (
-          <MenuItem
-            key={option.value}
-            value={option.value}
-          >
-            {option.label}
-          </MenuItem>
-        ))}
-      </SelectField>
-      <SelectField
-        id={id("issue")}
-        label="Причина"
-        value={filters.issue}
-        onChange={(value) => onChange("issue", value)}
-      >
-        <MenuItem value="">Все причины</MenuItem>
-        {dictionaries.issues.map((issue) => (
-          <MenuItem
-            key={issue.id ?? issue.code}
-            value={issue.code}
-          >
-            {issue.name}
-          </MenuItem>
-        ))}
-      </SelectField>
-      <SelectField
-        id={id("has-photo")}
-        label="Фото"
-        value={filters.has_photo}
-        onChange={(value) => onChange("has_photo", value)}
-      >
-        <MenuItem value="">Неважно</MenuItem>
-        <MenuItem value="1">Есть фото</MenuItem>
-        <MenuItem value="0">Без фото</MenuItem>
-      </SelectField>
-      <TextField
-        id={id("search")}
-        label="Поиск"
-        placeholder="ID или текст отзыва"
-        size="small"
-        value={filters.search}
-        onChange={(event) => onChange("search", event.target.value)}
-        inputProps={{ "aria-label": "Поиск по отзывам и инцидентам" }}
-        sx={{
-          ...fieldSx,
-          gridColumn: compact ? "auto" : "span 2",
-        }}
-      />
-      <Box
-        sx={{
-          display: "flex",
-          gap: 1,
-          gridColumn: "auto",
-          justifyContent: "flex-end",
-        }}
-      >
-        <Button
+        <JacoButton
           type="button"
-          variant="outlined"
+          tone="secondary"
           startIcon={<RestartAltIcon />}
           onClick={onReset}
-          sx={{ minHeight: 40, borderRadius: "12px", textTransform: "none" }}
+          sx={{ flex: 1, minWidth: 0 }}
         >
           Сбросить
-        </Button>
-        <Button
+        </JacoButton>
+        <JacoButton
           type="submit"
-          variant="contained"
           startIcon={<FilterAltOutlinedIcon />}
-          sx={{
-            minHeight: 40,
-            borderRadius: "12px",
-            textTransform: "none",
-            boxShadow: "none",
-          }}
+          sx={{ flex: 1, minWidth: 0 }}
         >
           Применить
-        </Button>
-      </Box>
-    </Box>
+        </JacoButton>
+      </Grid>
+    </Grid>
   );
 }

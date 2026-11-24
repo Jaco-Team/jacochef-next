@@ -471,7 +471,8 @@ class StatSale_Tab_Sett extends React.Component {
   };
 
   render() {
-    const { activeTab, fullScreen, openAlert, dynamics, dynamics_pay } = this.props;
+    const { activeTab, fullScreen, openAlert, dynamics, dynamics_pay, dynamics_pay_by_source } =
+      this.props;
     const { active_tab, rows, points, rows_clietns } = this.state;
     const settingsTabIndexes = this.getSettingsTabIndexes();
 
@@ -617,6 +618,7 @@ class StatSale_Tab_Sett extends React.Component {
                 >
                   <StatSale_Tab_Sett_Dynamics_Pay
                     dynamics={dynamics_pay || []}
+                    dynamicsBySource={dynamics_pay_by_source || {}}
                     points={this.props.pointsCurrent}
                     getDataSetOne={this.props.getDataSetOne}
                     saveDynamics={this.save_dynamics_pay}
@@ -710,7 +712,11 @@ class StatSale_Tab_Sett extends React.Component {
                                     <Tooltip
                                       key={k}
                                       title={
-                                        <Typography color="inherit">
+                                        <Typography
+                                          sx={{
+                                            color: "inherit",
+                                          }}
+                                        >
                                           Редактировать данные в столбце
                                         </Typography>
                                       }
@@ -796,7 +802,11 @@ class StatSale_Tab_Sett extends React.Component {
                                   <Tooltip
                                     key={k}
                                     title={
-                                      <Typography color="inherit">
+                                      <Typography
+                                        sx={{
+                                          color: "inherit",
+                                        }}
+                                      >
                                         Редактировать данные в ячейке
                                       </Typography>
                                     }

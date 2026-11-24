@@ -69,12 +69,13 @@ const QualityByPointsTable = ({ data }) => {
       {/* Заголовок */}
       <Typography
         variant="h6"
-        fontWeight="600"
         gutterBottom
+        sx={{
+          fontWeight: "600",
+        }}
       >
         Качество по точкам
       </Typography>
-
       {/* Таблица */}
       <TableContainer>
         <Table>

@@ -48,6 +48,105 @@ import ReceptModuleCategoriesTab, {
   getCategoryUsageCount,
 } from "@/components/recept/ReceptModuleCategoriesTab";
 
+const russianWordEndings = [
+  "иями",
+  "ями",
+  "ами",
+  "его",
+  "ого",
+  "ему",
+  "ому",
+  "иях",
+  "ах",
+  "ях",
+  "ую",
+  "юю",
+  "ая",
+  "яя",
+  "ое",
+  "ее",
+  "ые",
+  "ие",
+  "ый",
+  "ий",
+  "ой",
+  "ам",
+  "ям",
+  "ом",
+  "ем",
+  "ов",
+  "ев",
+  "ей",
+  "ы",
+  "и",
+  "а",
+  "я",
+  "у",
+  "ю",
+  "е",
+  "о",
+];
+
+function normalizeCompositionSearchText(value) {
+  return String(value ?? "")
+    .toLocaleLowerCase("ru")
+    .replaceAll("ё", "е")
+    .replace(/[^a-zа-я0-9]+/gi, " ")
+    .trim()
+    .replace(/\s+/g, " ");
+}
+
+function getRussianWordStem(word) {
+  for (const ending of russianWordEndings) {
+    if (word.endsWith(ending) && word.length - ending.length >= 3) {
+      return word.slice(0, -ending.length);
+    }
+  }
+
+  return word;
+}
+
+function getCompositionMatchScore(option, query) {
+  const name = normalizeCompositionSearchText(option?.name);
+  if (!name || !query) return 0;
+  if (name === query) return 0;
+  if (name.startsWith(`${query} `)) return 1;
+
+  const words = name.split(" ");
+  const queryWords = query.split(" ");
+  if (queryWords.every((queryWord) => words.includes(queryWord))) return 2;
+
+  const wordStems = words.map(getRussianWordStem);
+  if (queryWords.every((queryWord) => wordStems.includes(getRussianWordStem(queryWord)))) return 3;
+  if (queryWords.every((queryWord) => words.some((word) => word.startsWith(queryWord)))) return 4;
+  if (name.includes(query)) return 5;
+  if (queryWords.every((queryWord) => words.some((word) => word.includes(queryWord)))) return 6;
+
+  return Number.POSITIVE_INFINITY;
+}
+
+function filterCompositionOptions(options, { inputValue }) {
+  const query = normalizeCompositionSearchText(inputValue);
+  if (!query) return options.slice(0, 100);
+
+  const matches = options
+    .map((option, index) => ({ option, index, score: getCompositionMatchScore(option, query) }))
+    .filter((match) => Number.isFinite(match.score));
+  const bestScore = Math.min(...matches.map((match) => match.score));
+  const maximumScore = bestScore <= 3 ? 3 : 6;
+
+  return matches
+    .filter((match) => match.score <= maximumScore)
+    .sort(
+      (left, right) =>
+        left.score - right.score ||
+        String(left.option?.name ?? "").localeCompare(String(right.option?.name ?? ""), "ru") ||
+        left.index - right.index,
+    )
+    .slice(0, 100)
+    .map((match) => match.option);
+}
+
 const SwapIcon = ({ size = 24, className = "" }) => (
   <svg
     width={size}
@@ -1687,6 +1786,7 @@ class ReceptModule_Modal extends React.Component {
                           <MyAutocomplite
                             multiple={false}
                             optionKey="id_name"
+                            filterOptions={filterCompositionOptions}
                             getOptionKey={(option) => `${option?.id}-${option?.name}`}
                             data={all_pf_list}
                             onFocus={() => {
@@ -1765,6 +1865,7 @@ class ReceptModule_Modal extends React.Component {
                           multiple={false}
                           data={all_pf_list}
                           optionKey="id_name"
+                          filterOptions={filterCompositionOptions}
                           getOptionLabel={(option) => option?.name || ""}
                           disabledItemsFocusable={true}
                           value={null}

@@ -47,11 +47,9 @@ import TableContainer from "@mui/material/TableContainer";
 import Checkbox from "@mui/material/Checkbox";
 import { formatDate } from "@/src/helpers/ui/formatDate";
 import DriversMap from "@/ui/DriversMap/DriversMap";
-import { MyAutocomplite, MyCheckBox, MyDatePickerNew, MySelect, MyTextInput } from "@/ui/Forms";
-import { styled, Switch } from "@mui/material";
+import { MyAutocomplite, MyDatePickerNew, MySelect, MyTextInput } from "@/ui/Forms";
+import { styled } from "@mui/material";
 import ArrowBackIosNewIcon from "@mui/icons-material/ArrowBackIosNew";
-import ReportProblemOutlinedIcon from "@mui/icons-material/ReportProblemOutlined";
-import { ModalProblems } from "@/components/concenter/ModalProblems";
 
 // Функция для вычисления высоты экрана
 function convertPercentageToPixels(percent) {
@@ -88,71 +86,6 @@ const Accordion2 = styled((props) => (
   },
 }));
 
-const IOSSwitch = styled((props) => (
-  <Switch
-    focusVisibleClassName=".Mui-focusVisible"
-    disableRipple
-    {...props}
-  />
-))(({ theme }) => ({
-  width: 42,
-  height: 26,
-  marginRight: 5,
-  padding: 0,
-  "& .MuiSwitch-switchBase": {
-    padding: 0,
-    margin: 2,
-    transitionDuration: "300ms",
-    "&.Mui-checked": {
-      transform: "translateX(16px)",
-      color: "#fff",
-      "& + .MuiSwitch-track": {
-        backgroundColor: "#e82d2d",
-        opacity: 1,
-        border: 0,
-        ...theme.applyStyles("dark", {
-          backgroundColor: "#ec1919",
-        }),
-      },
-      "&.Mui-disabled + .MuiSwitch-track": {
-        opacity: 0.5,
-      },
-    },
-    "&.Mui-focusVisible .MuiSwitch-thumb": {
-      color: "#ec1919",
-      border: "6px solid #fff",
-    },
-    "&.Mui-disabled .MuiSwitch-thumb": {
-      color: theme.palette.grey[100],
-      ...theme.applyStyles("dark", {
-        color: theme.palette.grey[600],
-      }),
-    },
-    "&.Mui-disabled + .MuiSwitch-track": {
-      opacity: 0.7,
-      ...theme.applyStyles("dark", {
-        opacity: 0.3,
-      }),
-    },
-  },
-  "& .MuiSwitch-thumb": {
-    boxSizing: "border-box",
-    width: 22,
-    height: 22,
-  },
-  "& .MuiSwitch-track": {
-    borderRadius: 26 / 2,
-    backgroundColor: "#E9E9EA",
-    opacity: 1,
-    transition: theme.transitions.create(["background-color"], {
-      duration: 500,
-    }),
-    ...theme.applyStyles("dark", {
-      backgroundColor: "#39393D",
-    }),
-  },
-}));
-
 class Concenter_ extends React.Component {
   constructor(props) {
     super(props);
@@ -164,23 +97,12 @@ class Concenter_ extends React.Component {
       acces: {},
       err_info: {},
       sort: false,
-      modalDialogProblem: false,
       modalDialog: false,
       modalDialogDel: false,
       modalDialogDriver: false,
       modalDialogDelDriver: false,
       confirmDialog: false,
       confirmDialogDel: false,
-      checkedKey: {},
-      current_name: "",
-      problem_arr: [],
-      checkedDiffOrder: false,
-      checkAddress: false,
-      orderDiff: "",
-      positions: [],
-      address: "",
-      comment: "",
-      point: {},
       cities: [],
       city_id: "",
       text: "",
@@ -193,8 +115,6 @@ class Concenter_ extends React.Component {
       orders: [],
       ordersRender: [],
       showOrder: null,
-      checkedError: false,
-
       radiogroup_options: [
         { id: "0", label: "Решили отредактировать заказ", value: 0 },
         { id: "1", label: "Не устраивает время ожидания", value: 0 },
@@ -207,37 +127,39 @@ class Concenter_ extends React.Component {
 
       number: "",
       addr: "",
+      drivers: [],
+      driver: null,
     };
   }
 
   async componentDidMount() {
     let data = await this.getData("get_all");
-    const checked = localStorage.getItem("checkedError");
-    console.log(checked === "1");
-    this.setState({
-      checkedError: checked === "1",
-    });
+    if (!data) return;
 
-    let need_points = data.points.filter(
-      (item) => parseInt(item.city_id) == parseInt(data.cities[0].id),
+    const cities = Array.isArray(data.cities) ? data.cities : [];
+    const points = Array.isArray(data.points) ? data.points : [];
+    const city_id = cities[0]?.id ?? "";
+    const need_points = city_id === ""
+      ? []
+      : points.filter((item) => Number(item.city_id) === Number(city_id));
+    const point_id = Number(need_points[0]?.id) || 0;
+
+    this.setState(
+      {
+        module_name: data.module_info?.name ?? "",
+        cities,
+        city_id,
+        point_list: points,
+        need_point_list: need_points,
+        point_id,
+        acces: data.acces,
+      },
+      () => {
+        if (point_id > 0) this.getOrders();
+      },
     );
 
-    this.setState({
-      module_name: data.module_info.name,
-      cities: data.cities,
-      city_id: data.cities[0].id,
-      checkedKey: {},
-      point_list: data.points,
-      need_point_list: need_points,
-      point_id: parseInt(need_points[0].id),
-      acces: data.acces,
-    });
-
-    document.title = data.module_info.name;
-
-    setTimeout(() => {
-      this.getOrders();
-    }, 300);
+    if (data.module_info?.name) document.title = data.module_info.name;
   }
 
   getData = (method, data = {}) => {
@@ -259,62 +181,104 @@ class Concenter_ extends React.Component {
   };
 
   changeCity(event) {
-    this.setState({
-      number: "",
-      addr: "",
-    });
-
-    let data = event.target.value;
-
-    let need_points = this.state.point_list?.filter(
-      (item, key) => parseInt(item.city_id) == parseInt(data),
+    const city_id = event.target.value;
+    const need_points = this.state.point_list.filter(
+      (item) => Number(item.city_id) === Number(city_id),
     );
+    const point_id = Number(need_points[0]?.id) || 0;
 
-    this.setState({
-      city_id: data,
-      need_point_list: need_points,
-      point_id: parseInt(need_points[0]?.id),
-      indexTab: 0,
-    });
-
-    setTimeout(() => {
-      this.getOrders();
-    }, 300);
+    this.setState(
+      {
+        number: "",
+        addr: "",
+        driver: null,
+        drivers: [],
+        city_id,
+        need_point_list: need_points,
+        point_id,
+        indexTab: 0,
+        orders: [],
+        ordersRender: [],
+        err_info: {},
+      },
+      () => {
+        if (point_id > 0) this.getOrders();
+      },
+    );
   }
 
   async changePoint(point_id, index) {
     //let point_id = event.target.id;
     //point_id = point_id.split('-')[2]
 
-    this.setState({
-      point_id: point_id,
-      indexTab: index,
-    });
+    const selectedPointId = Number(point_id);
+    if (!this.state.need_point_list.some((item) => Number(item.id) === selectedPointId)) return;
 
-    setTimeout(() => {
-      this.getOrders();
-    }, 300);
+    this.setState(
+      {
+        point_id: selectedPointId,
+        indexTab: index,
+        orders: [],
+        ordersRender: [],
+        err_info: {},
+      },
+      () => this.getOrders(),
+    );
   }
 
   async getOrders() {
+    const point_id = Number(this.state.point_id);
+    if (
+      !Number.isInteger(point_id) ||
+      point_id <= 0 ||
+      !this.state.need_point_list.some((item) => Number(item.id) === point_id)
+    ) {
+      this.setState({ orders: [], ordersRender: [], err_info: {} });
+      return;
+    }
+
     let data = {
-      point_id: this.state.point_id,
+      point_id,
       date: dayjs(this.state.date).format("YYYY-MM-DD"),
       sort: this.state.sort,
     };
 
     let res = await this.getData("get_orders", data);
+    if (
+      point_id !== Number(this.state.point_id) ||
+      data.date !== dayjs(this.state.date).format("YYYY-MM-DD")
+    ) return;
 
-    // console.log( res )
+    const orders = Array.isArray(res?.orders) ? res.orders : [];
+    const drivers = this.collectDrivers(orders);
+    const driver = drivers.find((item) => item.id === this.state.driver?.id) ?? null;
 
-    this.setState({
-      orders: res.orders,
-      err_info: res.err_info,
+    this.setState(
+      {
+        orders,
+        drivers,
+        driver,
+        err_info: res?.err_info ?? {},
+      },
+      () => this.filterNumber(),
+    );
+  }
+
+  collectDrivers(orders) {
+    const drivers = new Map();
+
+    orders.forEach((order) => {
+      const id = Number(order.driver_id);
+      if (id > 0 && !drivers.has(id)) {
+        drivers.set(id, { id, name: order.driver || String(id) });
+      }
     });
 
-    setTimeout(() => {
-      this.filterNumber();
-    }, 300);
+    return [...drivers.values()].sort((a, b) => a.name.localeCompare(b.name, "ru"));
+  }
+
+  changeDriver(event, value) {
+    this.setState({ driver: value ?? null }, () => this.filterNumber());
   }
 
   btnGetOrders() {
@@ -527,60 +491,18 @@ class Concenter_ extends React.Component {
       );
     }
 
+    if (this.state.driver && this.hasAccess(this.state.acces?.driver_access)) {
+      renderOrders = renderOrders.filter(
+        (item) => Number(item.driver_id) === this.state.driver.id,
+      );
+    }
+
     this.setState({
       ordersRender: renderOrders,
     });
   }
 
   hasAccess = (flag) => flag === "1" || flag === 1;
-
-  onError = () => {
-    const checked = !this.state.checkedError === true ? "1" : "0";
-    localStorage.setItem("checkedError", checked);
-    this.setState({
-      checkedError: !this.state.checkedError,
-    });
-  };
-
-  openProblems = () => {
-    const positions = [];
-    this.state.showOrder.order_items_for.map((item, key) => {
-      if (this.state.checkedKey[key]) {
-        positions.push(item);
-      }
-    });
-    this.setState({ positions: positions, modalDialogProblem: true });
-  };
-
-  saveProblems = (solutions) => {
-    const positions = this.state.positions;
-    const problem_arr = [...this.state.problem_arr];
-    positions.map((pos) => {
-      const existingIndex = problem_arr.findIndex((item) => item.id === pos.id);
-
-      if (existingIndex !== -1) {
-        // Обновляем существующую запись
-        problem_arr[existingIndex] = {
-          ...problem_arr[existingIndex],
-          problem_name: solutions.value,
-          problem_comment: solutions.comment,
-          problem_solution: solutions.solution,
-          previewUrl: solutions.previewUrl,
-        };
-      } else {
-        // Добавляем новую запись
-        problem_arr.push({
-          ...pos,
-          problem_name: solutions.value,
-          problem_comment: solutions.comment,
-          problem_solution: solutions.solution,
-          previewUrl: solutions.previewUrl,
-        });
-      }
-    });
-
-    this.setState({ problem_arr: problem_arr, modalDialogProblem: false, checkedKey: {} });
-  };
 
   render() {
     const { acces, err_info } = this.state;
@@ -596,7 +518,7 @@ class Concenter_ extends React.Component {
           <Dialog
             open={!!this.state.modalDialog}
             onClose={() => {
-              this.setState({ modalDialog: false, checkedKey: {} });
+              this.setState({ modalDialog: false });
             }}
             aria-labelledby="alert-dialog-title"
             aria-describedby="alert-dialog-description"
@@ -618,7 +540,7 @@ class Concenter_ extends React.Component {
             </DialogTitle>
             <IconButton
               onClick={() => {
-                this.setState({ modalDialog: false, checkedKey: {} });
+                this.setState({ modalDialog: false });
               }}
               sx={(theme) => ({
                 position: "absolute",
@@ -629,82 +551,6 @@ class Concenter_ extends React.Component {
             >
               <CloseIcon />
             </IconButton>
-            {this.hasAccess(acces?.err_order_mod_access) ? (
-              <div
-                style={{
-                  backgroundColor: "#f5f5f8",
-                  margin: "10px",
-                  display: "flex",
-                  borderRadius: "12px",
-                  flexDirection: "row",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                  padding: "10px",
-                }}
-              >
-                <div
-                  style={{
-                    backgroundColor: "#f5f5f8",
-                    display: "flex",
-                    flexDirection: "row",
-                    alignItems: "center",
-                  }}
-                >
-                  <ReportProblemOutlinedIcon
-                    style={{ marginLeft: "10px", marginRight: "10px", color: "red" }}
-                  />
-                  <span>Режим описания ошибок</span>
-                </div>
-                <FormControlLabel
-                  control={
-                    <IOSSwitch
-                      onClick={this.onError}
-                      checked={this.state.checkedError}
-                      color="secondary"
-                      size="medium"
-                    />
-                  }
-                  labelPlacement="right"
-                  style={{ marginLeft: "auto" }}
-                />
-              </div>
-            ) : null}
-            {this.state.checkedError && this.hasAccess(acces?.err_order_mod_access) ? (
-              <Grid
-                container
-                spacing={0}
-                style={{ padding: "12px" }}
-              >
-                <Grid
-                  style={{ marginBottom: "12px" }}
-                  size={{
-                    xs: 12,
-                  }}
-                >
-                  <MyCheckBox
-                    label="Привезли другой заказ"
-                    value={this.state.checkedDiffOrder}
-                    func={() => this.setState({ checkedDiffOrder: !this.state.checkedDiffOrder })}
-                  />
-                  {this.state.checkedDiffOrder ? (
-                    <div style={{ display: "flex", alignItems: "center" }}>
-                      <MyTextInput
-                        placeholder={"Введите номер привезенного заказа"}
-                        label=""
-                        value={this.state.orderDiff}
-                        func={(e) => this.setState({ orderDiff: e.target.value })}
-                      />
-                      <Button
-                        variant="contained"
-                        style={{ marginLeft: "12px" }}
-                      >
-                        Сохранить
-                      </Button>
-                    </div>
-                  ) : null}
-                </Grid>
-              </Grid>
-            ) : null}
             <DialogContent>
               <Grid
                 container
@@ -932,15 +778,6 @@ class Concenter_ extends React.Component {
                     </Grid>
                   )}
                 </Grid>
-                <ModalProblems
-                  positions={this.state.positions}
-                  problem_arr={this.state.problem_arr}
-                  open={this.state.modalDialogProblem}
-                  current_name={this.state.current_name}
-                  onClose={() => this.setState({ modalDialogProblem: false })}
-                  title={`Проблема с ${Object.entries(this.state.checkedKey).length} позициями`}
-                  save={this.saveProblems}
-                />
                 <Grid
                   size={{
                     xs: 12,
@@ -956,205 +793,83 @@ class Concenter_ extends React.Component {
                     }}
                   >
                     <h3>Состав заказа</h3>
-                    {Object.entries(this.state.checkedKey).filter((item) => item[1]).length ? (
-                      <Button
-                        variant="contained"
-                        onClick={this.openProblems}
-                      >
-                        Проблема для{" "}
-                        {Object.entries(this.state.checkedKey).filter((item) => item[1]).length}{" "}
-                        позиций
-                      </Button>
-                    ) : null}
                   </div>
                   <div>
-                    {!this.state.checkedError ? (
-                      <Table
-                        size={"small"}
-                        style={{
-                          marginTop: 15,
-                          borderSpacing: "0 6px",
-                          borderCollapse: "separate",
-                        }}
-                      >
-                        <TableBody>
-                          {this.state.showOrder.order_items.map((item, key) => (
-                            <TableRow
-                              key={key}
-                              style={{
-                                border: "none",
-                                backgroundColor: "#f6f6f6",
-                                borderRadius: "12px",
-                              }}
-                            >
-                              <TableCell
-                                style={{
-                                  borderRadius: "10px 0 0 10px",
-                                  border: "none",
-                                  marginBottom: "10px",
-                                  height: "32px",
-                                }}
-                              >
-                                <span>{item.name}</span>
-                              </TableCell>
-                              <TableCell
-                                style={{ border: "none", marginBottom: "10px", height: "32px" }}
-                              >
-                                {item.count}
-                              </TableCell>
-                              <TableCell
-                                style={{
-                                  borderRadius: "0  10px 10px 0",
-                                  border: "none",
-                                  marginBottom: "10px",
-                                  height: "32px",
-                                }}
-                              >
-                                {item.price} р
-                              </TableCell>
-                            </TableRow>
-                          ))}
-                        </TableBody>
-                        <TableFooter>
-                          <TableRow>
+                    <Table
+                      size={"small"}
+                      style={{
+                        marginTop: 15,
+                        borderSpacing: "0 6px",
+                        borderCollapse: "separate",
+                      }}
+                    >
+                      <TableBody>
+                        {this.state.showOrder.order_items.map((item, key) => (
+                          <TableRow
+                            key={key}
+                            style={{
+                              border: "none",
+                              backgroundColor: "#f6f6f6",
+                              borderRadius: "12px",
+                            }}
+                          >
                             <TableCell
                               style={{
-                                fontWeight: "bold",
-                                color: "#000",
+                                borderRadius: "10px 0 0 10px",
                                 border: "none",
-                                float: "right",
+                                marginBottom: "10px",
+                                height: "32px",
                               }}
                             >
-                              Сумма закза
+                              <span>{item.name}</span>
+                            </TableCell>
+                            <TableCell
+                              style={{ border: "none", marginBottom: "10px", height: "32px" }}
+                            >
+                              {item.count}
                             </TableCell>
                             <TableCell
                               style={{
+                                borderRadius: "0  10px 10px 0",
                                 border: "none",
-                              }}
-                            ></TableCell>
-                            <TableCell
-                              style={{
-                                color: "#000",
-                                border: "none",
+                                marginBottom: "10px",
+                                height: "32px",
                               }}
                             >
-                              {this.state.showOrder.order.sum_order} р
+                              {item.price} р
                             </TableCell>
                           </TableRow>
-                        </TableFooter>
-                      </Table>
-                    ) : (
-                      <Table
-                        size={"small"}
-                        style={{
-                          marginTop: 15,
-                          borderSpacing: "0 6px",
-                          borderCollapse: "separate",
-                        }}
-                      >
-                        <TableBody>
-                          {this.state.showOrder.order_items_for.map((item, key) => (
-                            <TableRow
-                              key={key}
-                              style={{
-                                border: "none",
-                                backgroundColor: "#f6f6f6",
-                                borderRadius: "12px",
-                                cursor: "pointer",
-                              }}
-                              onClick={(e) => {
-                                if (
-                                  e.target.type === "checkbox" ||
-                                  e.target.closest('input[type="checkbox"]')
-                                ) {
-                                  return;
-                                }
-                                this.setState(
-                                  {
-                                    checkedKey: {
-                                      ...{},
-                                      [key]: true,
-                                    },
-                                    current_name: item.id,
-                                  },
-                                  () => {
-                                    this.openProblems();
-                                  },
-                                );
-                              }}
-                            >
-                              <TableCell
-                                style={{
-                                  borderRadius: "10px 0 0 10px",
-                                  border: "none",
-                                  marginBottom: "10px",
-                                }}
-                              >
-                                <span style={{ display: "flex", alignItems: "center" }}>
-                                  {this.state.checkedError ? (
-                                    <span>
-                                      <MyCheckBox
-                                        value={this.state.checkedKey[key] === true}
-                                        func={(e) =>
-                                          this.setState({
-                                            checkedKey: {
-                                              ...this.state.checkedKey,
-                                              [key]: e.target.checked,
-                                              current_name: "",
-                                            },
-                                          })
-                                        }
-                                        style={{ padding: 0.5 }}
-                                      />
-                                    </span>
-                                  ) : null}
-                                  <div
-                                    style={{
-                                      display: "flex",
-                                      flexDirection: "column",
-                                      justifyContent: "flex-start",
-                                    }}
-                                  >
-                                    <span>{item.name}</span>
-                                    {this.state.problem_arr.find((it) => it?.id === item.id)
-                                      ?.problem_name ? (
-                                      <span
-                                        style={{
-                                          color: "#fff",
-                                          border: "1px solid red",
-                                          borderRadius: "12px",
-                                          backgroundColor: "#e12a58",
-                                          padding: "2px 10px",
-                                          width: "max-content",
-                                        }}
-                                        className="special-badge"
-                                      >
-                                        {
-                                          this.state.problem_arr.find((it) => it?.id === item.id)
-                                            ?.problem_name
-                                        }
-                                      </span>
-                                    ) : null}
-                                  </div>
-                                </span>
-                              </TableCell>
-                              <TableCell
-                                style={{
-                                  borderRadius: "0  10px 10px 0",
-                                  border: "none",
-                                  marginBottom: "10px",
-                                  cursor: "pointer",
-                                  height: "32px",
-                                }}
-                              >
-                                {item.price} р.
-                              </TableCell>
-                            </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
-                    )}
-                    {this.hasAccess(acces?.disband_access) && !this.state.checkedError && (
+                        ))}
+                      </TableBody>
+                      <TableFooter>
+                        <TableRow>
+                          <TableCell
+                            style={{
+                              fontWeight: "bold",
+                              color: "#000",
+                              border: "none",
+                              float: "right",
+                            }}
+                          >
+                            Сумма закза
+                          </TableCell>
+                          <TableCell
+                            style={{
+                              border: "none",
+                            }}
+                          ></TableCell>
+                          <TableCell
+                            style={{
+                              color: "#000",
+                              border: "none",
+                            }}
+                          >
+                            {this.state.showOrder.order.sum_order} р
+                          </TableCell>
+                        </TableRow>
+                      </TableFooter>
+                    </Table>
+                    {this.hasAccess(acces?.disband_access) && (
                       <Accordion
                         style={{
                           width: "98%",
@@ -1240,60 +955,6 @@ class Concenter_ extends React.Component {
                       </Accordion>
                     )}
                 </Grid>
-                {this.state.problem_arr.length &&
-                this.state.problem_arr.find((item) => item?.problem_id === 3)?.problem_id ? (
-                  <Grid
-                    size={{
-                      xs: 12,
-                    }}
-                  >
-                    <MyCheckBox
-                      label="На тот же адрес"
-                      value={this.state.checkAddress}
-                      func={() => {
-                        if (!this.state.checkAddress === true) {
-                          this.setState({
-                            checkAddress: true,
-                            address: this.state.showOrder.order.type_order_addr_new,
-                          });
-                        } else {
-                          this.setState({
-                            checkAddress: false,
-                            address: "",
-                          });
-                        }
-                      }}
-                    />
-                    <MyAutocomplite
-                      multiple={false}
-                      data={this.state.point_list}
-                      value={this.state.point}
-                      func={(e, value) => this.setState({ point: e })}
-                      style={{ marginBottom: "12px" }}
-                      label="Выбрать кафе"
-                    />
-                    <MyTextInput
-                      style={{ marginBottom: "12px" }}
-                      placeholder={"Введите номер привезенного заказа"}
-                      label="Или введите адрес"
-                      value={this.state.address}
-                    />
-                    <MyTextInput
-                      multiline={true}
-                      rows={4}
-                      style={{ marginBottom: "12px" }}
-                      value={this.state.comment}
-                      func={(e) => this.setState({ comment: e.target.value })}
-                      label={"Комментарий ко всему заказу"}
-                    />
-                    <Button
-                      variant="contained"
-                      style={{ marginTop: "12px" }}
-                    >
-                      Сохранить
-                    </Button>
-                  </Grid>
-                ) : null}
               </Grid>
             </DialogContent>
 
@@ -1629,6 +1290,23 @@ class Concenter_ extends React.Component {
             />
           </Grid>
 
+          {this.hasAccess(this.state.acces?.driver_access) && (
+            <Grid
+              size={{
+                xs: 12,
+                sm: 3,
+              }}
+            >
+              <MyAutocomplite
+                label="Водитель"
+                multiple={false}
+                data={this.state.drivers}
+                value={this.state.driver}
+                func={this.changeDriver.bind(this)}
+              />
+            </Grid>
+          )}
+
           <Grid
             size={{
               xs: 12,
@@ -1809,6 +1487,9 @@ class Concenter_ extends React.Component {
                           <TableCell>Время по проге/Реал время ДОСТАВКИ</TableCell>
                         )}
 
+                        {this.hasAccess(acces?.driver_take_time_access) && (
+                          <TableCell>Курьер взял заказ</TableCell>
+                        )}
                         <TableCell>Тип</TableCell>
                         <TableCell>Статус</TableCell>
 
@@ -1974,6 +1655,11 @@ class Concenter_ extends React.Component {
                             </TableCell>
                           )}
 
+                          {this.hasAccess(acces?.driver_take_time_access) && (
+                            <TableCell style={{ color: "inherit", fontWeight: "inherit" }}>
+                              {item.driver_take_time}
+                            </TableCell>
+                          )}
                           <TableCell style={{ color: "inherit", fontWeight: "inherit" }}>
                             {item.type_order}
                           </TableCell>

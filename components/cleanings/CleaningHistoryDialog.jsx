@@ -1,6 +1,6 @@
-import { Box, CircularProgress, DialogContent, Typography } from "@mui/material";
+import { Box, CircularProgress, Typography } from "@mui/material";
 import HistoryLog from "@/ui/history/HistoryLog";
-import MyModal from "@/ui/MyModal";
+import { JacoModal, uiColors, uiTypography } from "@/design-system/shared/ui";
 
 export default function CleaningHistoryDialog({
   open,
@@ -8,31 +8,35 @@ export default function CleaningHistoryDialog({
   history = [],
   loading = false,
   onClose,
+  title = "История изменений",
+  dateLabel,
   hiddenFields = [],
 }) {
   return (
-    <MyModal
+    <JacoModal
       open={open}
       onClose={onClose}
+      title={title}
       maxWidth="md"
-      title="История изменений"
     >
-      <DialogContent sx={{ pt: 0, pb: 2 }}>
-        <Typography sx={{ color: "text.secondary", fontSize: 14, mb: 2 }}>
-          {item?.name || ""}
+      {item?.name ? (
+        <Typography sx={{ ...uiTypography.label, color: uiColors.textMuted, mb: 1.5 }}>
+          {item.name}
         </Typography>
-        {loading ? (
-          <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}>
-            <CircularProgress size={28} />
-          </Box>
-        ) : (
-          <HistoryLog
-            history={history}
-            defaultExpanded
-            hiddenFields={hiddenFields}
-          />
-        )}
-      </DialogContent>
-    </MyModal>
+      ) : null}
+      {loading ? (
+        <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}>
+          <CircularProgress size={28} />
+        </Box>
+      ) : (
+        <HistoryLog
+          history={history}
+          title={title}
+          dateLabel={dateLabel}
+          hiddenFields={hiddenFields}
+          defaultExpanded
+        />
+      )}
+    </JacoModal>
   );
 }

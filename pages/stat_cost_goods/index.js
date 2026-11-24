@@ -36,8 +36,8 @@ import DialogActions from "@mui/material/DialogActions";
 import PriceChart from "@/components/stat_cost_goods/PriceChart";
 import TabContext from "@mui/lab/TabContext";
 import Box from "@mui/material/Box";
-import TabList from "@mui/lab/TabList";
 import Tab from "@mui/material/Tab";
+import Tabs from "@mui/material/Tabs";
 import TabPanel from "@mui/lab/TabPanel";
 import CloseIcon from "@mui/icons-material/Close";
 import DehazeIcon from "@mui/icons-material/Dehaze";
@@ -75,7 +75,8 @@ const ModalGraph = ({ open, onClose, data, title = "Графики" }) => {
         >
           <TabContext value={tab}>
             <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
-              <TabList
+              <Tabs
+                value={tab}
                 onChange={(event, value) => setTab(value)}
                 variant="fullWidth"
               >
@@ -87,7 +88,7 @@ const ModalGraph = ({ open, onClose, data, title = "Графики" }) => {
                   label="График процентного изменения цены"
                   value="2"
                 />
-              </TabList>
+              </Tabs>
               <TabPanel value="1">
                 <PriceChart data={data} />
               </TabPanel>

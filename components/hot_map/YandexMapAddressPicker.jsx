@@ -283,7 +283,9 @@ const YandexMapAddressPicker = ({
       {allowMultiple && (
         <Stack
           direction="row"
-          justifyContent="flex-end"
+          sx={{
+            justifyContent: "flex-end",
+          }}
         >
           <Tooltip title={`Можно добавить до ${maxMarkers} точек`}>
             <Chip
@@ -294,7 +296,6 @@ const YandexMapAddressPicker = ({
           </Tooltip>
         </Stack>
       )}
-
       {/* Карта */}
       <Paper
         elevation={3}
@@ -336,7 +337,9 @@ const YandexMapAddressPicker = ({
           >
             <Typography
               variant="caption"
-              color="text.secondary"
+              sx={{
+                color: "text.secondary",
+              }}
             >
               {allowMultiple
                 ? "Кликните на карте для добавления точек. Можно перетаскивать метки."
@@ -345,7 +348,6 @@ const YandexMapAddressPicker = ({
           </Box>
         )}
       </Paper>
-
       {/* Список выбранных точек */}
       {allowMultiple && selectedAddresses.length > 0 && (
         <Paper
@@ -354,9 +356,11 @@ const YandexMapAddressPicker = ({
         >
           <Stack
             direction="row"
-            justifyContent="space-between"
-            alignItems="center"
-            mb={2}
+            sx={{
+              justifyContent: "space-between",
+              alignItems: "center",
+              mb: 2,
+            }}
           >
             <Typography variant="h6">Выбранные точки ({selectedAddresses.length})</Typography>
             <Button
@@ -407,7 +411,9 @@ const YandexMapAddressPicker = ({
                     secondary={
                       <Typography
                         variant="caption"
-                        color="text.secondary"
+                        sx={{
+                          color: "text.secondary",
+                        }}
                       >
                         Координаты: {address.coordinates[0].toFixed(6)},{" "}
                         {address.coordinates[1].toFixed(6)}
@@ -421,7 +427,6 @@ const YandexMapAddressPicker = ({
           </List>
         </Paper>
       )}
-
       {!allowMultiple && selectedAddress && (
         <Alert
           severity="success"
@@ -440,7 +445,9 @@ const YandexMapAddressPicker = ({
           </Typography>
           <Typography
             variant="caption"
-            color="text.secondary"
+            sx={{
+              color: "text.secondary",
+            }}
           >
             Координаты: {selectedAddress.coordinates[0].toFixed(6)},{" "}
             {selectedAddress.coordinates[1].toFixed(6)}

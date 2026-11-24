@@ -4,46 +4,61 @@ import {
   AccordionDetails,
   AccordionSummary,
   Box,
-  Button,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
   Grid,
-  Paper,
   Table,
   TableBody,
   TableCell,
   TableContainer,
   TableHead,
   TableRow,
-  TextField,
   Typography,
 } from "@mui/material";
-import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
-import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
+import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutlined";
+import DeleteOutlineIcon from "@mui/icons-material/DeleteOutlined";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
-import RefreshIcon from "@mui/icons-material/Refresh";
-import dayjs from "dayjs";
-import { MyDatePickerNew, MySelect } from "@/ui/Forms";
+import {
+  JacoButton,
+  JacoDatePicker,
+  JacoModal,
+  JacoSelect,
+  JacoSurface,
+  JacoTextInput,
+  uiColors,
+  uiRadii,
+  uiTypography,
+} from "@/design-system/shared/ui";
 import { getLocationName, isSameId, isDateInRange, tableHeaderSx, tableRowSx } from "./helpers";
+import { ControlHistoryButton, ControlRefreshControl } from "./shared";
 
 const actionButtonSx = {
-  borderRadius: "8px",
-  fontWeight: 700,
-  minHeight: 36,
-  lineHeight: "20px",
-  alignItems: "center",
-  justifyContent: "center",
   whiteSpace: "nowrap",
 };
 
-const dialogButtonSx = {
-  ...actionButtonSx,
-  minHeight: 40,
-  minWidth: 112,
-  px: 2,
+const cellTextSx = {
+  ...uiTypography.label,
+  color: uiColors.text,
 };
+
+// Date picker change → «YYYY-MM-DD» or "" for a cleared / invalid value.
+function toDateValue(value) {
+  return value?.isValid?.() ? value.format("YYYY-MM-DD") : "";
+}
+
+function preparationNameSx(canEdit) {
+  return {
+    p: 0,
+    border: 0,
+    bgcolor: "transparent",
+    color: canEdit ? uiColors.primary : uiColors.textStrong,
+    cursor: canEdit ? "pointer" : "default",
+    fontFamily: "inherit",
+    ...uiTypography.label,
+    fontWeight: 700,
+    textAlign: "left",
+    textTransform: "uppercase",
+    "&:hover": canEdit ? { textDecoration: "underline" } : {},
+  };
+}
 
 function formatPreparationAmount(value, unit) {
   if (value === "" || value == null) {
@@ -65,14 +80,21 @@ export default function PreparationControlView({
   onEdit,
   onApprove,
   onDelete,
+  onHistory,
   onRefresh,
   isLoading,
+  refreshing,
+  updatedAt,
+  refreshError,
   canEdit,
 }) {
   const locationOptions = locations.map((location) => ({
     id: location.id,
     name: getLocationName(location),
   }));
+  // JacoSelect reports string values; the page keeps location ids as they came from the API.
+  const toLocationId = (value) =>
+    locationOptions.find((option) => String(option.id) === String(value))?.id ?? value;
   const visibleItems = items.filter(
     (item) =>
       isSameId(item.locationId, selectedCafeId) && isDateInRange(item.preparedAt, dateFrom, dateTo),
@@ -84,10 +106,7 @@ export default function PreparationControlView({
       spacing={2.5}
     >
       <Grid size={12}>
-        <Paper
-          variant="outlined"
-          sx={{ borderRadius: "8px", overflow: "hidden" }}
-        >
+        <JacoSurface sx={{ overflow: "hidden" }}>
           <Box
             sx={{
               p: 1.5,
@@ -97,48 +116,46 @@ export default function PreparationControlView({
               alignItems: "center",
             }}
           >
-            <MySelect
+            <JacoSelect
               label="Кафе"
               data={locationOptions}
               value={selectedCafeId}
-              func={(event) => onCafeChange(event.target.value)}
-              is_none={false}
+              onChange={(event) => onCafeChange(toLocationId(event.target.value))}
+              allowNone={false}
               disabled={locationOptions.length <= 1}
             />
-            <MyDatePickerNew
+            <JacoDatePicker
               label="Дата от"
               value={dateFrom}
-              maxDate={dateTo ? dayjs(dateTo) : null}
-              func={(value) => onDateFromChange(value ? value.format("YYYY-MM-DD") : "")}
+              maxDate={dateTo || undefined}
+              onChange={(value) => onDateFromChange(toDateValue(value))}
             />
-            <MyDatePickerNew
+            <JacoDatePicker
               label="Дата до"
               value={dateTo}
-              minDate={dateFrom ? dayjs(dateFrom) : null}
-              func={(value) => onDateToChange(value ? value.format("YYYY-MM-DD") : "")}
+              minDate={dateFrom || undefined}
+              onChange={(value) => onDateToChange(toDateValue(value))}
             />
-            <Button
-              size="small"
-              variant="outlined"
-              startIcon={<RefreshIcon />}
-              onClick={onRefresh}
-              disabled={isLoading}
-              sx={{ ...actionButtonSx, justifySelf: { xs: "stretch", md: "end" } }}
-            >
-              Обновить
-            </Button>
+            <Box sx={{ justifySelf: { xs: "stretch", md: "end" } }}>
+              <ControlRefreshControl
+                onRefresh={onRefresh}
+                refreshing={refreshing}
+                disabled={isLoading}
+                updatedAt={updatedAt}
+                error={refreshError}
+              />
+            </Box>
           </Box>
-        </Paper>
+        </JacoSurface>
       </Grid>
 
       <Grid size={12}>
-        <Paper
-          variant="outlined"
+        <JacoSurface
           sx={{
-            borderRadius: { xs: 0, md: "12px" },
+            borderRadius: { xs: 0, md: uiRadii.lg },
             overflow: "hidden",
-            border: { xs: 0, md: "1px solid #e0e0e0" },
-            bgcolor: { xs: "transparent", md: "background.paper" },
+            border: { xs: 0, md: `1px solid ${uiColors.border}` },
+            bgcolor: { xs: "transparent", md: uiColors.surface },
           }}
         >
           <TableContainer sx={{ display: { xs: "none", md: "block" } }}>
@@ -174,80 +191,70 @@ export default function PreparationControlView({
                         component="button"
                         type="button"
                         onClick={() => canEdit && onEdit(item.id)}
-                        sx={{
-                          p: 0,
-                          border: 0,
-                          bgcolor: "transparent",
-                          color: canEdit ? "primary.main" : "text.primary",
-                          cursor: canEdit ? "pointer" : "default",
-                          fontFamily: "inherit",
-                          fontSize: 14,
-                          fontWeight: 800,
-                          textAlign: "left",
-                          textTransform: "uppercase",
-                          "&:hover": canEdit ? { textDecoration: "underline" } : {},
-                        }}
+                        sx={preparationNameSx(canEdit)}
                       >
                         {item.name}
                       </Typography>
                     </TableCell>
-                    <TableCell sx={{ color: "text.secondary", fontSize: 14 }}>
+                    <TableCell sx={cellTextSx}>
                       {item.preparedAt || "—"}
                     </TableCell>
-                    <TableCell sx={{ fontSize: 14 }}>
+                    <TableCell sx={{ ...cellTextSx, color: uiColors.textStrong }}>
                       {formatPreparationAmount(item.volume, item.unit)}
                     </TableCell>
-                    <TableCell sx={{ fontSize: 14 }}>
+                    <TableCell sx={{ ...cellTextSx, color: uiColors.textStrong }}>
                       {formatPreparationAmount(item.waste, item.unit)}
                     </TableCell>
-                    <TableCell sx={{ color: "text.secondary", fontSize: 14 }}>
+                    <TableCell sx={cellTextSx}>
                       {item.employee}
                     </TableCell>
-                    <TableCell sx={{ color: "text.secondary", fontSize: 14 }}>
+                    <TableCell sx={cellTextSx}>
                       {item.helper || "—"}
                     </TableCell>
-                    <TableCell sx={{ color: "text.secondary", fontSize: 14 }}>
+                    <TableCell sx={cellTextSx}>
                       {item.confirmedAt || "—"}
                     </TableCell>
-                    <TableCell sx={{ color: "text.secondary", fontSize: 14 }}>
+                    <TableCell sx={cellTextSx}>
                       {item.confirmer || "—"}
                     </TableCell>
                     <TableCell align="right">
-                      <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 1 }}>
+                      <Box
+                        sx={{
+                          display: "flex",
+                          justifyContent: "flex-end",
+                          alignItems: "center",
+                          gap: 1,
+                        }}
+                      >
                         {canEdit && item.status === "pending" ? (
-                          <Button
-                            size="small"
-                            variant="contained"
+                          <JacoButton
+                            tone="success"
+                            compact
                             startIcon={<CheckCircleOutlineIcon />}
                             onClick={() => onApprove(item.id)}
-                            sx={{
-                              ...actionButtonSx,
-                              bgcolor: "#16a34a",
-                              color: "#fff",
-                              "&:hover": { bgcolor: "#15803d" },
-                            }}
+                            sx={actionButtonSx}
                           >
                             Подтвердить
-                          </Button>
+                          </JacoButton>
                         ) : null}
                         {canEdit && item.status === "pending" ? (
-                          <Button
-                            size="small"
-                            variant="contained"
+                          <JacoButton
+                            tone="danger"
+                            compact
                             startIcon={<DeleteOutlineIcon />}
                             onClick={() => onDelete(item.id)}
-                            sx={{
-                              ...actionButtonSx,
-                              bgcolor: "primary.main",
-                              color: "#fff",
-                              "&:hover": { bgcolor: "primary.dark" },
-                            }}
+                            sx={actionButtonSx}
                           >
                             Удалить
-                          </Button>
-                        ) : (
-                          <Typography sx={{ color: "text.disabled", fontSize: 14 }}>—</Typography>
+                          </JacoButton>
+                        ) : item.eventsCount > 0 ? null : (
+                          <Typography sx={{ ...uiTypography.label, color: uiColors.textSubtle }}>
+                            —
+                          </Typography>
                         )}
+                        {item.eventsCount > 0 ? (
+                          <ControlHistoryButton onClick={() => onHistory(item.id)} />
+                        ) : null}
                       </Box>
                     </TableCell>
                   </TableRow>
@@ -256,16 +263,20 @@ export default function PreparationControlView({
             </Table>
           </TableContainer>
 
-          <Box sx={{ display: { xs: "grid", md: "none" }, gap: 1.75, p: 0 }}>
+          <Box
+            sx={{
+              display: { xs: "grid", md: "none" },
+              gridTemplateColumns: "minmax(0, 1fr)",
+              gap: 1.75,
+              p: 0,
+            }}
+          >
             {visibleItems.map((item) => (
-              <Paper
+              <JacoSurface
                 key={item.id}
-                variant="outlined"
                 sx={{
                   p: 1.5,
-                  borderRadius: "10px",
-                  borderLeft: "3px solid",
-                  borderLeftColor: "primary.main",
+                  borderLeft: `3px solid ${uiColors.primary}`,
                 }}
               >
                 <Box sx={{ display: "grid", gap: 0.75, mb: 1 }}>
@@ -274,37 +285,24 @@ export default function PreparationControlView({
                       component="button"
                       type="button"
                       onClick={() => canEdit && onEdit(item.id)}
-                      sx={{
-                        p: 0,
-                        border: 0,
-                        bgcolor: "transparent",
-                        color: canEdit ? "primary.main" : "text.primary",
-                        cursor: canEdit ? "pointer" : "default",
-                        fontFamily: "inherit",
-                        fontSize: 16,
-                        fontWeight: 800,
-                        lineHeight: 1.25,
-                        textAlign: "left",
-                        textTransform: "uppercase",
-                        "&:hover": canEdit ? { textDecoration: "underline" } : {},
-                      }}
+                      sx={{ ...preparationNameSx(canEdit), ...uiTypography.bodyMedium, fontWeight: 700 }}
                     >
                       {item.name}
                     </Typography>
-                    <Typography sx={{ color: "text.secondary", fontSize: 14 }}>
+                    <Typography sx={cellTextSx}>
                       {item.preparedAt || "—"} · {formatPreparationAmount(item.volume, item.unit)} /{" "}
                       {formatPreparationAmount(item.waste, item.unit)}
                     </Typography>
                   </Box>
                 </Box>
                 <Box sx={{ display: "grid", gap: 0.25, mb: 1 }}>
-                  <Typography sx={{ color: "text.secondary", fontSize: 14 }}>
+                  <Typography sx={cellTextSx}>
                     Сотрудник: {item.employee}
                   </Typography>
-                  <Typography sx={{ color: "text.secondary", fontSize: 14 }}>
+                  <Typography sx={cellTextSx}>
                     Подтвердили: {item.confirmedAt || "—"}
                   </Typography>
-                  <Typography sx={{ color: "text.secondary", fontSize: 14 }}>
+                  <Typography sx={cellTextSx}>
                     Подтвердивший: {item.confirmer || "—"}
                   </Typography>
                 </Box>
@@ -321,45 +319,36 @@ export default function PreparationControlView({
                 >
                   {canEdit && item.status === "pending" ? (
                     <>
-                      <Button
-                        size="small"
-                        variant="contained"
+                      <JacoButton
+                        tone="success"
                         startIcon={<CheckCircleOutlineIcon />}
                         onClick={() => onApprove(item.id)}
-                        sx={{
-                          ...actionButtonSx,
-                          minHeight: 44,
-                          width: "100%",
-                          bgcolor: "#16a34a",
-                          color: "#fff",
-                          "&:hover": { bgcolor: "#15803d" },
-                        }}
+                        sx={{ ...actionButtonSx, width: "100%" }}
                       >
                         Подтвердить
-                      </Button>
-                      <Button
-                        size="small"
-                        variant="contained"
+                      </JacoButton>
+                      <JacoButton
+                        tone="danger"
                         startIcon={<DeleteOutlineIcon />}
                         onClick={() => onDelete(item.id)}
-                        sx={{
-                          ...actionButtonSx,
-                          minHeight: 44,
-                          width: "100%",
-                          bgcolor: "primary.main",
-                          color: "#fff",
-                          "&:hover": { bgcolor: "primary.dark" },
-                        }}
+                        sx={{ ...actionButtonSx, width: "100%" }}
                       >
                         Удалить
-                      </Button>
+                      </JacoButton>
                     </>
                   ) : null}
+                  {item.eventsCount > 0 ? (
+                    <ControlHistoryButton
+                      mobile
+                      onClick={() => onHistory(item.id)}
+                      sx={{ ...actionButtonSx, width: "100%" }}
+                    />
+                  ) : null}
                 </Box>
-              </Paper>
+              </JacoSurface>
             ))}
           </Box>
-        </Paper>
+        </JacoSurface>
       </Grid>
     </Grid>
   );
@@ -384,45 +373,42 @@ export function PreparationEditDialog({ open, item, onClose, onSave }) {
   };
 
   return (
-    <Dialog
+    <JacoModal
       open={open}
       onClose={onClose}
-      fullWidth
+      title={`Редактирование заготовки: ${item?.name || ""}`}
       maxWidth="sm"
-      slotProps={{ paper: { sx: { borderRadius: "12px" } } }}
+      actions={
+        <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 1, width: "100%" }}>
+          <JacoButton
+            tone="secondary"
+            compact
+            onClick={onClose}
+          >
+            Отмена
+          </JacoButton>
+          <JacoButton
+            compact
+            onClick={handleSave}
+          >
+            Сохранить
+          </JacoButton>
+        </Box>
+      }
     >
-      <DialogTitle sx={{ fontWeight: 700 }}>
-        Редактирование заготовки: {item?.name || ""}
-      </DialogTitle>
-      <DialogContent>
         <Grid
           container
           spacing={2}
-          sx={{ pt: 1 }}
         >
-          {/* <Grid size={{ xs: 12, sm: 6 }}>
-            <Typography sx={{ fontWeight: 700, mb: 0.5 }}>Уборку начал</Typography>
-            <Typography sx={{ color: "text.secondary" }}>{item?.employee || "Не указано"}</Typography>
-          </Grid>
           <Grid size={{ xs: 12, sm: 6 }}>
-            <Typography sx={{ fontWeight: 700, mb: 0.5 }}>Уборку подтвердил</Typography>
-            <Typography sx={{ color: "text.secondary" }}>
-              {item?.confirmer || "Не указано"}
-            </Typography>
-          </Grid> */}
-          <Grid size={{ xs: 12, sm: 6 }}>
-            <TextField
-              fullWidth
-              size="small"
+            <JacoTextInput
               label="Объем заготовки"
               value={form.volume}
               onChange={(event) => setForm((prev) => ({ ...prev, volume: event.target.value }))}
             />
           </Grid>
           <Grid size={{ xs: 12, sm: 6 }}>
-            <TextField
-              fullWidth
-              size="small"
+            <JacoTextInput
               label="Объем отходов"
               value={form.waste}
               onChange={(event) => setForm((prev) => ({ ...prev, waste: event.target.value }))}
@@ -430,15 +416,25 @@ export function PreparationEditDialog({ open, item, onClose, onSave }) {
           </Grid>
           {item?.history?.length ? (
             <Grid size={12}>
-              <Accordion>
+              <Accordion
+                disableGutters
+                sx={{
+                  border: `1px solid ${uiColors.border}`,
+                  borderRadius: `${uiRadii.md} !important`,
+                  boxShadow: "none",
+                  "&::before": { display: "none" },
+                }}
+              >
                 <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                  <Typography>История изменений</Typography>
+                  <Typography sx={{ ...uiTypography.bodyMedium, color: uiColors.textStrong }}>
+                    История изменений
+                  </Typography>
                 </AccordionSummary>
                 <AccordionDetails>
                   <TableContainer>
                     <Table size="small">
                       <TableHead>
-                        <TableRow>
+                        <TableRow sx={tableHeaderSx}>
                           <TableCell>Сотрудник</TableCell>
                           <TableCell>Время обновления</TableCell>
                           <TableCell>Заготовки ДО</TableCell>
@@ -466,30 +462,6 @@ export function PreparationEditDialog({ open, item, onClose, onSave }) {
             </Grid>
           ) : null}
         </Grid>
-      </DialogContent>
-      <DialogActions sx={{ px: 3, pb: 2.5, gap: 1 }}>
-        <Button
-          size="small"
-          variant="contained"
-          onClick={handleSave}
-          sx={{
-            ...dialogButtonSx,
-            bgcolor: "#16a34a",
-            color: "#fff",
-            "&:hover": { bgcolor: "#15803d" },
-          }}
-        >
-          Сохранить
-        </Button>
-        <Button
-          size="small"
-          variant="outlined"
-          onClick={onClose}
-          sx={dialogButtonSx}
-        >
-          Отмена
-        </Button>
-      </DialogActions>
-    </Dialog>
+    </JacoModal>
   );
 }

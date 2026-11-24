@@ -78,7 +78,9 @@ function StageMetricRow({ stage, formatters }) {
       <TableCell align="center">
         <Typography
           variant="body2"
-          color="text.secondary"
+          sx={{
+            color: "text.secondary",
+          }}
         >
           {formatters.duration(stage?.p90)}
         </Typography>
@@ -110,7 +112,9 @@ function StageMetricRow({ stage, formatters }) {
       <TableCell align="center">
         <Typography
           variant="body2"
-          color="text.secondary"
+          sx={{
+            color: "text.secondary",
+          }}
         >
           {formatters.integer(stage?.sample_size)}
         </Typography>
@@ -130,7 +134,9 @@ function EmployeeOrdersTable({ orders, formatters }) {
       >
         <Typography
           variant="body2"
-          color="text.secondary"
+          sx={{
+            color: "text.secondary",
+          }}
         >
           Нет данных по заказам.
         </Typography>
@@ -177,7 +183,9 @@ function EmployeeOrdersTable({ orders, formatters }) {
                 <TableCell align="center">
                   <Typography
                     variant="body2"
-                    color="text.secondary"
+                    sx={{
+                      color: "text.secondary",
+                    }}
                   >
                     {formatters.duration(order?.target_seconds)}
                   </Typography>
@@ -242,9 +250,11 @@ export default function EmployeeDetailsModal({
       >
         {loading ? (
           <Stack
-            alignItems="center"
-            justifyContent="center"
-            sx={{ minHeight: 240 }}
+            sx={{
+              alignItems: "center",
+              justifyContent: "center",
+              minHeight: 240,
+            }}
           >
             <CircularProgress size={28} />
           </Stack>
@@ -262,7 +272,9 @@ export default function EmployeeDetailsModal({
                 <Stack
                   direction="row"
                   spacing={CP_SPACE.component}
-                  alignItems="center"
+                  sx={{
+                    alignItems: "center",
+                  }}
                 >
                   <EmployeeAvatar
                     name={employeeName}
@@ -279,7 +291,9 @@ export default function EmployeeDetailsModal({
                     {pointName ? (
                       <Typography
                         variant="body2"
-                        color="text.secondary"
+                        sx={{
+                          color: "text.secondary",
+                        }}
                       >
                         {pointName}
                       </Typography>
@@ -287,14 +301,18 @@ export default function EmployeeDetailsModal({
                     {pointAddress ? (
                       <Typography
                         variant="body2"
-                        color="text.secondary"
+                        sx={{
+                          color: "text.secondary",
+                        }}
                       >
                         {pointAddress}
                       </Typography>
                     ) : null}
                     <Typography
                       variant="body2"
-                      color="text.secondary"
+                      sx={{
+                        color: "text.secondary",
+                      }}
                     >
                       Детализация по этапам за выбранный период
                     </Typography>
@@ -355,7 +373,9 @@ export default function EmployeeDetailsModal({
                   >
                     <Typography
                       variant="body2"
-                      color="text.secondary"
+                      sx={{
+                        color: "text.secondary",
+                      }}
                     >
                       Нет данных по этапам.
                     </Typography>

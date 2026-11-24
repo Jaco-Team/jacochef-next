@@ -167,9 +167,11 @@ export default function CompositionOfOrdersGroupGraphModal({ open, onClose, data
                 }
                 label={
                   <Box
-                    display="flex"
-                    alignItems="center"
-                    gap={1}
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 1,
+                    }}
                   >
                     <Box
                       sx={{

@@ -13,8 +13,8 @@ import Box from "@mui/material/Box";
 import Divider from "@mui/material/Divider";
 
 import IconButton from "@mui/material/IconButton";
-import AddCircleOutline from "@mui/icons-material/AddCircleOutline";
-import DeleteOutline from "@mui/icons-material/DeleteOutline";
+import AddCircleOutlineOutlined from "@mui/icons-material/AddCircleOutlineOutlined";
+import DeleteOutlined from "@mui/icons-material/DeleteOutlined";
 import Collapse from "@mui/material/Collapse";
 import CloseIcon from "@mui/icons-material/Close";
 import EditIcon from "@mui/icons-material/Edit";
@@ -546,7 +546,7 @@ class EventTime_Tab_Kassir_Registr extends React.PureComponent {
                             onClick={() => this.handleConfirm(block)}
                             title="Удалить"
                           >
-                            <DeleteOutline />
+                            <DeleteOutlined />
                           </IconButton>
                         )}
                       </TableCell>
@@ -756,7 +756,7 @@ class EventTime_Tab_Cur extends React.PureComponent {
                           title="Удалить"
                           onClick={() => handlers.del(row.id)}
                         >
-                          <DeleteOutline />
+                          <DeleteOutlined />
                         </IconButton>
                       ) : null}
                     </TableCell>
@@ -776,7 +776,7 @@ class EventTime_Tab_Cur extends React.PureComponent {
                         title="Добавить"
                         onClick={handlers.add}
                       >
-                        <AddCircleOutline />
+                        <AddCircleOutlineOutlined />
                       </IconButton>
                     ) : null}
                   </TableCell>
@@ -898,7 +898,7 @@ class EventTime_Tab_TableLv extends React.PureComponent {
                           title="Удалить"
                           onClick={() => handlers.del(row.id)}
                         >
-                          <DeleteOutline />
+                          <DeleteOutlined />
                         </IconButton>
                       ) : null}
                     </TableCell>
@@ -918,7 +918,7 @@ class EventTime_Tab_TableLv extends React.PureComponent {
                         title="Добавить"
                         onClick={handlers.add}
                       >
-                        <AddCircleOutline />
+                        <AddCircleOutlineOutlined />
                       </IconButton>
                     ) : null}
                   </TableCell>
@@ -1087,7 +1087,7 @@ class EventTime_Tab_Kassir_Time extends React.PureComponent {
                               onClick={() => h.del(row.id)}
                               title="Удалить"
                             >
-                              <DeleteOutline />
+                              <DeleteOutlined />
                             </IconButton>
                           ) : null}
                         </TableCell>
@@ -1107,7 +1107,7 @@ class EventTime_Tab_Kassir_Time extends React.PureComponent {
                             onClick={h.add}
                             title="Добавить"
                           >
-                            <AddCircleOutline />
+                            <AddCircleOutlineOutlined />
                           </IconButton>
                         ) : null}
                       </TableCell>
@@ -1455,7 +1455,7 @@ class EventTime_Tab_Time_Smena extends React.PureComponent {
                           onClick={() => handleDeleteRow(row.id)}
                           title="Удалить"
                         >
-                          <DeleteOutline />
+                          <DeleteOutlined />
                         </IconButton>
                       ) : null}
                     </TableCell>
@@ -1475,7 +1475,7 @@ class EventTime_Tab_Time_Smena extends React.PureComponent {
                         onClick={handleAddRow}
                         title="Добавить"
                       >
-                        <AddCircleOutline />
+                        <AddCircleOutlineOutlined />
                       </IconButton>
                     ) : null}
                   </TableCell>
@@ -1680,7 +1680,7 @@ class EventTime_Tab_Time_Manager extends React.PureComponent {
                             onClick={() => cashH.del(row.id)}
                             title="Удалить"
                           >
-                            <DeleteOutline />
+                            <DeleteOutlined />
                           </IconButton>
                         ) : null}
                       </TableCell>
@@ -1700,7 +1700,7 @@ class EventTime_Tab_Time_Manager extends React.PureComponent {
                           onClick={cashH.add}
                           title="Добавить"
                         >
-                          <AddCircleOutline />
+                          <AddCircleOutlineOutlined />
                         </IconButton>
                       ) : null}
                     </TableCell>

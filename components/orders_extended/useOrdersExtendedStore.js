@@ -11,10 +11,23 @@ export const PARAM_OPTIONS = [
   { id: "lost", name: "Ушедшие" },
 ];
 
+export const ERROR_STATUS_OPTIONS = [
+  { id: "all", name: "Все" },
+  { id: "with_error", name: "Да" },
+  { id: "without_error", name: "Нет" },
+];
+
+export const DELIVERY_STATUS_OPTIONS = [
+  { id: "all", name: "Все" },
+  { id: "on_time", name: "Успели" },
+  { id: "late", name: "Не успели" },
+];
+
 export const DEFAULT_FILTERS = {
   date_start_true: null,
   date_end_true: null,
-  is_show_claim: false,
+  error_status: ERROR_STATUS_OPTIONS[0],
+  delivery_status: DELIVERY_STATUS_OPTIONS[0],
   count_orders_min: 0,
   count_orders_max: 0,
   min_summ: 0,
@@ -29,6 +42,7 @@ export const DEFAULT_FILTERS = {
   item: [],
   category_ids: [],
   source_ids: [],
+  traffic_source: "",
   order_type_ids: [],
   payment_type_ids: [],
 };
@@ -38,10 +52,13 @@ const ORDERS_EXTENDED_FILTERS_STORAGE_KEY = "orders_extended:filters";
 const cloneDefaultFilters = () => ({
   ...DEFAULT_FILTERS,
   param: DEFAULT_FILTERS.param ? { ...DEFAULT_FILTERS.param } : null,
+  error_status: { ...DEFAULT_FILTERS.error_status },
+  delivery_status: { ...DEFAULT_FILTERS.delivery_status },
   point: [],
   item: [],
   category_ids: [],
   source_ids: [],
+  traffic_source: "",
   order_type_ids: [],
   payment_type_ids: [],
 });
@@ -57,7 +74,14 @@ const normalizePersistedDate = (value) => {
 const normalizePersistedFilters = (filters = {}) => ({
   date_start_true: normalizePersistedDate(filters.date_start_true),
   date_end_true: normalizePersistedDate(filters.date_end_true),
-  is_show_claim: Boolean(filters.is_show_claim),
+  error_status:
+    ERROR_STATUS_OPTIONS.find(
+      (option) => option.id === (filters.error_status?.id ?? filters.error_status),
+    ) ?? (filters.is_show_claim ? ERROR_STATUS_OPTIONS[1] : cloneDefaultFilters().error_status),
+  delivery_status:
+    DELIVERY_STATUS_OPTIONS.find(
+      (option) => option.id === (filters.delivery_status?.id ?? filters.delivery_status),
+    ) ?? cloneDefaultFilters().delivery_status,
   count_orders_min: filters.count_orders_min ?? 0,
   count_orders_max: filters.count_orders_max ?? 0,
   min_summ: filters.min_summ ?? 0,
@@ -73,6 +97,7 @@ const normalizePersistedFilters = (filters = {}) => ({
   item: Array.isArray(filters.item) ? filters.item : [],
   category_ids: Array.isArray(filters.category_ids) ? filters.category_ids : [],
   source_ids: Array.isArray(filters.source_ids) ? filters.source_ids : [],
+  traffic_source: filters.traffic_source ?? "",
   order_type_ids: Array.isArray(filters.order_type_ids) ? filters.order_type_ids : [],
   payment_type_ids: Array.isArray(filters.payment_type_ids) ? filters.payment_type_ids : [],
 });
@@ -107,7 +132,7 @@ const DEFAULT_STATE = {
   totals: {
     count: 0,
     order_price_sum: 0,
-    avg_check_avg: 0,
+    avg_check_avg: null,
   },
   page: 0,
   perPage: 50,
@@ -203,7 +228,7 @@ export const useOrdersExtendedStore = create(
         set({
           rows: [],
           total: 0,
-          totals: { count: 0, order_price_sum: 0, avg_check_avg: 0 },
+          totals: { count: 0, order_price_sum: 0, avg_check_avg: null },
           exportUrl: "",
         });
       },

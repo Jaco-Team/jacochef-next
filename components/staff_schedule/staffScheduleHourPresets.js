@@ -1,0 +1,201 @@
+export const STAFF_SCHEDULE_HOUR_PRESETS = [
+  {
+    type: 0,
+    key: "full",
+    label: "10:00-22:00",
+    time_start: "10:00",
+    time_end: "22:00",
+    color: "#95D26B",
+    textColor: "#1F2937",
+  },
+  {
+    type: 1,
+    key: "first_half",
+    label: "10:00-16:00",
+    time_start: "10:00",
+    time_end: "16:00",
+    color: "#62B0FF",
+    textColor: "#1F2937",
+  },
+  {
+    type: 2,
+    key: "second_half",
+    label: "16:00-22:00",
+    time_start: "16:00",
+    time_end: "22:00",
+    color: "#2567C1",
+    textColor: "#FFFFFF",
+  },
+  {
+    type: 3,
+    key: "custom",
+    label: "Другое",
+    time_start: "",
+    time_end: "",
+    color: "#926EAE",
+    textColor: "#1F2937",
+  },
+];
+
+export function getHourPresetByType(type) {
+  return (
+    STAFF_SCHEDULE_HOUR_PRESETS.find((item) => Number(item.type) === Number(type)) ||
+    STAFF_SCHEDULE_HOUR_PRESETS[0]
+  );
+}
+
+export function normalizeTimeLabel(value) {
+  const match = String(value ?? "").match(/^(\d{1,2}):(\d{2})(?::\d{2})?$/);
+
+  if (!match) {
+    return String(value ?? "");
+  }
+
+  return `${match[1].padStart(2, "0")}:${match[2]}`;
+}
+
+export function formatHourRangeLabel(timeStart, timeEnd) {
+  return (
+    [normalizeTimeLabel(timeStart), normalizeTimeLabel(timeEnd)].filter(Boolean).join("-") || "—"
+  );
+}
+
+function parseTimeToMinutes(value) {
+  const match = String(value ?? "").match(/^(\d{1,2}):(\d{2})(?::\d{2})?$/);
+
+  if (!match) {
+    return null;
+  }
+
+  const hours = Number(match[1]);
+  const minutes = Number(match[2]);
+
+  if (!Number.isInteger(hours) || !Number.isInteger(minutes) || hours > 23 || minutes > 59) {
+    return null;
+  }
+
+  return hours * 60 + minutes;
+}
+
+export function formatWorkedHours(timeStart, timeEnd) {
+  const startMinutes = parseTimeToMinutes(timeStart);
+  const endMinutes = parseTimeToMinutes(timeEnd);
+
+  if (startMinutes === null || endMinutes === null) {
+    return "";
+  }
+
+  let durationMinutes = endMinutes - startMinutes;
+
+  if (durationMinutes < 0) {
+    durationMinutes += 24 * 60;
+  }
+
+  const hours = Math.floor(durationMinutes / 60);
+  const minutes = durationMinutes % 60;
+
+  return minutes === 0 ? String(hours) : `${hours}:${String(minutes).padStart(2, "0")}`;
+}
+
+export function isSameHourRange(left = {}, right = {}) {
+  return (
+    String(left?.time_start ?? "") === String(right?.time_start ?? "") &&
+    String(left?.time_end ?? "") === String(right?.time_end ?? "") &&
+    Number(left?.type ?? 0) === Number(right?.type ?? 0)
+  );
+}
+
+export function matchesPresetRange(timeStart, timeEnd, preset) {
+  return (
+    normalizeTimeLabel(timeStart) === normalizeTimeLabel(preset?.time_start) &&
+    normalizeTimeLabel(timeEnd) === normalizeTimeLabel(preset?.time_end)
+  );
+}
+
+export function isCustomHourRange(item = {}) {
+  const preset = STAFF_SCHEDULE_HOUR_PRESETS.slice(0, 3).find((candidate) =>
+    matchesPresetRange(item?.time_start, item?.time_end, candidate),
+  );
+
+  return !preset;
+}
+
+export function buildHourSlotId(item = {}) {
+  return `${normalizeTimeLabel(item?.time_start)}-${normalizeTimeLabel(item?.time_end)}`;
+}
+
+export function getHiddenRecentHourSlotsKey(userId, appId) {
+  if (userId == null || userId === "" || appId == null || appId === "") {
+    return "";
+  }
+
+  return `staff_schedule:hidden_recent_hours:v1:${userId}:${appId}`;
+}
+
+export function readHiddenRecentHourSlots(storage, key) {
+  if (!storage || !key) {
+    return [];
+  }
+
+  try {
+    const value = JSON.parse(storage.getItem(key) || "[]");
+    return Array.isArray(value)
+      ? [...new Set(value.filter((item) => typeof item === "string" && item.startsWith("custom-")))]
+      : [];
+  } catch {
+    return [];
+  }
+}
+
+export function writeHiddenRecentHourSlots(storage, key, slotIds) {
+  if (!storage || !key) {
+    return false;
+  }
+
+  try {
+    storage.setItem(key, JSON.stringify(slotIds));
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+export function buildCustomHourSlots(dates = [], recentRanges = []) {
+  const slots = new Map();
+  const candidates = [
+    ...dates.map((item) => ({ item, isRecentOnly: false })),
+    ...recentRanges.map((item) => ({ item, isRecentOnly: true })),
+  ];
+
+  candidates.forEach(({ item, isRecentOnly }) => {
+    const timeStart = normalizeTimeLabel(item?.time_start);
+    const timeEnd = normalizeTimeLabel(item?.time_end);
+
+    if (
+      !timeStart ||
+      !timeEnd ||
+      !isCustomHourRange({ time_start: timeStart, time_end: timeEnd })
+    ) {
+      return;
+    }
+
+    const id = `custom-${buildHourSlotId({ time_start: timeStart, time_end: timeEnd })}`;
+
+    if (!slots.has(id)) {
+      const preset = getHourPresetByType(item?.type ?? 3);
+      slots.set(id, {
+        id,
+        type: Number(item?.type ?? 3),
+        label: formatHourRangeLabel(timeStart, timeEnd),
+        time_start: timeStart,
+        time_end: timeEnd,
+        color: preset.color,
+        textColor: preset.textColor,
+        isCustom: true,
+        isRecentOnly,
+      });
+    }
+  });
+
+  return Array.from(slots.values());
+}

@@ -76,7 +76,7 @@ import {
 } from "@/components/billing/BillingPageCommon";
 import DraggableImage from "@/components/billing/DraggableImage";
 import MyAlert from "@/ui/MyAlert";
-import { api_laravel, api_laravel_local } from "@/src/api_new";
+import { api_laravel, api_laravel_local, prepareBillingUploads, setBillingUploadCsrf, resetBillingUploadCsrf } from "@/src/api_new";
 import { Link } from "@mui/material";
 
 const types = [
@@ -942,7 +942,7 @@ var global_point_id = 0;
 var type_bill = "bill";
 var bill_type = 0;
 var is_return = false;
-const API_URL = "https://apichef.jacochef.ru/api";
+const API_URL = (process.env.NEXT_PUBLIC_API_URL || "https://apichef2.jacochef.ru/api").replace(/\/+$/, "");
 // const API_URL = "http://127.0.0.1:8000/api";
 const url_bill = `${API_URL}/bill-items/upload`;
 const url_bill_ex = `${API_URL}/bill-ex-items/upload`;
@@ -1571,7 +1571,14 @@ var dropzoneOptions_bill = {
       }
     });
 
+    this.on("error", function (file, message, xhr) {
+      resetBillingUploadCsrf(myDropzone, xhr);
+    });
+
     this.on("sending", function (file, xhr, data) {
+      if (!setBillingUploadCsrf(myDropzone, file, xhr)) {
+        return;
+      }
       //var point = document.getElementById('point_id').value;
 
       i++;
@@ -1655,7 +1662,14 @@ var dropzoneOptions_bill_factur = {
       //window.location.pathname = "/billing";
     });
 
+    this.on("error", function (file, message, xhr) {
+      resetBillingUploadCsrf(myDropzone, xhr);
+    });
+
     this.on("sending", function (file, xhr, data) {
+      if (!setBillingUploadCsrf(myDropzone, file, xhr)) {
+        return;
+      }
       //var point = document.getElementById('point_id').value;
 
       i++;
@@ -2069,7 +2083,7 @@ const useStore = create((set, get) => ({
       if (point && vendors.length === 1 && docs.length) {
         const data = {
           point_id: point.id,
-          vendor_id: vendor?.id,
+          vendor_id: get().vendor?.id ?? vendors[0]?.id,
         };
 
         const res = await get().getData("get_vendor_items", data);
@@ -5268,8 +5282,15 @@ class Billing_Edit_ extends React.Component {
 
         dropzone.off?.("queuecomplete", handleQueueComplete);
 
+        const failedFiles = dropzone.files.filter((file) => file?.status === "error");
+        const ambiguousFiles = failedFiles.filter(
+          (file) => file?.xhr && !file?.chefCsrfFailure && Number(file.xhr.status) === 0,
+        );
+
         resolve({
-          hasErrors: dropzone.files.some((file) => file?.status === "error"),
+          hasErrors: failedFiles.length > 0,
+          hasAmbiguousErrors: ambiguousFiles.length > 0,
+          hasDefinitiveErrors: failedFiles.length > ambiguousFiles.length,
           filesCount: pendingFiles.length,
         });
       };
@@ -5280,6 +5301,37 @@ class Billing_Edit_ extends React.Component {
 
       dropzone.on("queuecomplete", handleQueueComplete);
     });
+  };
+
+  verifyUploadedImages = async ({ billId, pointId, billType, mainFiles, facturFiles }) => {
+    const method = billType === "bill_ex" ? "get_one_bill_ex" : "get_one";
+    const retryDelays = [0, 500, 1500];
+
+    for (const delay of retryDelays) {
+      if (delay > 0) {
+        await new Promise((resolve) => window.setTimeout(resolve, delay));
+      }
+
+      try {
+        const response = await this.getData(method, {
+          id: billId,
+          point_id: pointId,
+          type: billType,
+        });
+        const savedMainFiles = Array.isArray(response?.bill_imgs) ? response.bill_imgs.length : 0;
+        const savedFacturFiles = Array.isArray(response?.factur_imgs)
+          ? response.factur_imgs.length
+          : 0;
+
+        if (savedMainFiles >= mainFiles && savedFacturFiles >= facturFiles) {
+          return true;
+        }
+      } catch (error) {
+        console.warn("Unable to verify billing images after an ambiguous upload result", error);
+      }
+    }
+
+    return false;
   };
 
   getOcrResolveState = (ocrItem, selectedProduct = null, selectedPackOption = null) => {
@@ -5760,6 +5812,10 @@ class Billing_Edit_ extends React.Component {
     };
 
     try {
+      await prepareBillingUploads([
+        this.getPendingDropzoneFiles(this.myDropzone).length ? this.myDropzone : null,
+        parseInt(type) == 2 && DropzoneDop && this.getPendingDropzoneFiles(DropzoneDop).length ? DropzoneDop : null,
+      ]);
       const res = await this.getData("save_new", data);
 
       if (res.st === true) {
@@ -5774,8 +5830,12 @@ class Billing_Edit_ extends React.Component {
         const facturUploadFiles =
           parseInt(type) == 2 && DropzoneDop ? this.getPendingDropzoneFiles(DropzoneDop) : [];
         const uploadTargets = [
-          mainUploadFiles.length ? { dropzone: this.myDropzone } : null,
-          facturUploadFiles.length ? { dropzone: DropzoneDop } : null,
+          mainUploadFiles.length
+            ? { dropzone: this.myDropzone, target: "main", filesCount: mainUploadFiles.length }
+            : null,
+          facturUploadFiles.length
+            ? { dropzone: DropzoneDop, target: "factur", filesCount: facturUploadFiles.length }
+            : null,
         ].filter(Boolean);
 
         is_return = false;
@@ -5788,9 +5848,11 @@ class Billing_Edit_ extends React.Component {
           },
         });
 
-        const uploadPromises = uploadTargets.map(({ dropzone }) =>
-          this.waitForDropzoneQueue(dropzone),
-        );
+        const uploadPromises = uploadTargets.map(async ({ dropzone, target, filesCount }) => ({
+          ...(await this.waitForDropzoneQueue(dropzone)),
+          target,
+          filesCount,
+        }));
 
         this.myDropzone.processQueue();
 
@@ -5799,7 +5861,23 @@ class Billing_Edit_ extends React.Component {
         }
 
         const uploadResults = await Promise.all(uploadPromises);
-        const hasUploadErrors = uploadResults.some((item) => item.hasErrors);
+        const hasDefinitiveUploadErrors = uploadResults.some((item) => item.hasDefinitiveErrors);
+        const hasAmbiguousUploadErrors = uploadResults.some((item) => item.hasAmbiguousErrors);
+        let ambiguousUploadsVerified = false;
+
+        if (hasAmbiguousUploadErrors && !hasDefinitiveUploadErrors) {
+          ambiguousUploadsVerified = await this.verifyUploadedImages({
+            billId: res.bill_id,
+            pointId: point?.id,
+            billType: type_bill,
+            mainFiles: uploadResults
+              .filter((item) => item.target === "main")
+              .reduce((total, item) => total + item.filesCount, 0),
+            facturFiles: uploadResults
+              .filter((item) => item.target === "factur")
+              .reduce((total, item) => total + item.filesCount, 0),
+          });
+        }
 
         this.finishSaveAction({
           isUploadProcessing: false,
@@ -5809,7 +5887,7 @@ class Billing_Edit_ extends React.Component {
           },
         });
 
-        if (hasUploadErrors) {
+        if (hasDefinitiveUploadErrors || (hasAmbiguousUploadErrors && !ambiguousUploadsVerified)) {
           showAlert(false, "Документ сохранен, но часть изображений не загрузилась");
           return;
         }
@@ -5854,6 +5932,7 @@ class Billing_Edit_ extends React.Component {
       closeDialog,
       bill,
       bill_list,
+      bill_items,
       is_horizontal,
       is_vertical,
     } = this.props.store;
@@ -5909,16 +5988,18 @@ class Billing_Edit_ extends React.Component {
           fullWidth={true}
           maxWidth={fullScreen ? false : "lg"}
           scroll="paper"
-          PaperProps={{
-            sx: {
-              ...billingConfirmDialogPaperSx,
-              ...(fullScreen
-                ? {
-                    borderRadius: 0,
-                    minHeight: "100dvh",
-                    maxHeight: "100dvh",
-                  }
-                : {}),
+          slotProps={{
+            paper: {
+              sx: {
+                ...billingConfirmDialogPaperSx,
+                ...(fullScreen
+                  ? {
+                      borderRadius: 0,
+                      minHeight: "100dvh",
+                      maxHeight: "100dvh",
+                    }
+                  : {}),
+              },
             },
           }}
         >
@@ -6009,16 +6090,18 @@ class Billing_Edit_ extends React.Component {
           fullWidth={true}
           maxWidth={fullScreen ? false : "lg"}
           scroll="paper"
-          PaperProps={{
-            sx: {
-              ...billingConfirmDialogPaperSx,
-              ...(fullScreen
-                ? {
-                    borderRadius: 0,
-                    minHeight: "100dvh",
-                    maxHeight: "100dvh",
-                  }
-                : {}),
+          slotProps={{
+            paper: {
+              sx: {
+                ...billingConfirmDialogPaperSx,
+                ...(fullScreen
+                  ? {
+                      borderRadius: 0,
+                      minHeight: "100dvh",
+                      maxHeight: "100dvh",
+                    }
+                  : {}),
+              },
             },
           }}
         >
@@ -6092,22 +6175,28 @@ class Billing_Edit_ extends React.Component {
                         </Typography>
                         <Typography
                           variant="body2"
-                          color="text.secondary"
-                          sx={{ mt: 0.75 }}
+                          sx={{
+                            color: "text.secondary",
+                            mt: 0.75,
+                          }}
                         >
                           Строка: {item.ocrItem?.line ?? index + 1}
                         </Typography>
                         {!normalizeOcrText(item.ocrItem?.__ocr_file_name) ? null : (
                           <Typography
                             variant="body2"
-                            color="text.secondary"
+                            sx={{
+                              color: "text.secondary",
+                            }}
                           >
                             Файл: {item.ocrItem.__ocr_file_name}
                           </Typography>
                         )}
                         <Typography
                           variant="body2"
-                          color="text.secondary"
+                          sx={{
+                            color: "text.secondary",
+                          }}
                         >
                           OCR: {formatBillingQuantity(item.ocrItem?.quantity)}
                           {formatBillingQuantity(item.ocrItem?.quantity) === "—" ? "" : " упак."}
@@ -6126,8 +6215,10 @@ class Billing_Edit_ extends React.Component {
                         {!item.resolveIssue ? null : (
                           <Typography
                             variant="body2"
-                            color="warning.main"
-                            sx={{ mt: 1 }}
+                            sx={{
+                              color: "warning.main",
+                              mt: 1,
+                            }}
                           >
                             {item.resolveIssue}
                           </Typography>

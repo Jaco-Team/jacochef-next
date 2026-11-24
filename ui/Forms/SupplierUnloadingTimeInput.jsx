@@ -39,12 +39,14 @@ const SupplierUnloadingTimeInput = ({ handleChange, value, label }) => {
         value={value}
         onChange={handleChange}
         placeholder="с 09:00 до 18:00"
-        InputProps={{
-          inputComponent: TimePeriodMask,
-        }}
         sx={{
           "& .MuiOutlinedInput-root": {
             borderRadius: 1,
+          },
+        }}
+        slotProps={{
+          input: {
+            inputComponent: TimePeriodMask,
           },
         }}
       />

@@ -1,52 +1,62 @@
 import { useState } from "react";
 import {
   Box,
-  Button,
-  Chip,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
   Grid,
   IconButton,
-  InputAdornment,
-  Paper,
   Table,
   TableBody,
   TableCell,
   TableContainer,
   TableHead,
   TableRow,
-  TextField,
   Tooltip,
   Typography,
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
-import CloseIcon from "@mui/icons-material/Close";
-import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
+import DeleteOutlineIcon from "@mui/icons-material/DeleteOutlined";
+import HistoryIcon from "@mui/icons-material/History";
 import PlaceOutlinedIcon from "@mui/icons-material/PlaceOutlined";
-import SearchIcon from "@mui/icons-material/Search";
 import ScheduleOutlinedIcon from "@mui/icons-material/ScheduleOutlined";
-import { MySelect, MyTextInput } from "@/ui/Forms";
 import {
+  JacoButton,
+  JacoModal,
+  JacoSearchField,
+  JacoSelect,
+  JacoStatusChip,
+  JacoSurface,
+  JacoTextInput,
+  uiColors,
+  uiRadii,
+  uiTypography,
+} from "@/design-system/shared/ui";
+import {
+  getAdditionTypeName,
   getCategoryName,
   getLocationName,
   getScheduleText,
   isSameId,
   tableHeaderSx,
   tableRowSx,
+  wrappingChipSx,
 } from "./helpers";
+import { CleaningTemplateChips, FormHint, usePendingAction } from "./shared";
 
-const actionButtonSx = {
-  minHeight: 40,
-  minWidth: 112,
-  px: 2,
-  borderRadius: "8px",
+const cellTextSx = {
+  ...uiTypography.label,
+  color: uiColors.text,
+};
+
+const cleaningNameButtonSx = {
+  p: 0,
+  border: 0,
+  bgcolor: "transparent",
+  cursor: "pointer",
+  fontFamily: "inherit",
+  ...uiTypography.bodyMedium,
   fontWeight: 700,
-  lineHeight: "20px",
-  alignItems: "center",
-  justifyContent: "center",
-  whiteSpace: "nowrap",
+  color: uiColors.textStrong,
+  textAlign: "left",
+  "&:hover": { color: uiColors.primary },
 };
 
 function getCategory(categories, categoryId) {
@@ -59,11 +69,16 @@ export default function CafesView({
   locations = [],
   roles = [],
   scheduleTypeOptions = [],
+  additionTypeOptions = [],
   selectedCafeId,
   roleFilter,
   onCafeChange,
   onRoleFilterChange,
   onRemoveCleaning,
+  onAddOpen,
+  onHistoryOpen,
+  onSaveDopTimes,
+  dopTimeDraftCount = 0,
   dopTimeDrafts = {},
   onDopTimeChange,
   canEdit,
@@ -73,8 +88,11 @@ export default function CafesView({
     id: location.id,
     name: getLocationName(location),
   }));
+  // JacoSelect reports string values; the page keeps location ids as they came from the API.
+  const toLocationId = (value) =>
+    locationOptions.find((option) => String(option.id) === String(value))?.id ?? value;
   const roleOptions = [
-    { id: "all", name: "Все роли" },
+    { id: "all", name: "Все должности" },
     ...roles.map((role) => ({
       id: role?.name || "",
       name: role?.name || "",
@@ -91,8 +109,10 @@ export default function CafesView({
   const infoCleaning = templates.find((template) => template.id === infoCleaningId) || null;
   const infoCategory = infoCleaning ? getCategory(categories, infoCleaning.categoryId) : null;
 
+  const isDopTimeUnsaved = (item) => Object.prototype.hasOwnProperty.call(dopTimeDrafts, item.id);
+
   const getDopTimeValue = (item) => {
-    if (Object.prototype.hasOwnProperty.call(dopTimeDrafts, item.id)) {
+    if (isDopTimeUnsaved(item)) {
       return dopTimeDrafts[item.id];
     }
 
@@ -105,10 +125,7 @@ export default function CafesView({
       spacing={2.5}
     >
       <Grid size={12}>
-        <Paper
-          variant="outlined"
-          sx={{ borderRadius: "8px", overflow: "hidden" }}
-        >
+        <JacoSurface sx={{ overflow: "hidden" }}>
           <Box
             sx={{
               p: 1.5,
@@ -130,17 +147,17 @@ export default function CafesView({
             >
               <PlaceOutlinedIcon
                 sx={{
-                  color: "text.secondary",
+                  color: uiColors.textMuted,
                   flexShrink: 0,
                   display: { xs: "none", md: "block" },
                 }}
               />
-              <MySelect
+              <JacoSelect
                 label="Кафе"
                 data={locationOptions}
                 value={selectedCafeId}
-                func={(event) => onCafeChange(event.target.value)}
-                is_none={false}
+                onChange={(event) => onCafeChange(toLocationId(event.target.value))}
+                allowNone={false}
                 disabled={locationOptions.length <= 1}
                 sx={{
                   flex: { xs: 1, md: "0 1 360px" },
@@ -149,12 +166,12 @@ export default function CafesView({
                 }}
               />
 
-              <MySelect
-                label="Роль"
+              <JacoSelect
+                label="Должность"
                 data={roleOptions}
                 value={roleFilter}
-                func={(event) => onRoleFilterChange(event.target.value)}
-                is_none={false}
+                onChange={(event) => onRoleFilterChange(event.target.value)}
+                allowNone={false}
                 sx={{
                   flex: { xs: "1 1 100%", md: "0 1 240px" },
                   minWidth: { xs: 0, md: 240 },
@@ -162,40 +179,90 @@ export default function CafesView({
               />
             </Box>
 
-            <Typography
+            <Box
               sx={{
-                color: "text.secondary",
-                fontSize: 14,
-                whiteSpace: { xs: "normal", md: "nowrap" },
+                display: "flex",
+                alignItems: "center",
+                justifyContent: { xs: "flex-start", md: "flex-end" },
+                flexWrap: "wrap",
+                gap: 1.5,
                 width: { xs: "100%", md: "auto" },
               }}
             >
-              <b>{assignedCleanings.length}</b> уборок назначено на «{selectedCafe?.name || "—"}»
-            </Typography>
+              <Typography
+                sx={{
+                  ...cellTextSx,
+                  whiteSpace: { xs: "normal", md: "nowrap" },
+                  width: { xs: "100%", md: "auto" },
+                }}
+              >
+                <b>{assignedCleanings.length}</b> уборок назначено на «{selectedCafe?.name || "—"}»
+              </Typography>
+              <JacoButton
+                compact
+                tone="secondary"
+                startIcon={<HistoryIcon />}
+                onClick={onHistoryOpen}
+                disabled={!selectedCafe}
+              >
+                История изменений
+              </JacoButton>
+              {canEdit ? (
+                <>
+                  <JacoButton
+                    compact
+                    startIcon={<AddIcon />}
+                    onClick={onAddOpen}
+                  >
+                    Добавить уборку
+                  </JacoButton>
+                  <JacoButton
+                    compact
+                    tone="success"
+                    onClick={onSaveDopTimes}
+                    disabled={!dopTimeDraftCount}
+                  >
+                    Сохранить изменения
+                  </JacoButton>
+                  {dopTimeDraftCount ? (
+                    <Typography
+                      sx={{
+                        ...uiTypography.label,
+                        color: uiColors.warningHover,
+                        fontWeight: 600,
+                        whiteSpace: "nowrap",
+                      }}
+                    >
+                      Не сохранено: {dopTimeDraftCount}
+                    </Typography>
+                  ) : null}
+                </>
+              ) : null}
+            </Box>
           </Box>
-        </Paper>
+        </JacoSurface>
       </Grid>
 
       <Grid size={12}>
-        <Paper
-          variant="outlined"
+        <JacoSurface
           sx={{
-            borderRadius: { xs: 0, md: "12px" },
+            borderRadius: { xs: 0, md: uiRadii.lg },
             overflow: "hidden",
-            border: { xs: 0, md: "1px solid #e0e0e0" },
-            bgcolor: { xs: "transparent", md: "background.paper" },
+            border: { xs: 0, md: `1px solid ${uiColors.border}` },
+            bgcolor: { xs: "transparent", md: uiColors.surface },
           }}
         >
           <TableContainer sx={{ display: { xs: "none", md: "block" } }}>
             <Table size="small">
               <TableHead>
                 <TableRow sx={tableHeaderSx}>
-                  <TableCell sx={{ width: "34%" }}>Уборка</TableCell>
-                  <TableCell>Категория</TableCell>
-                  <TableCell>Роль</TableCell>
+                  <TableCell sx={{ width: "34%" }}>Объект уборки</TableCell>
+                  <TableCell>Вид уборки</TableCell>
+                  <TableCell>Должность</TableCell>
                   <TableCell>Длительность</TableCell>
                   <TableCell sx={{ width: 132 }}>Доп. время</TableCell>
-                  <TableCell sx={{ width: "24%" }}>Расписание</TableCell>
+                  <TableCell sx={{ width: "20%" }}>Расписание</TableCell>
+                  <TableCell>Тип добавления</TableCell>
                   <TableCell align="right">Действия</TableCell>
                 </TableRow>
               </TableHead>
@@ -208,42 +275,41 @@ export default function CafesView({
                   >
                     <TableCell
                       className="cleaning-name-cell"
-                      sx={{ borderLeft: "3px solid transparent" }}
+                      sx={{
+                        borderLeft: "3px solid",
+                        borderLeftColor: isDopTimeUnsaved(item) ? uiColors.warning : "transparent",
+                      }}
                     >
                       <Box>
                         <Typography
                           component="button"
                           type="button"
                           onClick={() => setInfoCleaningId(item.id)}
-                          sx={{
-                            p: 0,
-                            border: 0,
-                            bgcolor: "transparent",
-                            cursor: "pointer",
-                            color: "text.primary",
-                            fontSize: 15,
-                            fontWeight: 800,
-                            textAlign: "left",
-                            "&:hover": { color: "primary.main" },
-                          }}
+                          sx={cleaningNameButtonSx}
                         >
                           {item.name}
                         </Typography>
+                        <CleaningTemplateChips
+                          item={item}
+                          withAdditionType={false}
+                          sx={{ mt: 0.5 }}
+                        />
                       </Box>
                     </TableCell>
                     <TableCell>
-                      <Chip
+                      <JacoStatusChip
                         label={getCategoryName(categories, item.categoryId)}
-                        size="small"
-                        sx={{ height: 24, bgcolor: "surface.subtle", fontWeight: 700 }}
+                        tone="neutral"
+                        variant="soft"
+                        sx={wrappingChipSx}
                       />
                     </TableCell>
                     <TableCell>
-                      <Chip
+                      <JacoStatusChip
                         label={item.role}
-                        size="small"
+                        tone="neutral"
                         variant="outlined"
-                        sx={{ height: 24, fontWeight: 700 }}
+                        sx={wrappingChipSx}
                       />
                     </TableCell>
                     <TableCell>
@@ -251,31 +317,39 @@ export default function CafesView({
                         sx={{
                           width: 58,
                           py: 0.5,
-                          borderRadius: "8px",
-                          bgcolor: "surface.muted",
+                          borderRadius: uiRadii.sm,
+                          bgcolor: uiColors.surfaceMuted,
                           textAlign: "center",
                         }}
                       >
-                        <Typography sx={{ fontSize: 16, fontWeight: 800, lineHeight: "18px" }}>
+                        <Typography
+                          sx={{ ...uiTypography.bodyMedium, fontWeight: 700, color: uiColors.textStrong }}
+                        >
                           {item.duration}
                         </Typography>
-                        <Typography
-                          sx={{ color: "text.secondary", fontSize: 11, lineHeight: "14px" }}
-                        >
+                        <Typography sx={{ ...uiTypography.compactLabel, color: uiColors.textMuted }}>
                           мин
                         </Typography>
                       </Box>
                     </TableCell>
                     <TableCell>
-                      <MyTextInput
+                      <JacoTextInput
                         value={getDopTimeValue(item)}
-                        func={(event) => onDopTimeChange(item.id, event.target.value ?? "")}
+                        onChange={(event) => onDopTimeChange(item.id, event.target.value ?? "")}
                         type="number"
                         min={0}
                         step={1}
                         disabled={!canEdit}
                         sx={{ minWidth: 96 }}
                       />
+                      {isDopTimeUnsaved(item) ? (
+                        <FormHint
+                          tone="warning"
+                          sx={{ mt: 0.5, fontSize: 12 }}
+                        >
+                          Не сохранено
+                        </FormHint>
+                      ) : null}
                     </TableCell>
                     <TableCell>
                       <Box
@@ -283,22 +357,27 @@ export default function CafesView({
                           display: "flex",
                           alignItems: "center",
                           gap: 1,
-                          color: "text.secondary",
+                          color: uiColors.textMuted,
                         }}
                       >
                         <ScheduleOutlinedIcon sx={{ fontSize: 18 }} />
-                        <Typography sx={{ fontSize: 14 }}>
+                        <Typography sx={cellTextSx}>
                           {getScheduleText(item, scheduleTypeOptions)}
                         </Typography>
                       </Box>
+                    </TableCell>
+                    <TableCell>
+                      <Typography sx={cellTextSx}>
+                        {getAdditionTypeName(item.additionType, additionTypeOptions) || "—"}
+                      </Typography>
                     </TableCell>
                     <TableCell align="right">
                       {canEdit ? (
                         <Tooltip title="Убрать из кафе">
                           <IconButton
                             size="small"
-                            color="primary"
                             onClick={() => onRemoveCleaning(item.id)}
+                            sx={{ color: uiColors.primary }}
                           >
                             <DeleteOutlineIcon fontSize="small" />
                           </IconButton>
@@ -310,8 +389,8 @@ export default function CafesView({
                 {visibleCleanings.length ? null : (
                   <TableRow>
                     <TableCell
-                      colSpan={7}
-                      sx={{ py: 4, textAlign: "center", color: "text.secondary" }}
+                      colSpan={8}
+                      sx={{ ...cellTextSx, py: 4, textAlign: "center" }}
                     >
                       Нет уборок по выбранным фильтрам
                     </TableCell>
@@ -321,16 +400,20 @@ export default function CafesView({
             </Table>
           </TableContainer>
 
-          <Box sx={{ display: { xs: "grid", md: "none" }, gap: 1.75, p: 0 }}>
+          <Box
+            sx={{
+              display: { xs: "grid", md: "none" },
+              gridTemplateColumns: "minmax(0, 1fr)",
+              gap: 1.75,
+              p: 0,
+            }}
+          >
             {visibleCleanings.map((item) => (
-              <Paper
+              <JacoSurface
                 key={item.id}
-                variant="outlined"
                 sx={{
                   p: 1.5,
-                  borderRadius: "10px",
-                  borderLeft: "3px solid",
-                  borderLeftColor: "primary.main",
+                  borderLeft: `3px solid ${isDopTimeUnsaved(item) ? uiColors.warning : uiColors.primary}`,
                 }}
               >
                 <Box sx={{ display: "grid", gap: 1, mb: 1 }}>
@@ -339,89 +422,83 @@ export default function CafesView({
                       component="button"
                       type="button"
                       onClick={() => setInfoCleaningId(item.id)}
-                      sx={{
-                        p: 0,
-                        border: 0,
-                        bgcolor: "transparent",
-                        cursor: "pointer",
-                        color: "text.primary",
-                        fontSize: 16,
-                        fontWeight: 800,
-                        lineHeight: 1.25,
-                        textAlign: "left",
-                        "&:hover": { color: "primary.main" },
-                      }}
+                      sx={cleaningNameButtonSx}
                     >
                       {item.name}
                     </Typography>
+                    <CleaningTemplateChips
+                      item={item}
+                      withAdditionType={false}
+                      sx={{ mt: 0.75 }}
+                    />
                     <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap", mt: 0.75 }}>
-                      <Chip
+                      <JacoStatusChip
                         label={getCategoryName(categories, item.categoryId)}
-                        size="small"
-                        sx={{ height: 22, bgcolor: "surface.subtle", fontWeight: 700 }}
+                        tone="neutral"
+                        variant="soft"
                       />
-                      <Chip
+                      <JacoStatusChip
                         label={item.role}
-                        size="small"
+                        tone="neutral"
                         variant="outlined"
-                        sx={{ height: 22, fontWeight: 700 }}
                       />
                     </Box>
                   </Box>
                   {canEdit ? (
-                    <Button
-                      size="small"
-                      variant="contained"
+                    <JacoButton
+                      tone="danger"
+                      compact
                       startIcon={<DeleteOutlineIcon />}
                       onClick={() => onRemoveCleaning(item.id)}
-                      sx={{
-                        justifySelf: "start",
-                        minHeight: 36,
-                        px: 1.75,
-                        borderRadius: "8px",
-                        fontWeight: 700,
-                        bgcolor: "primary.main",
-                        color: "#fff",
-                        "&:hover": { bgcolor: "primary.dark" },
-                      }}
+                      sx={{ justifySelf: "start" }}
                     >
                       Убрать
-                    </Button>
+                    </JacoButton>
                   ) : null}
                   <Box
                     sx={{
                       width: 100,
                     }}
                   >
-                    <MyTextInput
+                    <JacoTextInput
                       value={getDopTimeValue(item)}
-                      func={(event) => onDopTimeChange(item.id, event.target.value ?? "")}
+                      onChange={(event) => onDopTimeChange(item.id, event.target.value ?? "")}
                       type="number"
                       min={0}
                       step={1}
                       disabled={!canEdit}
                     />
+                    {isDopTimeUnsaved(item) ? (
+                      <FormHint
+                        tone="warning"
+                        sx={{ mt: 0.5, fontSize: 12 }}
+                      >
+                        Не сохранено
+                      </FormHint>
+                    ) : null}
                   </Box>
                 </Box>
                 <Box
-                  sx={{ display: "flex", alignItems: "center", gap: 1, color: "text.secondary" }}
+                  sx={{ display: "flex", alignItems: "center", gap: 1, color: uiColors.textMuted }}
                 >
                   <ScheduleOutlinedIcon sx={{ fontSize: 18 }} />
-                  <Typography sx={{ fontSize: 14 }}>
+                  <Typography sx={cellTextSx}>
                     {item.duration} мин · {getScheduleText(item, scheduleTypeOptions)}
                   </Typography>
                 </Box>
-              </Paper>
+                <Typography sx={{ ...cellTextSx, mt: 0.75 }}>
+                  Тип добавления:{" "}
+                  {getAdditionTypeName(item.additionType, additionTypeOptions) || "—"}
+                </Typography>
+              </JacoSurface>
             ))}
             {visibleCleanings.length ? null : (
-              <Typography
-                sx={{ color: "text.secondary", fontSize: 14, textAlign: "center", py: 3 }}
-              >
+              <Typography sx={{ ...cellTextSx, textAlign: "center", py: 3 }}>
                 Нет уборок по выбранным фильтрам
               </Typography>
             )}
           </Box>
-        </Paper>
+        </JacoSurface>
       </Grid>
 
       <CafeCleaningInfoDialog
@@ -436,58 +513,33 @@ export default function CafesView({
 
 function CafeCleaningInfoDialog({ open, cleaning, category, onClose }) {
   return (
-    <Dialog
+    <JacoModal
       open={open}
       onClose={onClose}
-      fullWidth
+      title={cleaning?.name || ""}
       maxWidth="md"
-      slotProps={{ paper: { sx: { borderRadius: "8px" } } }}
     >
-      <DialogTitle sx={{ p: 2.5 }}>
-        <Box
-          sx={{
-            display: "flex",
-            alignItems: "flex-start",
-            justifyContent: "space-between",
-            gap: 2,
-          }}
-        >
-          <Box>
-            <Typography sx={{ fontSize: 18, fontWeight: 800, lineHeight: 1.3 }}>
-              {cleaning?.name || ""}
-            </Typography>
-            <Typography sx={{ color: "text.secondary", fontSize: 14, mt: 0.75 }}>
-              {category?.name || "Без категории"} · {cleaning?.role || "Без роли"} ·{" "}
-              {cleaning?.duration || "—"} мин
-            </Typography>
-          </Box>
-          <IconButton
-            size="small"
-            onClick={onClose}
-          >
-            <CloseIcon fontSize="small" />
-          </IconButton>
-        </Box>
-      </DialogTitle>
-      <DialogContent sx={{ px: 2.5, pb: 2.5 }}>
-        <Typography sx={{ fontSize: 15, fontWeight: 700, mb: 1 }}>
-          Описание процесса уборки:
-        </Typography>
-        <Box
-          sx={{
-            color: "text.primary",
-            fontSize: 15,
-            lineHeight: 1.55,
-            "& p": { m: 0, mb: 1.5 },
-            "& ol, & ul": { mt: 0, mb: 1.5, pl: 2.5 },
-            "& li": { mb: 0.5 },
-          }}
-          dangerouslySetInnerHTML={{
-            __html: category?.instruction || "<p>Описание не заполнено</p>",
-          }}
-        />
-      </DialogContent>
-    </Dialog>
+      <Typography sx={{ ...uiTypography.label, color: uiColors.textMuted, mb: 2 }}>
+        {category?.name || "Без вида уборки"} · {cleaning?.role || "Без должности"} ·{" "}
+        {cleaning?.duration || "—"} мин
+      </Typography>
+      <Typography sx={{ ...uiTypography.bodyMedium, color: uiColors.textStrong, mb: 1 }}>
+        Описание процесса уборки:
+      </Typography>
+      <Box
+        sx={{
+          ...uiTypography.body,
+          color: uiColors.textStrong,
+          lineHeight: 1.55,
+          "& p": { m: 0, mb: 1.5 },
+          "& ol, & ul": { mt: 0, mb: 1.5, pl: 2.5 },
+          "& li": { mb: 0.5 },
+        }}
+        dangerouslySetInnerHTML={{
+          __html: category?.instruction || "<p>Описание не заполнено</p>",
+        }}
+      />
+    </JacoModal>
   );
 }
 
@@ -504,8 +556,9 @@ export function AddCafeCleaningDialog({
   onClose,
   onAdd,
 }) {
+  const { pendingKey, isPending, runPending } = usePendingAction();
   const roleOptions = [
-    { id: "all", name: "Все роли" },
+    { id: "all", name: "Все должности" },
     ...roles.map((role) => ({
       id: role?.name || "",
       name: role?.name || "",
@@ -525,88 +578,83 @@ export function AddCafeCleaningDialog({
   });
 
   return (
-    <Dialog
+    <JacoModal
       open={open}
       onClose={onClose}
-      fullWidth
+      title="Добавить уборку"
       maxWidth="sm"
-      slotProps={{ paper: { sx: { borderRadius: "12px" } } }}
+      actions={
+        <JacoButton
+          tone="secondary"
+          compact
+          onClick={onClose}
+        >
+          Закрыть
+        </JacoButton>
+      }
     >
-      <DialogTitle sx={{ fontWeight: 700 }}>
-        Добавить уборку
-        <Typography sx={{ color: "text.secondary", fontSize: 14, mt: 0.5 }}>
+      <Box sx={{ display: "grid", gap: 1.5 }}>
+        <Typography sx={{ ...uiTypography.label, color: uiColors.textMuted }}>
           {cafe ? getLocationName(cafe) : ""}
         </Typography>
-      </DialogTitle>
-      <DialogContent sx={{ display: "grid", gap: 1.5 }}>
         <Box
           sx={{
             display: "grid",
-            gridTemplateColumns: { xs: "1fr", sm: "minmax(0, 1fr) 180px" },
+            gridTemplateColumns: { xs: "1fr", sm: "minmax(0, 1fr) 200px" },
             gap: 1,
           }}
         >
-          <TextField
-            size="small"
+          <JacoSearchField
             value={query}
-            placeholder="Поиск по названию, роли или категории"
-            onChange={(event) => onQueryChange(event.target.value)}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <SearchIcon fontSize="small" />
-                </InputAdornment>
-              ),
-            }}
+            onValueChange={onQueryChange}
+            minLength={1}
+            debounceMs={150}
+            placeholder="Поиск по объекту, должности или виду уборки"
           />
-          <MySelect
-            label="Роль"
+          <JacoSelect
+            label="Должность"
             data={roleOptions}
             value={roleFilter}
-            func={(event) => onRoleFilterChange(event.target.value)}
-            is_none={false}
+            onChange={(event) => onRoleFilterChange(event.target.value)}
+            allowNone={false}
           />
         </Box>
 
         <Box sx={{ display: "grid", gap: 1, maxHeight: 420, overflow: "auto" }}>
           {filteredItems.length ? (
             filteredItems.map((item) => (
-              <Paper
+              <JacoSurface
                 key={item.id}
-                variant="outlined"
                 sx={{
                   p: 1.5,
                   display: "grid",
-                  gridTemplateColumns: { xs: "minmax(0, 1fr) 40px", sm: "minmax(0, 1fr) auto" },
+                  gridTemplateColumns: { xs: "minmax(0, 1fr) 44px", sm: "minmax(0, 1fr) auto" },
                   alignItems: "center",
                   gap: { xs: 1.25, sm: 2 },
-                  borderRadius: "8px",
+                  borderRadius: uiRadii.md,
                 }}
               >
                 <Box sx={{ minWidth: 0 }}>
-                  <Typography sx={{ fontSize: 15, fontWeight: 700, lineHeight: 1.3 }}>
+                  <Typography sx={{ ...uiTypography.bodyMedium, color: uiColors.textStrong }}>
                     {item.name}
                   </Typography>
-                  <Typography sx={{ color: "text.secondary", fontSize: 14 }}>
+                  <Typography sx={cellTextSx}>
                     {getCategoryName(categories, item.categoryId)} · {item.role} · {item.duration}{" "}
                     мин
                   </Typography>
                 </Box>
-                <Button
-                  size="small"
-                  variant="outlined"
+                <JacoButton
+                  tone="outlinePrimary"
+                  compact
+                  aria-label="Добавить"
                   startIcon={<AddIcon />}
-                  onClick={() => onAdd(item.id)}
+                  onClick={() => runPending(() => onAdd(item.id), item.id)}
+                  disabled={isPending}
+                  loading={pendingKey === item.id}
                   sx={{
-                    minWidth: { xs: 40, sm: 96 },
-                    width: { xs: 40, sm: "auto" },
-                    height: 40,
-                    px: { xs: 0, sm: 1.5 },
-                    borderRadius: "8px",
-                    whiteSpace: "nowrap",
-                    "& .MuiButton-startIcon": {
-                      m: { xs: 0, sm: "0 8px 0 -4px" },
-                    },
+                    minWidth: { xs: 44, sm: 112 },
+                    px: { xs: 0, sm: 2 },
+                    "& .MuiButton-startIcon": { m: { xs: 0, sm: "0 8px 0 -4px" } },
                   }}
                 >
                   <Box
@@ -615,63 +663,50 @@ export function AddCafeCleaningDialog({
                   >
                     Добавить
                   </Box>
-                </Button>
-              </Paper>
+                </JacoButton>
+              </JacoSurface>
             ))
           ) : (
-            <Typography sx={{ color: "text.secondary", fontSize: 14 }}>
-              Нет уборок, которые можно добавить
-            </Typography>
+            <Typography sx={cellTextSx}>Нет уборок, которые можно добавить</Typography>
           )}
         </Box>
-      </DialogContent>
-      <DialogActions sx={{ px: 3, pb: 2.5 }}>
-        <Button
-          size="small"
-          variant="outlined"
-          onClick={onClose}
-          sx={actionButtonSx}
-        >
-          Закрыть
-        </Button>
-      </DialogActions>
-    </Dialog>
+      </Box>
+    </JacoModal>
   );
 }
 
 export function RemoveCafeCleaningDialog({ open, cleaning, cafe, onClose, onConfirm }) {
+  const { isPending, runPending } = usePendingAction();
+
   return (
-    <Dialog
+    <JacoModal
       open={open}
       onClose={onClose}
-      fullWidth
+      title="Убрать уборку?"
       maxWidth="xs"
-      slotProps={{ paper: { sx: { borderRadius: "12px" } } }}
+      actions={
+        <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 1, width: "100%" }}>
+          <JacoButton
+            tone="secondary"
+            compact
+            onClick={onClose}
+          >
+            Отмена
+          </JacoButton>
+          <JacoButton
+            tone="danger"
+            compact
+            onClick={() => runPending(onConfirm)}
+            loading={isPending}
+          >
+            Убрать
+          </JacoButton>
+        </Box>
+      }
     >
-      <DialogTitle sx={{ fontWeight: 700 }}>Убрать уборку?</DialogTitle>
-      <DialogContent>
-        <Typography sx={{ color: "text.secondary", fontSize: 15 }}>
-          Уборка «{cleaning?.name || ""}» будет убрана из кафе «{cafe?.name || ""}».
-        </Typography>
-      </DialogContent>
-      <DialogActions sx={{ px: 3, pb: 2.5, gap: 1 }}>
-        <Button
-          size="small"
-          variant="outlined"
-          onClick={onClose}
-          sx={actionButtonSx}
-        >
-          Отмена
-        </Button>
-        <Button
-          size="small"
-          variant="contained"
-          onClick={onConfirm}
-          sx={actionButtonSx}
-        >
-          Убрать
-        </Button>
-      </DialogActions>
-    </Dialog>
+      <Typography sx={{ ...uiTypography.body, color: uiColors.text }}>
+        Уборка «{cleaning?.name || ""}» будет убрана из кафе «{cafe?.name || ""}».
+      </Typography>
+    </JacoModal>
   );
 }

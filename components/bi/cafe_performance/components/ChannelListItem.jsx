@@ -33,7 +33,6 @@ export default function ChannelListItem({
       tabIndex={onClick ? 0 : undefined}
       aria-label={ariaLabel}
       direction="row"
-      alignItems="center"
       spacing={CP_SPACE.compact}
       onClick={onClick}
       onKeyDown={(event) => {
@@ -44,6 +43,7 @@ export default function ChannelListItem({
         }
       }}
       sx={{
+        alignItems: "center",
         p: CP_SPACE.compact,
         borderRadius: CP_RADIUS.control,
         border: "1px solid",
@@ -51,6 +51,7 @@ export default function ChannelListItem({
         backgroundColor: "background.paper",
         cursor: onClick ? "pointer" : "default",
         transition: "border-color 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease",
+
         "&:hover": onClick
           ? {
               borderColor: "border.hover",
@@ -81,9 +82,11 @@ export default function ChannelListItem({
       >
         <Stack
           direction="row"
-          alignItems="center"
-          justifyContent="space-between"
           spacing={CP_SPACE.related}
+          sx={{
+            alignItems: "center",
+            justifyContent: "space-between",
+          }}
         >
           <Typography
             variant="subtitle2"
@@ -102,7 +105,9 @@ export default function ChannelListItem({
         {subtitle ? (
           <Typography
             variant="caption"
-            color="text.secondary"
+            sx={{
+              color: "text.secondary",
+            }}
           >
             {subtitle}
           </Typography>

@@ -2,6 +2,7 @@ import React from "react";
 
 import Grid from "@mui/material/Grid";
 import Button from "@mui/material/Button";
+import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 
 import IconButton from "@mui/material/IconButton";
@@ -50,7 +51,7 @@ import { ModalAccept } from "@/components/general/ModalAccept";
 import SkladItemsCategoriesTab, {
   flattenSkladCategories,
   getSkladCategoryUsageCount,
-} from "@/components/sklad/SkladItemsCategoriesTab";
+} from "@/components/sklad_items_module_new/SkladItemsCategoriesTab";
 
 class SkladItemsModule_Modal_History_View extends React.Component {
   constructor(props) {
@@ -1099,6 +1100,52 @@ class SkladItemsModule_Modal extends React.Component {
                     let this_storages = this.state.itemEdit;
                     this_storages.item.cat_id = value;
                     this.setState({ itemEdit: this_storages });
+                  }}
+                />
+              </Grid>
+              <Grid size={{ xs: 12, sm: 1.75 }}>
+                <TextField
+                  fullWidth
+                  required
+                  type="date"
+                  label="Действует с"
+                  value={this.state.itemEdit?.item?.date_start || ""}
+                  onChange={(event) => this.changeItem("date_start", event)}
+                  disabled={
+                    !this.props.acces?.warehouse_items_date_start_edit &&
+                    !this.props.acces?.name_edit
+                  }
+                  slotProps={{
+                    inputLabel: { shrink: true },
+                    htmlInput: {
+                      min: this.props.acces?.warehouse_items_past_date_access
+                        ? undefined
+                        : new Date().toLocaleDateString("sv-SE", {
+                            timeZone: "Europe/Samara",
+                          }),
+                    },
+                  }}
+                />
+              </Grid>
+              <Grid size={{ xs: 12, sm: 1.75 }}>
+                <TextField
+                  fullWidth
+                  type="date"
+                  label="Действует по"
+                  value={this.state.itemEdit?.item?.date_end || ""}
+                  onChange={(event) => this.changeItem("date_end", event)}
+                  disabled={
+                    !this.props.acces?.warehouse_items_date_end_edit && !this.props.acces?.name_edit
+                  }
+                  slotProps={{
+                    inputLabel: { shrink: true },
+                    htmlInput: {
+                      min:
+                        this.state.itemEdit?.item?.date_start ||
+                        new Date().toLocaleDateString("sv-SE", {
+                          timeZone: "Europe/Samara",
+                        }),
+                    },
                   }}
                 />
               </Grid>

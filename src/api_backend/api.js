@@ -18,7 +18,7 @@ export async function getDataSSR(module, method, rawCookies = "", data = {}, dop
   }
 
   const apiUrl = `${
-    process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000/api/"
+    process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080/api/"
   }/${module}/${method}`;
 
   const requestData = queryString.stringify({

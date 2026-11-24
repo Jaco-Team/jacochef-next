@@ -60,7 +60,9 @@ function EmployeeNominations({ variants }) {
     <Stack
       direction="row"
       spacing={CP_SPACE.micro}
-      alignItems="center"
+      sx={{
+        alignItems: "center",
+      }}
     >
       {variants.map((variant) => {
         const config = BEST_EMPLOYEE_VARIANTS[variant];
@@ -103,7 +105,9 @@ function StabilityIndicator({ value, formatters }) {
     return (
       <Typography
         variant="body2"
-        color="text.secondary"
+        sx={{
+          color: "text.secondary",
+        }}
       >
         —
       </Typography>
@@ -214,8 +218,8 @@ export default function KitchenTab({
             <Stack
               direction={{ xs: "column", sm: "row" }}
               spacing={CP_SPACE.related}
-              alignItems="center"
               sx={{
+                alignItems: "center",
                 width: { xs: "100%", sm: "auto" },
                 alignItems: { xs: "stretch", sm: "center" },
               }}
@@ -316,7 +320,6 @@ export default function KitchenTab({
           ))}
         </ToggleButtonGroup>
       </Stack>
-
       <Box
         sx={{
           borderRadius: 3,
@@ -347,8 +350,10 @@ export default function KitchenTab({
           <Stack
             key={metric.label}
             spacing={CP_SPACE.micro}
-            alignItems="center"
-            sx={{ textAlign: "center" }}
+            sx={{
+              alignItems: "center",
+              textAlign: "center",
+            }}
           >
             <MetricLabel
               text={metric.label}
@@ -365,7 +370,6 @@ export default function KitchenTab({
           </Stack>
         ))}
       </Box>
-
       {cards.length ? (
         <Box
           sx={{
@@ -395,7 +399,6 @@ export default function KitchenTab({
           })}
         </Box>
       ) : null}
-
       <SectionCard title={`Сотрудники на этапе «${stageName || "—"}»`}>
         {rows.length ? (
           <TableContainer>
@@ -475,7 +478,9 @@ export default function KitchenTab({
                         <Stack
                           direction="row"
                           spacing={1.5}
-                          alignItems="center"
+                          sx={{
+                            alignItems: "center",
+                          }}
                         >
                           <EmployeeAvatar
                             name={item.employee_name}
@@ -491,8 +496,10 @@ export default function KitchenTab({
                             <Stack
                               direction="row"
                               spacing={CP_SPACE.related}
-                              alignItems="center"
-                              flexWrap="wrap"
+                              sx={{
+                                alignItems: "center",
+                                flexWrap: "wrap",
+                              }}
                             >
                               <EmployeeNominations variants={nominations} />
                               {!item.is_valid_for_rating ? (
@@ -515,7 +522,9 @@ export default function KitchenTab({
                       <TableCell align="right">
                         <Typography
                           variant="body2"
-                          color="text.secondary"
+                          sx={{
+                            color: "text.secondary",
+                          }}
                         >
                           {formatters.duration(item.p90)}
                         </Typography>
@@ -529,7 +538,9 @@ export default function KitchenTab({
                       <TableCell align="right">
                         <Stack
                           direction="row"
-                          justifyContent="flex-end"
+                          sx={{
+                            justifyContent: "flex-end",
+                          }}
                         >
                           <StabilityIndicator
                             value={item.stability}

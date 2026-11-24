@@ -140,7 +140,13 @@ export default function PromoItemsStatActivationsModal({ item, dateRange, onClos
             </Table>
           </TableContainer>
         ) : (
-          <Typography color="text.secondary">Нет данных</Typography>
+          <Typography
+            sx={{
+              color: "text.secondary",
+            }}
+          >
+            Нет данных
+          </Typography>
         )}
       </DialogContent>
     </MyModal>

@@ -213,10 +213,12 @@ const PostAnalyticsDialog = ({
       maxWidth="md"
       fullWidth
       scroll="paper"
-      PaperProps={{
-        sx: {
-          borderRadius: 2,
-          bgcolor: "#f4f6f8",
+      slotProps={{
+        paper: {
+          sx: {
+            borderRadius: 2,
+            bgcolor: "#f4f6f8",
+          },
         },
       }}
     >
@@ -250,7 +252,6 @@ const PostAnalyticsDialog = ({
           <CloseIcon fontSize="small" />
         </IconButton>
       </DialogTitle>
-
       {/* Контент */}
       <DialogContent sx={{ p: 3, bgcolor: "#f4f6f8" }}>
         {/* Период */}

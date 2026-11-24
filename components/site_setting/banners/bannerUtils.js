@@ -1,7 +1,7 @@
 import dayjs from "dayjs";
 import { getAuthHeaders } from "@/src/api_new";
 
-const apiBaseUrl = (process.env.NEXT_PUBLIC_API_URL || "https://apichef.jacochef.ru/api").replace(
+const apiBaseUrl = (process.env.NEXT_PUBLIC_API_URL || "https://apichef2.jacochef.ru/api").replace(
   /\/+$/,
   "",
 );

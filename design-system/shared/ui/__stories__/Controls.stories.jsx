@@ -1,0 +1,368 @@
+import { useState } from "react";
+import AddIcon from "@mui/icons-material/Add";
+import DeleteOutlinedIcon from "@mui/icons-material/DeleteOutlined";
+import HelpOutlineRoundedIcon from "@mui/icons-material/HelpOutlineRounded";
+import RefreshIcon from "@mui/icons-material/Refresh";
+import SaveIcon from "@mui/icons-material/Save";
+import { Box, FormControlLabel, Stack, Tooltip, Typography } from "@mui/material";
+
+import {
+  JacoButton,
+  JacoCheckbox,
+  JacoCheckboxField,
+  JacoChoiceChips,
+  JacoCompactTabs,
+  JacoFieldSwitch,
+  JacoIconButton,
+  JacoInfoLabel,
+  JacoSegmentedTabs,
+  JacoStatusChip,
+  JacoSwitch,
+  JacoTabPanel,
+} from "@/design-system/shared/ui";
+
+const meta = {
+  title: "Chef Design System/Shared UI/Controls",
+  parameters: {
+    docs: {
+      description: {
+        component:
+          "Переиспользуемые контролы из design-system/shared/ui. Использовать как базовые действия, переключатели и табы для новых Chef-интерфейсов.",
+      },
+    },
+  },
+};
+
+export default meta;
+
+const tabItems = [
+  { id: "month", label: "На месяц" },
+  { id: "period", label: "На 2 недели" },
+];
+
+const sourceTabItems = [
+  { id: "total", label: "Тотал" },
+  { id: "site", label: "Сайт" },
+  { id: "cafe", label: "Кафе" },
+  { id: "kc", label: "КЦ" },
+];
+
+function StoryCanvas({ children }) {
+  return (
+    <Box sx={{ minHeight: "100vh", bgcolor: "background.default", p: { xs: 2, md: 4 } }}>
+      {children}
+    </Box>
+  );
+}
+
+export function Buttons() {
+  return (
+    <StoryCanvas>
+      <Stack
+        direction="row"
+        sx={{
+          gap: 1.5,
+          flexWrap: "wrap",
+          alignItems: "center",
+        }}
+      >
+        <JacoButton startIcon={<SaveIcon />}>Сохранить</JacoButton>
+        <JacoButton tone="secondary">Отмена</JacoButton>
+        <JacoButton
+          tone="outlinePrimary"
+          compact
+          startIcon={<RefreshIcon />}
+        >
+          Обновить
+        </JacoButton>
+        <JacoButton
+          tone="danger"
+          startIcon={<DeleteOutlinedIcon />}
+        >
+          Удалить
+        </JacoButton>
+        <JacoButton loading>Загрузка</JacoButton>
+        <JacoButton disabled>Недоступно</JacoButton>
+        <JacoButton compact>Компактно</JacoButton>
+        <Tooltip title="Добавить">
+          <JacoIconButton aria-label="Добавить">
+            <AddIcon />
+          </JacoIconButton>
+        </Tooltip>
+        <Tooltip title="Недоступно">
+          <JacoIconButton
+            aria-label="Недоступно"
+            disabled
+          >
+            <AddIcon />
+          </JacoIconButton>
+        </Tooltip>
+      </Stack>
+    </StoryCanvas>
+  );
+}
+
+export function ButtonStateMatrix() {
+  const tones = ["primary", "success", "warning", "secondary", "outlinePrimary", "danger"];
+
+  return (
+    <StoryCanvas>
+      <Stack spacing={1.5}>
+        {tones.map((tone) => (
+          <Stack
+            key={tone}
+            direction="row"
+            sx={{
+              gap: 1.5,
+              flexWrap: "wrap",
+              alignItems: "center",
+            }}
+          >
+            <Typography sx={{ width: 120, fontSize: 13, fontWeight: 700 }}>{tone}</Typography>
+            <JacoButton tone={tone}>{tone}</JacoButton>
+            <JacoButton
+              tone={tone}
+              compact
+            >
+              Compact
+            </JacoButton>
+            <JacoButton
+              tone={tone}
+              loading
+            >
+              Loading
+            </JacoButton>
+            <JacoButton
+              tone={tone}
+              disabled
+            >
+              Disabled
+            </JacoButton>
+          </Stack>
+        ))}
+      </Stack>
+    </StoryCanvas>
+  );
+}
+
+export function SelectionControls() {
+  const [checked, setChecked] = useState(true);
+  const [boxChecked, setBoxChecked] = useState(true);
+
+  return (
+    <StoryCanvas>
+      <Stack
+        spacing={2}
+        sx={{ width: 360, maxWidth: "100%" }}
+      >
+        <JacoFieldSwitch
+          label="Показывать только активных"
+          checked={checked}
+          onChange={(event) => setChecked(event.target.checked)}
+          labelAction={
+            <JacoIconButton
+              aria-label="Подробнее о фильтре"
+              sx={{ width: 24, height: 24, border: "none" }}
+            >
+              <HelpOutlineRoundedIcon sx={{ fontSize: 18 }} />
+            </JacoIconButton>
+          }
+        />
+        <JacoFieldSwitch
+          label="Недоступное состояние"
+          checked={false}
+          disabled
+        />
+        <JacoSwitch
+          checked={checked}
+          onChange={(event) => setChecked(event.target.checked)}
+          slotProps={{ input: { "aria-label": "Активность" } }}
+        />
+        <JacoSwitch
+          checked={false}
+          disabled
+          slotProps={{ input: { "aria-label": "Недоступная активность" } }}
+        />
+        <FormControlLabel
+          control={
+            <JacoCheckbox
+              checked={boxChecked}
+              onChange={(event) => setBoxChecked(event.target.checked)}
+            />
+          }
+          label="Выбран сотрудник"
+          sx={{ m: 0, gap: 1 }}
+        />
+        <FormControlLabel
+          control={<JacoCheckbox disabled />}
+          label="Недоступный выбор"
+          disabled
+          sx={{ m: 0, gap: 1 }}
+        />
+        <JacoCheckboxField
+          checked={boxChecked}
+          onChange={(event) => setBoxChecked(event.target.checked)}
+          label="Показывать в ревизии"
+        />
+        <JacoCheckboxField
+          label="Недоступный выбор"
+          disabled
+        />
+      </Stack>
+    </StoryCanvas>
+  );
+}
+
+export function StatusChips() {
+  const tones = ["success", "warning", "danger", "neutral"];
+  const variants = [
+    { id: "filled", hint: "Состояние требует внимания" },
+    { id: "soft", hint: "Обычное состояние" },
+    { id: "outlined", hint: "Состояние не задано" },
+  ];
+
+  return (
+    <StoryCanvas>
+      <Stack spacing={2}>
+        {variants.map((variant) => (
+          <Stack
+            key={variant.id}
+            direction="row"
+            spacing={1.5}
+            sx={{ alignItems: "center", flexWrap: "wrap" }}
+          >
+            <Typography sx={{ width: 220, color: "text.secondary" }}>
+              {variant.id} · {variant.hint}
+            </Typography>
+            {tones.map((tone) => (
+              <JacoStatusChip
+                key={tone}
+                tone={tone}
+                variant={variant.id}
+                label={tone}
+              />
+            ))}
+          </Stack>
+        ))}
+      </Stack>
+    </StoryCanvas>
+  );
+}
+
+export function Tabs() {
+  const [segmented, setSegmented] = useState("month");
+  const [source, setSource] = useState("total");
+  const [compact, setCompact] = useState("main");
+
+  return (
+    <StoryCanvas>
+      <Stack
+        spacing={3}
+        sx={{ width: 520, maxWidth: "100%" }}
+      >
+        <JacoSegmentedTabs
+          value={segmented}
+          onChange={(_event, value) => setSegmented(value)}
+          items={tabItems}
+        />
+        <JacoSegmentedTabs
+          value={segmented}
+          onChange={(_event, value) => setSegmented(value)}
+          items={tabItems}
+          size="compact"
+          variant="standard"
+          sx={{ width: "fit-content" }}
+        />
+        <JacoSegmentedTabs
+          value={source}
+          onChange={(_event, value) => setSource(value)}
+          items={sourceTabItems}
+          size="compact"
+          aria-label="Источник продаж"
+        />
+        <JacoCompactTabs
+          value={compact}
+          onChange={(_event, value) => setCompact(value)}
+          items={[
+            { id: "main", label: "Основное" },
+            { id: "history", label: "История" },
+            { id: "settings", label: "Настройки" },
+          ]}
+        />
+        <JacoTabPanel
+          value={compact}
+          index="main"
+        >
+          Основная вкладка
+        </JacoTabPanel>
+      </Stack>
+    </StoryCanvas>
+  );
+}
+
+export function InfoLabels() {
+  return (
+    <StoryCanvas>
+      <Stack spacing={2}>
+        <JacoInfoLabel
+          variant="subtitle2"
+          fontWeight={700}
+          tooltip="Выписано / Активировано: сколько промокодов создано для решения жалоб и сколько из них применено в заказах."
+        >
+          Промокоды
+        </JacoInfoLabel>
+        <JacoInfoLabel
+          variant="body2"
+          tooltip="Сумма изменения показывает корректировку суммы заказа после рассмотрения жалобы."
+        >
+          Сумма изменения
+        </JacoInfoLabel>
+      </Stack>
+    </StoryCanvas>
+  );
+}
+
+export function ChoiceChips() {
+  const [stage, setStage] = useState("3");
+  const [solution, setSolution] = useState("");
+  const stages = [
+    { id: "1", name: "1 Этап" },
+    { id: "2", name: "2 Этап" },
+    { id: "3", name: "3 Этап" },
+    { id: "9", name: "Кассир" },
+  ];
+  const solutions = [
+    { id: "2", name: "Извинение" },
+    { id: "5", name: "Замена товара на аналогичный" },
+    { id: "8", name: "Выдать не достающую позицию" },
+  ];
+
+  return (
+    <StoryCanvas>
+      <Stack spacing={2}>
+        <Typography variant="subtitle2">Обязательный выбор</Typography>
+        <JacoChoiceChips
+          ariaLabel="Этап"
+          options={stages}
+          value={stage}
+          onChange={setStage}
+        />
+        <Typography variant="subtitle2">Необязательный выбор (повторный клик снимает)</Typography>
+        <JacoChoiceChips
+          ariaLabel="Решение"
+          options={solutions}
+          value={solution}
+          allowDeselect
+          onChange={setSolution}
+        />
+        <Typography variant="subtitle2">Недоступно</Typography>
+        <JacoChoiceChips
+          ariaLabel="Этап недоступен"
+          options={stages}
+          value="1"
+          disabled
+        />
+      </Stack>
+    </StoryCanvas>
+  );
+}

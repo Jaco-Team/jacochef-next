@@ -72,7 +72,9 @@ export default function ModalAddDeclaration({ open, onClose, onSubmit }) {
             </Button>
             <Typography
               variant="body2"
-              color="text.secondary"
+              sx={{
+                color: "text.secondary",
+              }}
             >
               {docModalFile ? docModalFile.name : "Файл не выбран"}
             </Typography>
@@ -90,7 +92,6 @@ export default function ModalAddDeclaration({ open, onClose, onSubmit }) {
           ) : null}
         </Stack>
       </DialogContent>
-
       <DialogActions sx={{ px: 3, pb: 3 }}>
         <Button
           onClick={onClose}

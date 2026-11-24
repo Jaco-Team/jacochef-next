@@ -176,8 +176,10 @@ function SiteClientsMarketingOrdersTree({ canExport, getData, showAlert }) {
       <Stack
         direction="row"
         spacing={2}
-        justifyContent="space-between"
-        mb={2}
+        sx={{
+          justifyContent: "space-between",
+          mb: 2,
+        }}
       >
         <Box sx={{ mb: 1 }}>
           <MyTextInput

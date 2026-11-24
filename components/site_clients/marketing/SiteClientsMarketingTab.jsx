@@ -227,7 +227,9 @@ export default function SiteClientsMarketingTab(props) {
         >
           <Stack
             spacing={1}
-            alignContent={"stretch"}
+            sx={{
+              alignContent: "stretch",
+            }}
           >
             <Button
               onClick={applyRange}
@@ -239,7 +241,6 @@ export default function SiteClientsMarketingTab(props) {
           </Stack>
         </Grid>
       </Grid>
-
       <Grid
         container
         spacing={0}

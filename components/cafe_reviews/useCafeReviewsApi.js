@@ -2,9 +2,11 @@ import { useMemo, useRef } from "react";
 import useApi from "@/src/hooks/useApi";
 
 export default function useCafeReviewsApi() {
-  const { api_laravel } = useApi("cafe_reviews");
+  const { api_laravel, api_upload } = useApi("cafe_reviews");
   const apiRef = useRef(api_laravel);
+  const uploadRef = useRef(api_upload);
   apiRef.current = api_laravel;
+  uploadRef.current = api_upload;
 
   return useMemo(() => {
     const isBlob = (value) => typeof Blob !== "undefined" && value instanceof Blob;
@@ -32,10 +34,23 @@ export default function useCafeReviewsApi() {
       getDashboard: (payload) => request("dashboard", payload),
       getReviews: (payload) => request("reviews", payload),
       getReview: (id) => request("review", { id }),
+      markReviewIncident: (id) => request("review/mark-incident", { id }),
       getIncidents: (payload) => request("incidents", payload),
+      getLinks: (payload) => request("links", payload),
+      getLinkHistory: (payload) => request("link/history", payload),
+      getLinkQr: (payload) => request("link/qr", payload),
+      generateLink: (payload) => request("link/generate", payload),
+      revokeLink: (payload) => request("link/revoke", payload),
       getIncident: (id) => request("incident", { id }),
-      updateIncident: (payload) => request("incident/update", payload),
+      updateIncident: (payload, file = null) =>
+        file
+          ? uploadRef.current("incident/update", file, payload)
+          : request("incident/update", payload),
       decideAi: (payload) => request("incident/ai-decision", payload),
+      reanalyzeAi: (payload, file = null) =>
+        file
+          ? uploadRef.current("incident/ai-reanalyze", file, payload)
+          : request("incident/ai-reanalyze", payload),
       getPhoto: (id) => request(`photos/${id}/view`, {}, { responseType: "blob" }),
     };
   }, []);

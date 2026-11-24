@@ -8,52 +8,51 @@ export const days = [
   { value: "sun", label: "Воскресенье" },
 ];
 
+export const CLEANINGS_MODULE_NAME = "Уборки и заготовки";
+
+// `path` is the first URL segment under /cleanings; tab is visible if any `accessKeys` is viewable.
 export const cleaningSectionTabs = [
   {
-    value: "templates",
-    label: "Уборки",
-    href: "/cleanings",
-    description: "Шаблоны уборок, расписание, роли и статус активности.",
+    value: "categories",
+    path: "categories",
+    label: "Виды уборок",
+    description: "Инструкции и объекты уборки",
+    accessKeys: ["categories"],
   },
   {
-    value: "categories",
-    label: "Категории",
-    href: "/cleanings/categories",
-    description: "Категории и инструкции, которыми группируются уборки.",
+    value: "templates",
+    path: "times",
+    label: "Время уборок",
+    description: "Настройка расписания: кто, какие объекты и когда должен убирать в кафе",
+    accessKeys: ["cleanings"],
   },
   {
     value: "cafes",
-    label: "Кафе",
-    href: "/cleanings/cafes",
-    description: "Привязка уборок к точкам и дополнительное время.",
+    path: "cafes",
+    label: "Уборки Кафе",
+    description: "Уборки, назначенные на выбранное кафе, и доп. время к ним",
+    accessKeys: ["cafes"],
   },
   {
     value: "control",
-    label: "Контроль",
-    href: "/cleanings/control",
-    description: "Проверка выполненных уборок и заготовок по точке и периоду.",
+    path: "control",
+    label: "Проверка заготовок и уборок",
+    description: "Подтверждайте выполненные уборки и заготовки в выбранном кафе",
+    accessKeys: ["control_cleanings", "control_pf"],
   },
   {
     value: "lamps",
+    path: "lamps",
     label: "Лампы",
-    href: "/cleanings/lamps",
     description: "Журнал работы бактерицидных ламп, активации и экспорт XLS.",
+    accessKeys: ["lamps"],
   },
 ];
 
+// Second URL segment under /cleanings/control.
 export const controlKindTabs = [
-  {
-    value: "cleanings",
-    label: "Уборки",
-    href: "/cleanings/control/cleanings",
-    description: "Выполненные уборки и действия подтверждения.",
-  },
-  {
-    value: "preparations",
-    label: "Заготовки",
-    href: "/cleanings/control/preparations",
-    description: "Объемы заготовок, отходы и подтверждение заготовок.",
-  },
+  { value: "cleanings", label: "Уборки", accessKey: "control_cleanings" },
+  { value: "preparations", label: "Заготовки", accessKey: "control_pf" },
 ];
 
 export const defaultForm = {
@@ -75,4 +74,32 @@ export const defaultForm = {
   is_need: false,
   locationIds: [],
   status: "active",
+};
+
+// Fallback names when `get_all` has no `additionTypeOptions`; keys are API `additionType` values.
+export const ADDITION_TYPE_LABELS = {
+  single_active: "Только 1 активная",
+  unlimited: "Добавление без ограничений",
+  other: "Другое",
+};
+
+export const ADDITION_TYPE_SHORT_LABELS = {
+  single_active: "1 активная",
+  unlimited: "Без ограничений",
+  other: "Другое",
+};
+
+// Options that are kept only for legacy templates and are never offered for new ones.
+export const LEGACY_ONLY_OPTION_VALUE = "other";
+
+// Unassigned tasks without a delete time are removed by the nightly cleanup at this time.
+export const NIGHTLY_CLEANUP_TIME = "23:30";
+
+// `useJacoConfirm` options for leaving a card, cafe or tab with unsaved changes.
+export const UNSAVED_CHANGES_CONFIRM = {
+  title: "Есть несохранённые изменения",
+  message: "Изменения не сохранены и будут потеряны.",
+  cancelLabel: "Остаться",
+  confirmLabel: "Уйти без сохранения",
+  confirmTone: "danger",
 };

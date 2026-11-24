@@ -54,7 +54,9 @@ export default function ModalAddProduct({
           {!isLoading && !itemsSelectData.length ? (
             <Typography
               variant="body2"
-              color="text.secondary"
+              sx={{
+                color: "text.secondary",
+              }}
             >
               Нет доступных товаров для добавления.
             </Typography>
@@ -62,7 +64,9 @@ export default function ModalAddProduct({
           {isLoading && !itemsSelectData.length ? (
             <Typography
               variant="body2"
-              color="text.secondary"
+              sx={{
+                color: "text.secondary",
+              }}
             >
               Загрузка товаров...
             </Typography>
@@ -101,7 +105,9 @@ export default function ModalAddProduct({
                 </Button>
                 <Typography
                   variant="body2"
-                  color="text.secondary"
+                  sx={{
+                    color: "text.secondary",
+                  }}
                 >
                   {declarationFile ? declarationFile.name : "Файл не выбран (необязательно)"}
                 </Typography>

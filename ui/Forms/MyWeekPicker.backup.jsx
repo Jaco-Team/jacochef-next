@@ -46,7 +46,6 @@ export default function MyWeekPicker({ value, onChange }) {
         label="Неделя"
         views={["month", "day"]}
         value={internalDate}
-        enableAccessibleFieldDOMStructure={false}
         displayWeekNumber
         onChange={handleSelect}
         format="DD.MM.YYYY"

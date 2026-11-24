@@ -8,10 +8,16 @@
 
 # testing
 /coverage
+/test-results
+/playwright-report
+/blob-report
 
 # next.js
 /.next/
 /out/
+
+# storybook build output
+/storybook-static/
 
 # production
 /build
@@ -45,5 +51,12 @@ next-env.d.ts
 
 # AI
 .codex
-./.codex
-.env
+.codex/
+.codex-artifacts/
+tmp-staff-*
+*.network-request
+*.network-response
+.playwright-mcp/
+.cursor
+.cursor*
+/output

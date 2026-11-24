@@ -112,7 +112,9 @@ const VKAuthDialog = ({ open, onClose, onSave, authUrl = "" }) => {
         <Typography
           variant="h6"
           component="h2"
-          fontWeight={600}
+          sx={{
+            fontWeight: 600,
+          }}
         >
           Подтвердить права VK
         </Typography>
@@ -129,7 +131,6 @@ const VKAuthDialog = ({ open, onClose, onSave, authUrl = "" }) => {
           <CloseIcon />
         </IconButton>
       </DialogTitle>
-
       <DialogContent sx={{ pt: 2, pb: 3, px: 3 }}>
         <Typography
           variant="body2"
@@ -210,7 +211,6 @@ const VKAuthDialog = ({ open, onClose, onSave, authUrl = "" }) => {
           />
         </Box>
       </DialogContent>
-
       <DialogActions sx={{ px: 3, pb: 3 }}>
         <Button
           onClick={handleClose}

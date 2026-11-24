@@ -37,8 +37,7 @@ export default function CleaningsLampFilters({
       <Grid
         container
         spacing={1.5}
-        sx={{ p: 1.5 }}
-        alignItems="center"
+        sx={{ p: 1.5, alignItems: "center" }}
       >
         <Grid size={{ xs: 12, sm: 6, md: 2.5 }}>
           <MyDatePickerNewViews

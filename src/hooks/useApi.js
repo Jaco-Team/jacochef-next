@@ -1,21 +1,19 @@
-import { useMemo } from "react";
-
 import axios from "axios";
+import { useCallback } from "react";
 import queryString from "query-string";
-import { api_laravel as api_fallback, getAuthToken } from "../api_new";
+import { api_laravel as api_fallback } from "../api_new";
 
 const apiClient = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/",
+  baseURL: process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000/api/",
   timeout: 300_000, // ms
-  withCredentials: false,
-  withXSRFToken: false,
   headers: {
     "Content-Type": "application/x-www-form-urlencoded",
   },
 });
 
 apiClient.interceptors.request.use((config) => {
-  const token = getAuthToken();
+  const token = localStorage.getItem("chef_auth_token") || localStorage.getItem("auth_token");
+
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
@@ -36,7 +34,7 @@ apiClient.interceptors.response.use(
 /**
  * NEW api_laravel wrapper (v2)
  *
- * to work on local add .env.development with NEXT_PUBLIC_API_URL=http://localhost:8000/api
+ * to work on local add .env.development with NEXT_PUBLIC_API_URL=http://127.0.0.1/8000/api/
  *
  * ⚠️ WARNING:
  * Same name as legacy src/api_new api_laravel.
@@ -44,25 +42,18 @@ apiClient.interceptors.response.use(
  */
 
 export default function useApi(module) {
-  return useMemo(() => {
-    if (!process.env.NEXT_PUBLIC_API_URL) {
-      const fallback_laravel = (...args) => {
+  const api_laravel = useCallback(
+    async (method, data = {}, options = {}) => {
+      if (!process.env.NEXT_PUBLIC_API_URL) {
         console.log("api_laravel fallback mode. Missing .env config");
-        return api_fallback(module, ...args);
-      };
-      const fallback_upload = () => console.log("api_upload fallback mode. Missing .env config");
+        return api_fallback(module, method, data, options);
+      }
 
-      return {
-        api_laravel: fallback_laravel,
-        api_upload: fallback_upload,
-      };
-    }
-
-    async function api_laravel(method, data = {}, options = {}) {
       const payload = queryString.stringify({
         method,
         module,
         version: 2,
+        login: localStorage.getItem("token"),
         data: JSON.stringify(data),
       });
 
@@ -71,20 +62,30 @@ export default function useApi(module) {
         if (options.responseType === "blob") {
           return response;
         }
-        if (typeof response.data === "string") {
-          return { st: false, text: response.data };
+        const responseData = response?.data === undefined ? response : response.data;
+        if (typeof responseData === "string") {
+          return { st: false, text: responseData };
         }
-        return response.data;
+        return responseData;
       } catch (error) {
         // console.error(error);
         throw error;
       }
-    }
+    },
+    [module],
+  );
 
-    async function api_upload(method, file, extraData = {}) {
+  const api_upload = useCallback(
+    async (method, file, extraData = {}) => {
+      if (!process.env.NEXT_PUBLIC_API_URL) {
+        console.log("api_upload fallback mode. Missing .env config");
+        return undefined;
+      }
+
       const formData = new FormData();
       formData.append("file", file);
       formData.append("method", method);
+      formData.append("login", localStorage.getItem("token"));
       formData.append("module", module);
       formData.append("version", 2);
       formData.append("data", JSON.stringify(extraData));
@@ -98,8 +99,9 @@ export default function useApi(module) {
         console.error(error);
         throw error;
       }
-    }
+    },
+    [module],
+  );
 
-    return { api_laravel, api_upload };
-  }, [module]);
+  return { api_laravel, api_upload };
 }

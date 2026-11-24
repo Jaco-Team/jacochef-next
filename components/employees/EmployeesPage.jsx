@@ -33,7 +33,7 @@ import {
 import AddIcon from "@mui/icons-material/Add";
 import CloseIcon from "@mui/icons-material/Close";
 import CloudUploadIcon from "@mui/icons-material/CloudUpload";
-import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
+import DeleteOutlineIcon from "@mui/icons-material/DeleteOutlined";
 import EditIcon from "@mui/icons-material/Edit";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import KeyboardArrowRightIcon from "@mui/icons-material/KeyboardArrowRight";
@@ -57,6 +57,22 @@ dayjs.locale("ru");
 
 const MODULE = "employees";
 const DEFAULT_ROWS = 25;
+const PHOTO_CHECK_COUNTDOWN_SECONDS = 90;
+const EMPLOYEE_CREATE_TIMEOUT_MS = 30_000;
+const EMPLOYEE_PHOTO_TIMEOUT_MS = 120_000;
+
+const isRequestTimeout = (error) =>
+  error?.code === "ECONNABORTED" ||
+  error?.code === "ETIMEDOUT" ||
+  error?.code === "ERR_CANCELED" ||
+  error?.name === "CanceledError";
+
+const formatCountdown = (seconds) => {
+  const minutes = Math.floor(seconds / 60);
+  const rest = seconds % 60;
+
+  return `${minutes}:${String(rest).padStart(2, "0")}`;
+};
 
 const emptyEmployee = {
   id: "",
@@ -187,6 +203,34 @@ const formatDate = (value, fallback = "—") => {
   const date = dayjs(value);
   return date.isValid() ? date.format("YYYY-MM-DD") : value;
 };
+
+const getEmployeeWorkSnapshot = (user) => ({
+  app_id: String(idOf(user?.app_id) ?? ""),
+  acc_to_kas: parseInt(user?.acc_to_kas) || 0,
+  point_access_ids: asArray(user?.point_access)
+    .map((point) => parseInt(idOf(point)))
+    .filter((id) => id > 0)
+    .sort((a, b) => a - b),
+  textDel: String(user?.textDel ?? ""),
+  date_start_day: formatDate(user?.date_start_day || dayjs(), ""),
+});
+
+const hasEmployeeWorkChanges = (initialUser, currentUser) =>
+  JSON.stringify(getEmployeeWorkSnapshot(initialUser)) !==
+  JSON.stringify(getEmployeeWorkSnapshot(currentUser));
+
+const buildWorkChangePayload = (user) => ({
+  user_id: user.id,
+  app_id: idOf(user.app_id),
+  point_id: idOf(user.point_id),
+  point_access: user.point_access,
+  point_access_ids: asArray(user.point_access)
+    .map((point) => parseInt(idOf(point)))
+    .filter((id) => id > 0),
+  textDel: user.textDel ?? "",
+  date_start_day: formatDate(user.date_start_day || dayjs()),
+  user,
+});
 
 const formatDateHuman = (value, fallback = "—") => {
   if (!value) return fallback;
@@ -327,6 +371,7 @@ const activityEventLabels = {
   absence_create: "Отсутствие добавлено",
   absence_update: "Отсутствие изменено",
   absence_delete: "Отсутствие удалено",
+  photo_ai_override: "Фото сохранено после предупреждения ИИ",
 };
 
 const parseHistoryJson = (value) => {
@@ -452,6 +497,19 @@ const normalizeEmployeeRow = (item) => {
     is_active: item?.is_active ?? item?.active ?? (item?.inactive ? 0 : 1),
   };
 };
+
+const getEmployeePositionGroupKey = (employee) => {
+  const appId = employee?.app_id;
+
+  if (appId !== null && appId !== undefined && appId !== "") {
+    return `id:${appId}`;
+  }
+
+  return `name:${String(employee?.app_name ?? "").trim()}`;
+};
+
+const getEmployeePositionGroupName = (employee) =>
+  String(employee?.app_name ?? "").trim() || "Без должности";
 
 const normalizeEmployeeCard = (data) => {
   const source = data?.employee ?? data?.user ?? data ?? {};
@@ -836,6 +894,10 @@ function EmployeePhotoDropzone({ user, file, disabled, onFileChange }) {
           </Box>
         </Box>
       ) : null}
+      <Typography sx={{ color: "text.secondary", fontSize: 12.5, lineHeight: 1.45 }}>
+        Фото автоматически проверяется локальным ИИ: в кадре должен быть сотрудник, без документов и
+        персональных данных. Фото не передаётся внешним сервисам.
+      </Typography>
     </Stack>
   );
 }
@@ -891,6 +953,9 @@ export default function EmployeesPage() {
   const theme = useTheme();
   const fullScreen = useMediaQuery(theme.breakpoints.down("sm"));
   const [isLoad, setIsLoad] = useState(false);
+  const [photoChecking, setPhotoChecking] = useState(false);
+  const [photoCheckSecondsLeft, setPhotoCheckSecondsLeft] = useState(PHOTO_CHECK_COUNTDOWN_SECONDS);
+  const [photoReview, setPhotoReview] = useState(null);
   const [alert, setAlert] = useState({ open: false, status: true, text: "" });
   const [refs, setRefs] = useState({
     cities: [],
@@ -922,6 +987,7 @@ export default function EmployeesPage() {
   const [totalRows, setTotalRows] = useState(0);
   const [employeeDialog, setEmployeeDialog] = useState(false);
   const [employee, setEmployee] = useState(null);
+  const [initialEmployeeUser, setInitialEmployeeUser] = useState(null);
   const [employeePhotoFile, setEmployeePhotoFile] = useState(null);
   const [pageTab, setPageTab] = useState("employees");
   const [activeTab, setActiveTab] = useState("basic");
@@ -948,6 +1014,24 @@ export default function EmployeesPage() {
     filtersRef.current = filters;
   }, [filters]);
 
+  useEffect(() => {
+    if (!photoChecking) {
+      setPhotoCheckSecondsLeft(PHOTO_CHECK_COUNTDOWN_SECONDS);
+      return undefined;
+    }
+
+    const startedAt = Date.now();
+    const updateCountdown = () => {
+      const elapsedSeconds = Math.floor((Date.now() - startedAt) / 1000);
+      setPhotoCheckSecondsLeft(Math.max(0, PHOTO_CHECK_COUNTDOWN_SECONDS - elapsedSeconds));
+    };
+
+    updateCountdown();
+    const intervalId = window.setInterval(updateCountdown, 1000);
+
+    return () => window.clearInterval(intervalId);
+  }, [photoChecking]);
+
   const showAlert = (status, text) => {
     setAlert({
       open: true,
@@ -956,32 +1040,62 @@ export default function EmployeesPage() {
     });
   };
 
-  const getData = async (method, data = {}) => {
+  const getData = async (method, data = {}, requestOptions = {}) => {
+    const { timeoutText, ...apiOptions } = requestOptions;
     setIsLoad(true);
 
     try {
-      const res = await api_laravel(MODULE, method, data);
+      const res = await api_laravel(MODULE, method, data, apiOptions);
       return unwrapResponse(res);
     } catch (e) {
-      showAlert(false, "Не удалось выполнить запрос");
+      showAlert(
+        false,
+        isRequestTimeout(e) && timeoutText ? timeoutText : "Не удалось выполнить запрос",
+      );
       return null;
     } finally {
       setTimeout(() => setIsLoad(false), 300);
     }
   };
 
-  const uploadData = async (method, file, data = {}) => {
+  const uploadData = async (method, file, data = {}, requestOptions = {}) => {
+    const { errorText, ...apiOptions } = requestOptions;
     setIsLoad(true);
 
     try {
-      const res = await api_laravel_upload(MODULE, method, file, data);
+      const res = await api_laravel_upload(MODULE, method, file, data, apiOptions);
+
+      if (!res) {
+        showAlert(false, errorText || "Не удалось загрузить файл");
+        return null;
+      }
+
       return unwrapResponse(res);
     } catch (e) {
-      showAlert(false, "Не удалось загрузить файл");
+      showAlert(false, errorText || "Не удалось загрузить файл");
       return null;
     } finally {
       setTimeout(() => setIsLoad(false), 300);
     }
+  };
+
+  const uploadEmployeePhoto = async (method, file, data = {}, requestOptions = {}) => {
+    setPhotoChecking(true);
+    try {
+      return await uploadData(method, file, data, requestOptions);
+    } finally {
+      setPhotoChecking(false);
+    }
+  };
+
+  const handlePhotoCheckFailure = (res, context) => {
+    if (res?.code === "employee_photo_review_required" && res?.photo_review?.token) {
+      setPhotoReview({ ...context, ...res.photo_review });
+      return true;
+    }
+
+    showAlert(false, res?.text || "Фото отклонено");
+    return false;
   };
 
   const refreshEmployees = async (
@@ -1035,7 +1149,10 @@ export default function EmployeesPage() {
       return false;
     }
 
-    setEmployee(normalizeEmployeeCard(res));
+    const nextEmployee = normalizeEmployeeCard(res);
+
+    setEmployee(nextEmployee);
+    setInitialEmployeeUser(nextEmployee.user);
     return true;
   };
 
@@ -1131,7 +1248,10 @@ export default function EmployeesPage() {
 
     if (!res || res.st === false) return;
 
-    setEmployee(normalizeEmployeeCard(res));
+    const nextEmployee = normalizeEmployeeCard(res);
+
+    setEmployee(nextEmployee);
+    setInitialEmployeeUser(nextEmployee.user);
     setEmployeeDialog(true);
   };
 
@@ -1195,6 +1315,7 @@ export default function EmployeesPage() {
   const closeEmployeeDialog = () => {
     setEmployeeDialog(false);
     setEmployee(null);
+    setInitialEmployeeUser(null);
     setEmployeePhotoFile(null);
     setAbsence(emptyAbsence);
   };
@@ -1224,32 +1345,48 @@ export default function EmployeesPage() {
       const basicUser = {
         ...employee.user,
         date_registration: formatDate(employee.user.date_registration, ""),
-        date_start_day: dayjs().format("YYYY-MM-DD"),
+        date_start_day: formatDate(employee.user.date_start_day || dayjs(), ""),
       };
+      const saveWorkTogether =
+        permissions.workTab.edit && hasEmployeeWorkChanges(initialEmployeeUser, basicUser);
+
+      if (saveWorkTogether && parseInt(idOf(basicUser.app_id)) === 0 && !basicUser.textDel) {
+        showAlert(false, "Укажите причину увольнения");
+        return;
+      }
+
       const ok = await handleMutation(
-        "save_basic",
-        {
-          user_id: employee.user.id,
-          user: basicUser,
-          employee: basicUser,
-          date_registration: basicUser.date_registration,
-          date_start_day: dayjs().format("YYYY-MM-DD"),
-        },
-        "Данные сотрудника сохранены",
+        saveWorkTogether ? "apply_work_change" : "save_basic",
+        saveWorkTogether
+          ? buildWorkChangePayload(basicUser)
+          : {
+              user_id: employee.user.id,
+              user: basicUser,
+              employee: basicUser,
+              date_registration: basicUser.date_registration,
+              date_start_day: dayjs().format("YYYY-MM-DD"),
+            },
+        saveWorkTogether
+          ? "Данные сотрудника и изменения работы сохранены"
+          : "Данные сотрудника сохранены",
       );
 
       if (!ok) return;
     }
 
     if (employeePhotoFile && permissions.photo.edit) {
-      const res = await uploadData("upload_photo", employeePhotoFile, {
+      const res = await uploadEmployeePhoto("upload_photo", employeePhotoFile, {
         user_id: employee.user.id,
       });
 
       if (!res) return;
 
       if (res.st === false) {
-        showAlert(false, res.text);
+        handlePhotoCheckFailure(res, {
+          mode: "edit",
+          file: employeePhotoFile,
+          userId: employee.user.id,
+        });
         return;
       }
 
@@ -1272,16 +1409,7 @@ export default function EmployeesPage() {
 
     const ok = await handleMutation(
       "apply_work_change",
-      {
-        user_id: user.id,
-        app_id: idOf(user.app_id),
-        point_id: idOf(user.point_id),
-        point_access: user.point_access,
-        point_access_ids: asArray(user.point_access).map((point) => point.id),
-        textDel: user.textDel ?? "",
-        date_start_day: formatDate(user.date_start_day || dayjs()),
-        user,
-      },
+      buildWorkChangePayload(user),
       "Изменения по работе применены",
     );
 
@@ -1460,7 +1588,7 @@ export default function EmployeesPage() {
     setNewDialog(true);
   };
 
-  const createEmployee = async () => {
+  const createEmployee = async (photoReviewConfirmation = null) => {
     const user = { ...newEmployee };
     const photoFile = user.photo_file;
     const healthItems = asArray(user.health_items);
@@ -1481,21 +1609,77 @@ export default function EmployeesPage() {
       health_items: healthItems,
       cloth_items: clothItems,
       absences,
+      ...(photoReviewConfirmation
+        ? {
+            photo_review_token: photoReviewConfirmation.token,
+            photo_review_confirmed: true,
+          }
+        : {}),
     };
     const res = photoFile
-      ? await uploadData("create_employee", photoFile, payload)
-      : await getData("create_employee", payload);
+      ? await uploadEmployeePhoto("create_employee", photoFile, payload, {
+          timeout: EMPLOYEE_PHOTO_TIMEOUT_MS,
+          errorText:
+            "Проверка фотографии не завершилась за 2 минуты. Проверьте сотрудника по телефону перед повторной отправкой.",
+        })
+      : await getData("create_employee", payload, {
+          timeout: EMPLOYEE_CREATE_TIMEOUT_MS,
+          throwErrors: true,
+          timeoutText:
+            "Сервер не ответил за 30 секунд. Проверьте сотрудника по телефону перед повторной отправкой.",
+        });
 
     if (!res) return;
 
     if (res.st === false) {
-      showAlert(false, res.text);
+      handlePhotoCheckFailure(res, { mode: "create", file: photoFile });
       return;
     }
 
     showAlert(true, res.text || "Сотрудник создан");
     await refreshEmployees();
     setNewDialog(false);
+    setPhotoReview(null);
+  };
+
+  const confirmPhotoReview = async () => {
+    if (!photoReview?.token || !photoReview?.file) return;
+
+    if (photoReview.mode === "create") {
+      await createEmployee(photoReview);
+      return;
+    }
+
+    const res = await uploadEmployeePhoto("upload_photo", photoReview.file, {
+      user_id: photoReview.userId,
+      photo_review_token: photoReview.token,
+      photo_review_confirmed: true,
+    });
+    if (!res) return;
+    if (res.st === false) {
+      handlePhotoCheckFailure(res, {
+        mode: "edit",
+        file: photoReview.file,
+        userId: photoReview.userId,
+      });
+      return;
+    }
+
+    setPhotoReview(null);
+    setEmployeePhotoFile(null);
+    showAlert(true, res.text || "Фото обновлено");
+    await refreshEmployees();
+    await refreshEmployee(photoReview.userId);
+    setEmployeeDialog(false);
+  };
+
+  const chooseAnotherPhoto = () => {
+    if (photoReview?.mode === "create") {
+      setNewEmployee((prev) => ({ ...prev, photo_file: null }));
+    } else {
+      setEmployeePhotoFile(null);
+    }
+    setPhotoReview(null);
   };
 
   const handleRowsChange = (event) => {
@@ -1614,7 +1798,9 @@ export default function EmployeesPage() {
           <Stack
             direction="row"
             spacing={1}
-            alignItems="baseline"
+            sx={{
+              alignItems: "baseline",
+            }}
           >
             <Box
               component="span"
@@ -1644,7 +1830,9 @@ export default function EmployeesPage() {
           <Stack
             direction="row"
             spacing={1}
-            alignItems="baseline"
+            sx={{
+              alignItems: "baseline",
+            }}
           >
             <Box
               component="span"
@@ -1780,7 +1968,9 @@ export default function EmployeesPage() {
                     <Stack
                       direction="row"
                       spacing={0.5}
-                      alignItems="center"
+                      sx={{
+                        alignItems: "center",
+                      }}
                     >
                       {isUnitExpanded ? <KeyboardArrowDownIcon /> : <KeyboardArrowRightIcon />}
                       <Box component="span">{unit.name}</Box>
@@ -1839,7 +2029,9 @@ export default function EmployeesPage() {
                       <Stack
                         direction="row"
                         spacing={0.5}
-                        alignItems="center"
+                        sx={{
+                          alignItems: "center",
+                        }}
                       >
                         {isExpanded ? <KeyboardArrowDownIcon /> : <KeyboardArrowRightIcon />}
                         <Box component="span">{item.name}</Box>
@@ -1896,10 +2088,48 @@ export default function EmployeesPage() {
   return (
     <>
       <Backdrop
-        style={{ zIndex: 99999 }}
-        open={isLoad}
+        sx={{ zIndex: (muiTheme) => muiTheme.zIndex.modal + 2 }}
+        open={isLoad || photoChecking}
       >
-        <CircularProgress color="inherit" />
+        {photoChecking ? (
+          <Paper
+            role="status"
+            aria-live="polite"
+            elevation={8}
+            sx={{ width: { xs: "calc(100% - 32px)", sm: 360 }, p: 3, borderRadius: 2.5 }}
+          >
+            <Stack
+              spacing={1.5}
+              sx={{
+                alignItems: "center",
+                textAlign: "center",
+              }}
+            >
+              <CircularProgress />
+              <Box>
+                <Typography sx={{ fontWeight: 900 }}>Проверяем фотографию</Typography>
+                <Typography sx={{ mt: 0.5, color: "text.secondary", fontSize: 14 }}>
+                  Локальный ИИ проверяет портрет и отсутствие документов
+                </Typography>
+              </Box>
+              <Typography
+                sx={{
+                  color: photoCheckSecondsLeft > 0 ? "text.primary" : "warning.dark",
+                  fontWeight: 800,
+                }}
+              >
+                {photoCheckSecondsLeft > 0
+                  ? `Осталось до ${formatCountdown(photoCheckSecondsLeft)}`
+                  : "Проверка занимает больше обычного. Ожидаем ответ…"}
+              </Typography>
+              <Typography sx={{ color: "text.secondary", fontSize: 12 }}>
+                Не закрывайте окно и не нажимайте «Сохранить» повторно
+              </Typography>
+            </Stack>
+          </Paper>
+        ) : (
+          <CircularProgress color="inherit" />
+        )}
       </Backdrop>
       <MyAlert
         isOpen={alert.open}
@@ -1907,7 +2137,6 @@ export default function EmployeesPage() {
         status={alert.status}
         text={alert.text}
       />
-
       <Grid
         container
         rowSpacing={2.5}
@@ -1918,8 +2147,10 @@ export default function EmployeesPage() {
           <Stack
             direction={{ xs: "column", sm: "row" }}
             spacing={1}
-            alignItems={{ xs: "stretch", sm: "center" }}
-            justifyContent="space-between"
+            sx={{
+              alignItems: { xs: "stretch", sm: "center" },
+              justifyContent: "space-between",
+            }}
           >
             {pageTitle ? (
               <Typography
@@ -1971,7 +2202,9 @@ export default function EmployeesPage() {
                 <Grid
                   container
                   spacing={1.5}
-                  alignItems="center"
+                  sx={{
+                    alignItems: "center",
+                  }}
                 >
                   <Grid size={{ xs: 12, sm: 6, md: 2 }}>
                     <CityCafeAutocomplete2
@@ -2049,8 +2282,10 @@ export default function EmployeesPage() {
                     <Stack
                       direction={{ xs: "column", sm: "row" }}
                       spacing={1}
-                      alignItems={{ xs: "stretch", sm: "center" }}
-                      justifyContent="flex-end"
+                      sx={{
+                        alignItems: { xs: "stretch", sm: "center" },
+                        justifyContent: "flex-end",
+                      }}
                     >
                       <Typography
                         sx={{
@@ -2147,62 +2382,88 @@ export default function EmployeesPage() {
                       </TableRow>
                     </TableHead>
                     <TableBody>
-                      {visibleEmployees.map((item) => {
+                      {visibleEmployees.map((item, index) => {
                         const health = getHealthStatusMeta(item);
+                        const showPositionDivider =
+                          index === 0 ||
+                          getEmployeePositionGroupKey(visibleEmployees[index - 1]) !==
+                            getEmployeePositionGroupKey(item);
 
                         return (
-                          <TableRow
-                            key={item.id}
-                            hover={canOpenEmployeeCard(permissions)}
-                            onClick={() => openEmployee(item.id)}
-                            sx={{
-                              cursor: canOpenEmployeeCard(permissions) ? "pointer" : "default",
-                            }}
-                          >
-                            <TableCell>
-                              <Stack
-                                direction="row"
-                                spacing={1.25}
-                                alignItems="center"
-                              >
-                                <EmployeeAvatar employee={item} />
-                                <Box sx={{ minWidth: 0 }}>
-                                  <Typography
-                                    sx={{ fontWeight: 800, maxWidth: 240 }}
-                                    noWrap
-                                  >
-                                    {item.displayName}
+                          <React.Fragment key={item.id}>
+                            {showPositionDivider ? (
+                              <TableRow>
+                                <TableCell
+                                  colSpan={8}
+                                  sx={{
+                                    px: 2,
+                                    py: 0.75,
+                                    bgcolor: "grey.200",
+                                    borderTop: "1px solid",
+                                    borderBottom: "1px solid",
+                                    borderColor: "divider",
+                                  }}
+                                >
+                                  <Typography sx={{ fontSize: 13, fontWeight: 900 }}>
+                                    {getEmployeePositionGroupName(item)}
                                   </Typography>
-                                  {String(item.is_active) === "0" ? (
-                                    <Typography sx={{ fontSize: 12, color: "text.secondary" }}>
-                                      уволен
+                                </TableCell>
+                              </TableRow>
+                            ) : null}
+                            <TableRow
+                              hover={canOpenEmployeeCard(permissions)}
+                              onClick={() => openEmployee(item.id)}
+                              sx={{
+                                cursor: canOpenEmployeeCard(permissions) ? "pointer" : "default",
+                              }}
+                            >
+                              <TableCell>
+                                <Stack
+                                  direction="row"
+                                  spacing={1.25}
+                                  sx={{
+                                    alignItems: "center",
+                                  }}
+                                >
+                                  <EmployeeAvatar employee={item} />
+                                  <Box sx={{ minWidth: 0 }}>
+                                    <Typography
+                                      sx={{ fontWeight: 800, maxWidth: 240 }}
+                                      noWrap
+                                    >
+                                      {item.displayName}
                                     </Typography>
-                                  ) : null}
-                                </Box>
-                              </Stack>
-                            </TableCell>
-                            <TableCell>{item.phone || "—"}</TableCell>
-                            <TableCell>{item.app_name || "—"}</TableCell>
-                            <TableCell>{item.point || "—"}</TableCell>
-                            <TableCell>{formatDate(item.date_registration)}</TableCell>
-                            <TableCell>{item.exp || "—"}</TableCell>
-                            <TableCell align="center">
-                              <Chip
-                                size="small"
-                                label={parseInt(item.acc_to_kas) === 1 ? "Да" : "Нет"}
-                                color={parseInt(item.acc_to_kas) === 1 ? "success" : "error"}
-                                sx={{ fontWeight: 800 }}
-                              />
-                            </TableCell>
-                            <TableCell>
-                              <Chip
-                                size="small"
-                                label={health.label}
-                                color={health.color}
-                                sx={{ fontWeight: 800 }}
-                              />
-                            </TableCell>
-                          </TableRow>
+                                    {String(item.is_active) === "0" ? (
+                                      <Typography sx={{ fontSize: 12, color: "text.secondary" }}>
+                                        уволен
+                                      </Typography>
+                                    ) : null}
+                                  </Box>
+                                </Stack>
+                              </TableCell>
+                              <TableCell>{item.phone || "—"}</TableCell>
+                              <TableCell>{item.app_name || "—"}</TableCell>
+                              <TableCell>{item.point || "—"}</TableCell>
+                              <TableCell>{formatDate(item.date_registration)}</TableCell>
+                              <TableCell>{item.exp || "—"}</TableCell>
+                              <TableCell align="center">
+                                <Chip
+                                  size="small"
+                                  label={parseInt(item.acc_to_kas) === 1 ? "Да" : "Нет"}
+                                  color={parseInt(item.acc_to_kas) === 1 ? "success" : "error"}
+                                  sx={{ fontWeight: 800 }}
+                                />
+                              </TableCell>
+                              <TableCell>
+                                <Chip
+                                  size="small"
+                                  label={health.label}
+                                  color={health.color}
+                                  sx={{ fontWeight: 800 }}
+                                />
+                              </TableCell>
+                            </TableRow>
+                          </React.Fragment>
                         );
                       })}
                       {!visibleEmployees.length ? (
@@ -2245,7 +2506,6 @@ export default function EmployeesPage() {
           </Grid>
         )}
       </Grid>
-
       <EmployeeDialog
         open={employeeDialog}
         fullScreen={fullScreen}
@@ -2257,7 +2517,7 @@ export default function EmployeesPage() {
         isSuperPosition={viewerIsSuperPosition}
         absence={absence}
         clothIssue={clothIssue}
-        onClose={closeEmployeeDialog}
+        onClose={photoChecking ? undefined : closeEmployeeDialog}
         onTabChange={setActiveTab}
         onUserChange={updateEmployeeUser}
         onHealthChange={updateHealthItem}
@@ -2274,18 +2534,18 @@ export default function EmployeesPage() {
         onIssueCloth={issueCloth}
         onReturnCloth={returnCloth}
         onManageCloth={loadClothList}
+        saving={isLoad || photoChecking}
       />
-
       <CreateEmployeeDialog
         open={newDialog}
         fullScreen={fullScreen}
         employee={newEmployee}
         refs={refs}
-        onClose={() => setNewDialog(false)}
+        onClose={photoChecking ? undefined : () => setNewDialog(false)}
         onChange={updateNewEmployee}
         onCreate={createEmployee}
+        saving={isLoad || photoChecking}
       />
-
       <ClothListDialog
         open={clothDialog}
         fullScreen={fullScreen}
@@ -2296,7 +2556,6 @@ export default function EmployeesPage() {
         onAdd={addClothItem}
         onDelete={deleteClothItem}
       />
-
       <Dialog
         open={Boolean(confirm)}
         onClose={() => setConfirm(null)}
@@ -2313,6 +2572,36 @@ export default function EmployeesPage() {
             onClick={confirm?.action}
           >
             Подтвердить
+          </Button>
+        </DialogActions>
+      </Dialog>
+      <Dialog
+        open={Boolean(photoReview)}
+        onClose={photoChecking ? undefined : chooseAnotherPhoto}
+      >
+        <DialogTitle>Нужна проверка фотографии</DialogTitle>
+        <DialogContent>
+          <Typography>
+            {photoReview?.reason || "ИИ не смог уверенно проверить фотографию."}
+          </Typography>
+          <Typography sx={{ mt: 1, color: "text.secondary", fontSize: 13 }}>
+            Если на фото точно нет документов и персональных данных, сохранение можно подтвердить.
+            Подтверждение будет записано в историю сотрудника.
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button
+            onClick={chooseAnotherPhoto}
+            disabled={photoChecking}
+          >
+            Выбрать другое фото
+          </Button>
+          <Button
+            variant="contained"
+            onClick={confirmPhotoReview}
+            disabled={photoChecking}
+          >
+            Сохранить всё равно
           </Button>
         </DialogActions>
       </Dialog>
@@ -2348,6 +2637,7 @@ function EmployeeDialog({
   onIssueCloth,
   onReturnCloth,
   onManageCloth,
+  saving,
 }) {
   const permissions = getEmployeeCardPermissions(basePermissions, isSelf, isSuperPosition);
   const user = employee?.user;
@@ -2383,7 +2673,7 @@ function EmployeeDialog({
   return (
     <Dialog
       open={open}
-      onClose={onClose}
+      onClose={saving ? undefined : onClose}
       fullWidth
       maxWidth="lg"
       fullScreen={fullScreen}
@@ -2393,8 +2683,10 @@ function EmployeeDialog({
         <Stack
           direction="row"
           spacing={1.5}
-          alignItems="center"
-          sx={{ minWidth: 0 }}
+          sx={{
+            alignItems: "center",
+            minWidth: 0,
+          }}
         >
           {permissions.photo.view ? (
             <EmployeeAvatar
@@ -2425,7 +2717,10 @@ function EmployeeDialog({
             ) : null}
           </Box>
         </Stack>
-        <IconButton onClick={onClose}>
+        <IconButton
+          onClick={onClose}
+          disabled={saving}
+        >
           <CloseIcon />
         </IconButton>
       </DialogTitle>
@@ -2496,8 +2791,10 @@ function EmployeeDialog({
               <Grid
                 container
                 spacing={1.5}
-                alignItems="flex-start"
-                sx={{ alignContent: "flex-start" }}
+                sx={{
+                  alignItems: "flex-start",
+                  alignContent: "flex-start",
+                }}
               >
                 {hasPersonalView ? (
                   <Grid size={12}>
@@ -2779,7 +3076,9 @@ function EmployeeDialog({
             <Grid
               container
               spacing={2}
-              alignItems="center"
+              sx={{
+                alignItems: "center",
+              }}
             >
               <Grid size={{ xs: 12, sm: 3 }}>
                 <MyAutocomplite
@@ -2868,7 +3167,9 @@ function EmployeeDialog({
                     <Stack
                       direction="row"
                       spacing={0.5}
-                      justifyContent="flex-end"
+                      sx={{
+                        justifyContent: "flex-end",
+                      }}
                     >
                       <Tooltip title="Редактировать">
                         <IconButton
@@ -2902,9 +3203,11 @@ function EmployeeDialog({
           <Stack
             direction={{ xs: "column", sm: "row" }}
             spacing={1}
-            alignItems={{ xs: "flex-start", sm: "center" }}
-            justifyContent="space-between"
-            sx={{ mb: 1.5 }}
+            sx={{
+              alignItems: { xs: "flex-start", sm: "center" },
+              justifyContent: "space-between",
+              mb: 1.5,
+            }}
           >
             <Chip
               label={`Общий статус: ${overallHealth}`}
@@ -2995,7 +3298,9 @@ function EmployeeDialog({
             <Grid
               container
               spacing={2}
-              alignItems="center"
+              sx={{
+                alignItems: "center",
+              }}
             >
               <Grid size={{ xs: 12, sm: 5 }}>
                 <MyAutocomplite
@@ -3094,7 +3399,7 @@ function EmployeeDialog({
           <Button
             variant="contained"
             onClick={onSaveBasic}
-            disabled={!basicCanEdit && !(permissions.photo.edit && photoFile)}
+            disabled={saving || (!basicCanEdit && !(permissions.photo.edit && photoFile))}
           >
             Сохранить
           </Button>
@@ -3104,7 +3409,16 @@ function EmployeeDialog({
   );
 }
 
-function CreateEmployeeDialog({ open, fullScreen, employee, refs, onClose, onChange, onCreate }) {
+function CreateEmployeeDialog({
+  open,
+  fullScreen,
+  employee,
+  refs,
+  onClose,
+  onChange,
+  onCreate,
+  saving,
+}) {
   const [activeTab, setActiveTab] = useState("basic");
   const [clothDraft, setClothDraft] = useState({
     item: null,
@@ -3181,7 +3495,7 @@ function CreateEmployeeDialog({ open, fullScreen, employee, refs, onClose, onCha
   return (
     <Dialog
       open={open}
-      onClose={onClose}
+      onClose={saving ? undefined : onClose}
       fullWidth
       maxWidth="lg"
       fullScreen={fullScreen}
@@ -3194,7 +3508,10 @@ function CreateEmployeeDialog({ open, fullScreen, employee, refs, onClose, onCha
             Заполните карточку сотрудника до создания
           </Typography>
         </Box>
-        <IconButton onClick={onClose}>
+        <IconButton
+          onClick={onClose}
+          disabled={saving}
+        >
           <CloseIcon />
         </IconButton>
       </DialogTitle>
@@ -3383,7 +3700,9 @@ function CreateEmployeeDialog({ open, fullScreen, employee, refs, onClose, onCha
           <Grid
             container
             spacing={2}
-            alignItems="center"
+            sx={{
+              alignItems: "center",
+            }}
           >
             <Grid size={{ xs: 12, sm: 6 }}>
               <MyAutocomplite
@@ -3450,7 +3769,9 @@ function CreateEmployeeDialog({ open, fullScreen, employee, refs, onClose, onCha
           <Grid
             container
             spacing={2}
-            alignItems="center"
+            sx={{
+              alignItems: "center",
+            }}
           >
             <Grid size={{ xs: 12, sm: 3 }}>
               <MyAutocomplite
@@ -3540,7 +3861,8 @@ function CreateEmployeeDialog({ open, fullScreen, employee, refs, onClose, onCha
         <Button onClick={onClose}>Отмена</Button>
         <Button
           variant="contained"
-          onClick={onCreate}
+          onClick={() => onCreate()}
+          disabled={saving}
         >
           Создать
         </Button>
@@ -3600,9 +3922,12 @@ function ClothListDialog({
             <Box key={item.id ?? `${item.name}-${index}`}>
               <Stack
                 direction="row"
-                alignItems="center"
-                justifyContent="space-between"
-                sx={{ px: 1.5, py: 1 }}
+                sx={{
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  px: 1.5,
+                  py: 1,
+                }}
               >
                 <Typography>{item.name}</Typography>
                 <Tooltip title="Удалить">
@@ -3678,7 +4003,9 @@ function HealthBookHistoryDetails({ item }) {
       <Grid
         container
         spacing={1.25}
-        alignItems="stretch"
+        sx={{
+          alignItems: "stretch",
+        }}
       >
         {groups.map((group) => {
           const end = snapshot[group.endKey];
@@ -3696,10 +4023,12 @@ function HealthBookHistoryDetails({ item }) {
               >
                 <Stack
                   direction="row"
-                  alignItems="center"
-                  justifyContent="space-between"
                   spacing={1}
-                  sx={{ mb: 1.5 }}
+                  sx={{
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    mb: 1.5,
+                  }}
                 >
                   <Typography sx={{ fontWeight: 900 }}>{group.name}</Typography>
                   <Chip
@@ -3768,9 +4097,11 @@ function AbsenceHistoryDetails({ item }) {
       >
         <Stack
           direction="row"
-          alignItems="center"
           spacing={1}
-          sx={{ mb: 1.5 }}
+          sx={{
+            alignItems: "center",
+            mb: 1.5,
+          }}
         >
           <Typography sx={{ fontWeight: 900 }}>{type}</Typography>
           <Chip
@@ -3883,9 +4214,11 @@ function WorkHistoryDetails({ item }) {
     <Box sx={{ p: 2 }}>
       <Stack
         direction={{ xs: "column", sm: "row" }}
-        alignItems={{ xs: "flex-start", sm: "center" }}
         spacing={1}
-        sx={{ mb: 1.5 }}
+        sx={{
+          alignItems: { xs: "flex-start", sm: "center" },
+          mb: 1.5,
+        }}
       >
         <Typography sx={{ fontWeight: 900 }}>{item.event_label}</Typography>
         {scheduled ? (
@@ -3900,7 +4233,9 @@ function WorkHistoryDetails({ item }) {
       <Grid
         container
         spacing={1.25}
-        alignItems="stretch"
+        sx={{
+          alignItems: "stretch",
+        }}
       >
         {item.changedFields.map(({ key, label }) => {
           const change = item.diff[key];
@@ -4008,7 +4343,9 @@ function ActivityHistoryDetails({ item }) {
       <Grid
         container
         spacing={1.25}
-        alignItems="stretch"
+        sx={{
+          alignItems: "stretch",
+        }}
       >
         {item.changedFields.map(({ key, label }) => {
           const change = item.diff[key];
@@ -4095,8 +4432,10 @@ function EmployeeHistoryRow({ item, fields }) {
           <Stack
             direction="row"
             useFlexGap
-            flexWrap="wrap"
-            gap={0.75}
+            sx={{
+              flexWrap: "wrap",
+              gap: 0.75,
+            }}
           >
             {item.event_label && !isCompactActivity ? (
               <Chip
@@ -4160,7 +4499,9 @@ function EmployeeHistoryRow({ item, fields }) {
                 <Grid
                   container
                   spacing={1.25}
-                  alignItems="stretch"
+                  sx={{
+                    alignItems: "stretch",
+                  }}
                 >
                   {fields.map(({ key, label }) => {
                     const change = item.diff[key];

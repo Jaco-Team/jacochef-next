@@ -348,10 +348,10 @@ function PositionSelect({ positions, value, onChange, disabled }) {
           </Box>
         </Box>
       )}
-      renderTags={(selected, getTagProps) =>
+      renderValue={(selected, getItemProps) =>
         selected.map((option, index) => (
           <Chip
-            {...getTagProps({ index })}
+            {...getItemProps({ index })}
             key={option.id === ALL_POSITIONS.id ? option.id : positionKey(option)}
             size="small"
             label={

@@ -63,7 +63,7 @@ const blockBackground = "#F3F3F3";
 const blockBorder = "#E5E5E5";
 const textPrimary = "#3C3B3B";
 const textSecondary = "#5E5E5E";
-const apiBaseUrl = (process.env.NEXT_PUBLIC_API_URL || "https://apichef.jacochef.ru/api").replace(
+const apiBaseUrl = (process.env.NEXT_PUBLIC_API_URL || "https://apichef2.jacochef.ru/api").replace(
   /\/+$/,
   "",
 );
@@ -1180,9 +1180,12 @@ class SiteItems_Table extends React.Component {
         >
           <Stack
             direction="row"
-            alignItems="center"
-            justifyContent="space-between"
-            sx={{ px: 0.25, pb: 0.25 }}
+            sx={{
+              alignItems: "center",
+              justifyContent: "space-between",
+              px: 0.25,
+              pb: 0.25,
+            }}
           >
             <Typography sx={{ color: textSecondary, fontSize: 13 }}>
               Выберите категорию, чтобы увидеть товары
@@ -1282,7 +1285,6 @@ class SiteItems_Table extends React.Component {
                     {cat.items?.length || 0}
                   </Box>
                 </AccordionSummary>
-
                 <AccordionDetails
                   className="accordion_details"
                   sx={{
@@ -1613,9 +1615,11 @@ class SiteItems_Table extends React.Component {
                       </Typography>
                       <Stack
                         direction="row"
-                        flexWrap="wrap"
                         useFlexGap
-                        gap={0.75}
+                        sx={{
+                          flexWrap: "wrap",
+                          gap: 0.75,
+                        }}
                       >
                         {mobileSortOptions.map((option) =>
                           renderMobileSortButton(option.field, option.label),
@@ -1641,9 +1645,11 @@ class SiteItems_Table extends React.Component {
                             <Stack spacing={1.25}>
                               <Stack
                                 direction="row"
-                                alignItems="flex-start"
-                                justifyContent="space-between"
                                 spacing={1.25}
+                                sx={{
+                                  alignItems: "flex-start",
+                                  justifyContent: "space-between",
+                                }}
                               >
                                 <Box sx={{ minWidth: 0, flex: 1 }}>
                                   <Typography
@@ -1721,9 +1727,11 @@ class SiteItems_Table extends React.Component {
 
                               <Stack
                                 direction="row"
-                                flexWrap="wrap"
                                 useFlexGap
-                                gap={0.75}
+                                sx={{
+                                  flexWrap: "wrap",
+                                  gap: 0.75,
+                                }}
                               >
                                 {canViewAccess(acces, "site_kc") &&
                                   renderMobileStatusControl(
@@ -1841,6 +1849,7 @@ class SiteItems_ extends React.Component {
       item_items: null,
 
       category: [],
+      categoryLegacy: [],
       stages: [],
     };
 
@@ -1948,6 +1957,7 @@ class SiteItems_ extends React.Component {
       { id: "3", name: "3 этап" },
     ];
     res.item.category_id = "";
+    res.item.category_id2 = "";
     res.item.tags_all = res?.tags_all;
 
     this.setState({
@@ -1955,6 +1965,7 @@ class SiteItems_ extends React.Component {
       modalDialogTech: true,
       method,
       category: res.cat_list,
+      categoryLegacy: res.cat_list_legacy || [],
       items_stage: res.items_stage,
       item_items: res.item_items,
       stages,
@@ -1980,7 +1991,12 @@ class SiteItems_ extends React.Component {
 
     ["stage_1", "stage_2", "stage_3"].forEach((stage) => {
       res.items_stage[stage] = (res.items_stage?.[stage] || []).map((item) => {
-        const itemId = item.type === "rec" ? item.rec_id : item.pf_id;
+        const itemId =
+          item.type === "rec"
+            ? item.rec_id
+            : item.type === "item"
+              ? item.warehouse_item_id
+              : item.pf_id;
         const value = stageOptionsByKey.get(`${item.type}:${itemId}`);
 
         return {
@@ -2017,6 +2033,7 @@ class SiteItems_ extends React.Component {
       modalDialogTech: true,
       method,
       category: res.cat_list,
+      categoryLegacy: res.cat_list_legacy || [],
       items_stage: res.items_stage,
       item_items: res.item_items,
       tags_all: res.tags_all,
@@ -2185,6 +2202,30 @@ class SiteItems_ extends React.Component {
       return newIt;
     }, []);
 
+    const item_stage_1 = item.items_stage.stage_1.reduce((newIt, it) => {
+      if (it.type === "item") {
+        it.warehouse_item_id = it.type_id.id;
+        newIt.push(it);
+      }
+      return newIt;
+    }, []);
+
+    const item_stage_2 = item.items_stage.stage_2.reduce((newIt, it) => {
+      if (it.type === "item") {
+        it.warehouse_item_id = it.type_id.id;
+        newIt.push(it);
+      }
+      return newIt;
+    }, []);
+
+    const item_stage_3 = item.items_stage.stage_3.reduce((newIt, it) => {
+      if (it.type === "item") {
+        it.warehouse_item_id = it.type_id.id;
+        newIt.push(it);
+      }
+      return newIt;
+    }, []);
+
     const data = {
       ...item,
       pf_stage_1,
@@ -2193,6 +2234,9 @@ class SiteItems_ extends React.Component {
       rec_stage_1,
       rec_stage_2,
       rec_stage_3,
+      item_stage_1,
+      item_stage_2,
+      item_stage_3,
     };
 
     let res;
@@ -2263,15 +2307,14 @@ class SiteItems_ extends React.Component {
       }
 
       if (res.cat_list) {
-        if (res.item.category_id) {
-          res.item.category_name =
-            res.cat_list.find((cat) => parseInt(cat.id) === parseInt(res.item.category_id))?.name ??
-            "";
-        } else {
-          res.item.category_name =
-            res.cat_list.find((cat) => parseInt(cat.id) === parseInt(res.item.category_id2))
-              ?.name ?? "";
-        }
+        res.item.category_name2 =
+          res.cat_list.find((cat) => parseInt(cat.id) === parseInt(res.item.category_id2))?.name ??
+          "";
+      }
+      if (res.cat_list_legacy) {
+        res.item.category_name =
+          res.cat_list_legacy.find((cat) => parseInt(cat.id) === parseInt(res.item.category_id))
+            ?.name ?? "";
       }
 
       this.setState({
@@ -2335,6 +2378,7 @@ class SiteItems_ extends React.Component {
           item={this.state.itemTech}
           method={this.state.method}
           category={this.state.category}
+          categoryLegacy={this.state.categoryLegacy}
           save={this.saveTech.bind(this)}
           getData={this.getData.bind(this)}
           update={this.update.bind(this)}
@@ -2426,8 +2470,10 @@ class SiteItems_ extends React.Component {
                   direction={{ xs: "column", sm: "row" }}
                   spacing={1.5}
                   useFlexGap
-                  flexWrap="wrap"
-                  sx={{ width: { xs: "100%", lg: "auto" } }}
+                  sx={{
+                    flexWrap: "wrap",
+                    width: { xs: "100%", lg: "auto" },
+                  }}
                 >
                   {hasAccessValue(this.state.acces?.new_item_access) ? (
                     <Button
@@ -2513,8 +2559,10 @@ class SiteItems_ extends React.Component {
                       <Stack
                         direction={{ xs: "column", lg: "row" }}
                         spacing={1.5}
-                        alignItems={{ xs: "stretch", lg: "center" }}
-                        justifyContent="space-between"
+                        sx={{
+                          alignItems: { xs: "stretch", lg: "center" },
+                          justifyContent: "space-between",
+                        }}
                       >
                         <Box>
                           <Typography
@@ -2562,29 +2610,31 @@ class SiteItems_ extends React.Component {
                               borderRadius: 1.5,
                             },
                           }}
-                          InputProps={{
-                            startAdornment: (
-                              <InputAdornment position="start">
-                                <SearchIcon sx={{ color: textSecondary, fontSize: 20 }} />
-                              </InputAdornment>
-                            ),
-                            endAdornment: searchValue ? (
-                              <InputAdornment position="end">
-                                <IconButton
-                                  size="small"
-                                  aria-label="Очистить поиск"
-                                  onClick={() =>
-                                    this.setState((state) => ({
-                                      searchItem: "",
-                                      ...this.buildListView(state.cats, state.listTab, ""),
-                                    }))
-                                  }
-                                  edge="end"
-                                >
-                                  <CloseIcon sx={{ fontSize: 18 }} />
-                                </IconButton>
-                              </InputAdornment>
-                            ) : null,
+                          slotProps={{
+                            input: {
+                              startAdornment: (
+                                <InputAdornment position="start">
+                                  <SearchIcon sx={{ color: textSecondary, fontSize: 20 }} />
+                                </InputAdornment>
+                              ),
+                              endAdornment: searchValue ? (
+                                <InputAdornment position="end">
+                                  <IconButton
+                                    size="small"
+                                    aria-label="Очистить поиск"
+                                    onClick={() =>
+                                      this.setState((state) => ({
+                                        searchItem: "",
+                                        ...this.buildListView(state.cats, state.listTab, ""),
+                                      }))
+                                    }
+                                    edge="end"
+                                  >
+                                    <CloseIcon sx={{ fontSize: 18 }} />
+                                  </IconButton>
+                                </InputAdornment>
+                              ) : null,
+                            },
                           }}
                         />
                       </Stack>
@@ -2592,8 +2642,10 @@ class SiteItems_ extends React.Component {
                       <Stack
                         direction={{ xs: "column", md: "row" }}
                         spacing={1.5}
-                        alignItems={{ xs: "stretch", md: "center" }}
-                        justifyContent="space-between"
+                        sx={{
+                          alignItems: { xs: "stretch", md: "center" },
+                          justifyContent: "space-between",
+                        }}
                       >
                         <Box
                           sx={{
@@ -2691,7 +2743,6 @@ class SiteItems_ extends React.Component {
                       </Stack>
                     </Stack>
                   </Paper>
-
                   {this.state.cats.length == 0 ? (
                     <Box
                       sx={{

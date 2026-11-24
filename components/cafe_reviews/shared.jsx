@@ -1,10 +1,50 @@
-import { Box, Chip, Rating, Typography } from "@mui/material";
+import { Box, Rating, Typography } from "@mui/material";
+import {
+  JacoStatusChip,
+  JacoSurface,
+  uiColors,
+  uiStateColors,
+  uiTypography,
+} from "@/design-system/shared/ui";
 
-export const brandRed = "#DD1A32";
-export const blockBackground = "#F3F3F3";
-export const blockBorder = "#E5E5E5";
-export const textPrimary = "#3C3B3B";
-export const textSecondary = "#5E5E5E";
+// Colour names used across the module; the values come from the design system tokens.
+export const brandRed = uiColors.primary;
+export const blockBackground = uiColors.surfaceMuted;
+export const blockBorder = uiColors.border;
+export const white = uiColors.surface;
+export const successGreen = uiColors.successHover;
+export const successBackground = uiColors.successSoft;
+export const mutedBackground = uiStateColors.hover;
+export const tableHeaderBackground = uiColors.surfaceMuted;
+export const accordionHeaderBackground = uiStateColors.hover;
+export const textPrimary = uiColors.textStrong;
+export const textSecondary = uiColors.text;
+export const CAFE_REVIEWS_AUTO_REFRESH_MINUTES = 1;
+
+export const sectionTitleSx = {
+  fontSize: 18,
+  lineHeight: 1.3,
+  fontWeight: 600,
+  color: uiColors.textStrong,
+};
+
+export const tableHeadCellSx = {
+  py: 1.25,
+  fontSize: 13,
+  fontWeight: 600,
+  color: uiColors.text,
+  backgroundColor: uiColors.surfaceMuted,
+  borderBottomColor: uiColors.border,
+  whiteSpace: "nowrap",
+};
+
+export const tableCellSx = {
+  py: 1.25,
+  fontSize: 14,
+  color: uiColors.textStrong,
+  borderBottomColor: uiColors.borderLight,
+  fontVariantNumeric: "tabular-nums",
+};
 
 export const desktopOnlySx = {
   display: "none",
@@ -37,47 +77,50 @@ export function formatDateTime(value) {
 
 export function getOptionLabel(options, value, fallback = "—") {
   if (!value) return fallback;
+  if (value === "positive") return "Решён";
   return options.find((option) => String(option.value) === String(value))?.label || String(value);
 }
 
+const severityChips = {
+  low: { tone: "success", variant: "soft" },
+  medium: { tone: "warning", variant: "soft" },
+  high: { tone: "danger", variant: "soft" },
+  critical: { tone: "danger", variant: "filled" },
+};
+
 export function SeverityChip({ value, options }) {
-  const colors = {
-    low: { color: "#356647", bgcolor: "#EAF5EE", borderColor: "#B8D9C3" },
-    medium: { color: "#7A5900", bgcolor: "#FFF6D8", borderColor: "#E8D48F" },
-    high: { color: "#A14C00", bgcolor: "#FFF0E1", borderColor: "#EDC299" },
-    critical: { color: "#A11425", bgcolor: "#FDECEF", borderColor: "#E8AFB6" },
-  };
-  const palette = colors[value] || {
-    color: textSecondary,
-    bgcolor: "#F6F6F6",
-    borderColor: blockBorder,
-  };
+  const chip = severityChips[value] || { tone: "neutral", variant: "outlined" };
 
   return (
-    <Chip
-      size="small"
+    <JacoStatusChip
+      {...chip}
       label={getOptionLabel(options, value, "Не задана")}
-      sx={{ ...palette, border: "1px solid", fontWeight: 700 }}
     />
   );
 }
 
-export function StatusChip({ value, options }) {
+const statusChips = {
+  in_progress: { tone: "warning", variant: "soft" },
+  resolved: { tone: "success", variant: "soft" },
+  positive: { tone: "success", variant: "soft" },
+  dismissed: { tone: "neutral", variant: "soft" },
+};
+
+export function StatusChip({ value, options, highlightNew = false }) {
+  const chip =
+    highlightNew && value === "new"
+      ? { tone: "danger", variant: "filled" }
+      : statusChips[value] || { tone: "neutral", variant: "outlined" };
+
   return (
-    <Chip
-      size="small"
+    <JacoStatusChip
+      {...chip}
       label={getOptionLabel(options, value, "Без статуса")}
-      sx={{
-        color: textPrimary,
-        bgcolor: "#FFFFFF",
-        border: `1px solid ${blockBorder}`,
-        fontWeight: 700,
-      }}
     />
   );
 }
 
-export function RatingValue({ value, size = "small" }) {
+export function RatingValue({ value, size = "small", isIncident = false }) {
   return (
     <Box sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
       <Rating
@@ -86,10 +129,11 @@ export function RatingValue({ value, size = "small" }) {
         size={size}
         readOnly
         aria-label={`Оценка ${Number(value) || 0} из 5`}
+        sx={isIncident ? { color: uiColors.primary } : undefined}
       />
       <Typography
         component="span"
-        sx={{ fontWeight: 800, color: textPrimary }}
+        sx={{ ...uiTypography.bodyMedium, color: uiColors.textStrong }}
       >
         {Number(value) || 0}
       </Typography>
@@ -99,27 +143,39 @@ export function RatingValue({ value, size = "small" }) {
 
 export function EmptyState({ children }) {
   return (
-    <Box
+    <JacoSurface
       role="status"
       sx={{
         p: 4,
         textAlign: "center",
-        color: textSecondary,
-        bgcolor: "#FFFFFF",
-        border: `1px solid ${blockBorder}`,
-        borderRadius: "12px",
+        color: uiColors.text,
+        borderStyle: "dashed",
       }}
     >
       {children}
-    </Box>
+    </JacoSurface>
   );
 }
 
 export function DetailRow({ label, children }) {
   return (
     <Box>
-      <Typography sx={{ fontSize: 12, color: textSecondary, mb: 0.25 }}>{label}</Typography>
-      <Box sx={{ color: textPrimary, overflowWrap: "anywhere" }}>{children || "—"}</Box>
+      <Typography sx={{ ...uiTypography.compactLabel, color: uiColors.text, mb: 0.25 }}>
+        {label}
+      </Typography>
+      <Box sx={{ color: uiColors.textStrong, overflowWrap: "anywhere" }}>{children || "—"}</Box>
     </Box>
+  );
+}
+
+export function ZoneChip({ code, label }) {
+  if (!code && !label) return null;
+
+  return (
+    <JacoStatusChip
+      tone="success"
+      variant="soft"
+      label={label || "Кафе"}
+    />
   );
 }

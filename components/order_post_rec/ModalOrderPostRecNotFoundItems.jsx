@@ -36,7 +36,9 @@ export const ModalOrderPostRecNotFoundItems = ({ open, onClose, items = [] }) =>
               />
               <Typography
                 variant="body1"
-                fontWeight={500}
+                sx={{
+                  fontWeight: 500,
+                }}
               >
                 {item.name}
               </Typography>

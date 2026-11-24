@@ -87,7 +87,7 @@ import DraggableImage from "@/components/billing/DraggableImage";
 import InsertDriveFileIcon from "@mui/icons-material/InsertDriveFile";
 import MyAlert from "@/ui/MyAlert";
 import { formatDateReverse } from "@/src/helpers/ui/formatDate";
-import { api_laravel, api_laravel_local } from "@/src/api_new";
+import { api_laravel, api_laravel_local, prepareBillingUploads, setBillingUploadCsrf, resetBillingUploadCsrf } from "@/src/api_new";
 import { Link } from "@mui/material";
 
 const types = [
@@ -211,10 +211,10 @@ var global_point_id = 0;
 var type_bill = "bill";
 var bill_type = 0;
 var is_return = false;
-const url_bill = "https://apichef.jacochef.ru/api/bill-items/upload";
-const url_bill_ex = "https://apichef.jacochef.ru/api/bill-ex-items/upload";
+const url_bill = (process.env.NEXT_PUBLIC_API_URL || "https://apichef2.jacochef.ru/api").replace(/\/+$/, "") + "/bill-items/upload";
+const url_bill_ex = (process.env.NEXT_PUBLIC_API_URL || "https://apichef2.jacochef.ru/api").replace(/\/+$/, "") + "/bill-ex-items/upload";
 // const API_URL = "http://127.0.0.1:8000/api";
-const API_URL = "https://apichef.jacochef.ru/api";
+const API_URL = (process.env.NEXT_PUBLIC_API_URL || "https://apichef2.jacochef.ru/api").replace(/\/+$/, "");
 // const url_ocr = `${API_URL}/ocr/files/pipeline`;
 const url_ocr = `${API_URL}/ocr/files/lilt-pipeline`;
 
@@ -1664,9 +1664,11 @@ function renderBillingVendorItemOption(optionProps, option, vendorId = null) {
       <Stack
         direction="row"
         spacing={1}
-        alignItems="center"
-        flexWrap="wrap"
         useFlexGap
+        sx={{
+          alignItems: "center",
+          flexWrap: "wrap",
+        }}
       >
         <Box component="span">{option?.name || option?.item_name || ""}</Box>
         {option?.err_decl && resolvedVendorId ? (
@@ -1734,7 +1736,14 @@ var dropzoneOptions_bill = {
       }
     });
 
+    this.on("error", function (file, message, xhr) {
+      resetBillingUploadCsrf(myDropzone, xhr);
+    });
+
     this.on("sending", function (file, xhr, data) {
+      if (!setBillingUploadCsrf(myDropzone, file, xhr)) {
+        return;
+      }
       //var point = document.getElementById('point_id').value;
 
       i++;
@@ -1820,7 +1829,14 @@ var dropzoneOptions_bill_factur = {
       }
     });
 
+    this.on("error", function (file, message, xhr) {
+      resetBillingUploadCsrf(myDropzone, xhr);
+    });
+
     this.on("sending", function (file, xhr, data) {
+      if (!setBillingUploadCsrf(myDropzone, file, xhr)) {
+        return;
+      }
       //var point = document.getElementById('point_id').value;
 
       i++;
@@ -2177,7 +2193,7 @@ const useStore = create((set, get) => ({
       get().check_price_item_new();
     }, 500);
 
-    get().changeKinds(res?.bill?.type_doc);
+    get().changeKinds(res?.bill?.type_bill);
   },
 
   clearForm: () => {
@@ -3943,6 +3959,7 @@ function VendorItemsTableEdit({ showPriceWarnings = true }) {
 }
 
 function VendorItemsTableView({ showPriceWarnings = true }) {
+  const [bill, vendors] = useStore((state) => [state.bill, state.vendors]);
   const [bill_items_doc, bill_items, allPrice, allPrice_w_nds, err_items] = useStore((state) => [
     state.bill_items_doc,
     state.bill_items,
@@ -3950,6 +3967,7 @@ function VendorItemsTableView({ showPriceWarnings = true }) {
     state.allPrice_w_nds,
     state.err_items,
   ]);
+  const vendorId = bill?.vendor_id ?? bill?.vendors?.[0]?.id ?? vendors?.[0]?.id ?? null;
 
   let summ_nds = 0;
 
@@ -5151,8 +5169,10 @@ function Billing_Accordion_item({ bill_list, bill, index, bill_type }) {
                 direction="row"
                 spacing={1}
                 useFlexGap
-                flexWrap="wrap"
-                sx={{ mt: 1 }}
+                sx={{
+                  flexWrap: "wrap",
+                  mt: 1,
+                }}
               >
                 <Chip
                   size="small"
@@ -5287,8 +5307,10 @@ function Billing_Accordion_item({ bill_list, bill, index, bill_type }) {
           direction="row"
           spacing={1}
           useFlexGap
-          flexWrap="wrap"
-          sx={{ mb: 2 }}
+          sx={{
+            flexWrap: "wrap",
+            mb: 2,
+          }}
         >
           <Chip
             size="small"
@@ -7200,6 +7222,10 @@ class Billing_Edit_ extends React.Component {
     };
 
     try {
+      await prepareBillingUploads([
+        DropzoneMain && this.getPendingDropzoneFiles(DropzoneMain).length ? DropzoneMain : null,
+        parseInt(type) == 2 && DropzoneDop && this.getPendingDropzoneFiles(DropzoneDop).length ? DropzoneDop : null,
+      ]);
       const res = await this.getData("save_edit", data);
 
       if (res.st === true) {
@@ -7715,7 +7741,9 @@ class Billing_Edit_ extends React.Component {
           }}
           fullWidth
           maxWidth="sm"
-          PaperProps={{ sx: billingConfirmDialogPaperSx }}
+          slotProps={{
+            paper: { sx: billingConfirmDialogPaperSx },
+          }}
         >
           <DialogTitle
             sx={{
@@ -7767,7 +7795,9 @@ class Billing_Edit_ extends React.Component {
           }}
           fullWidth
           maxWidth="sm"
-          PaperProps={{ sx: billingConfirmDialogPaperSx }}
+          slotProps={{
+            paper: { sx: billingConfirmDialogPaperSx },
+          }}
         >
           <DialogTitle sx={{ px: { xs: 2.5, md: 4 }, pt: { xs: 2.5, md: 3.5 }, pb: 0 }}>
             <Typography sx={{ fontSize: 28, fontWeight: 800, lineHeight: 1.05, color: "#111827" }}>
@@ -7817,7 +7847,9 @@ class Billing_Edit_ extends React.Component {
           }}
           fullWidth
           maxWidth="sm"
-          PaperProps={{ sx: billingConfirmDialogPaperSx }}
+          slotProps={{
+            paper: { sx: billingConfirmDialogPaperSx },
+          }}
         >
           <DialogTitle sx={{ px: { xs: 2.5, md: 4 }, pt: { xs: 2.5, md: 3.5 }, pb: 0 }}>
             <Typography sx={{ fontSize: 28, fontWeight: 800, lineHeight: 1.05, color: "#111827" }}>
@@ -7868,7 +7900,9 @@ class Billing_Edit_ extends React.Component {
           }}
           fullWidth
           maxWidth="sm"
-          PaperProps={{ sx: billingConfirmDialogPaperSx }}
+          slotProps={{
+            paper: { sx: billingConfirmDialogPaperSx },
+          }}
         >
           <DialogTitle sx={{ px: { xs: 2.5, md: 4 }, pt: { xs: 2.5, md: 3.5 }, pb: 0 }}>
             <Typography sx={{ fontSize: 28, fontWeight: 800, lineHeight: 1.05, color: "#111827" }}>
@@ -7918,7 +7952,9 @@ class Billing_Edit_ extends React.Component {
           }}
           fullWidth
           maxWidth="sm"
-          PaperProps={{ sx: billingConfirmDialogPaperSx }}
+          slotProps={{
+            paper: { sx: billingConfirmDialogPaperSx },
+          }}
         >
           <DialogTitle sx={{ px: { xs: 2.5, md: 4 }, pt: { xs: 2.5, md: 3.5 }, pb: 0 }}>
             <Typography sx={{ fontSize: 28, fontWeight: 800, lineHeight: 1.05, color: "#111827" }}>
@@ -7970,7 +8006,9 @@ class Billing_Edit_ extends React.Component {
           fullWidth
           maxWidth="xs"
           sx={{ zIndex: 2100 }}
-          PaperProps={{ sx: billingConfirmDialogPaperSx }}
+          slotProps={{
+            paper: { sx: billingConfirmDialogPaperSx },
+          }}
         >
           <DialogTitle sx={{ px: { xs: 2.5, md: 4 }, pt: { xs: 2.5, md: 3.5 }, pb: 0 }}>
             <Typography sx={{ fontSize: 28, fontWeight: 800, lineHeight: 1.05, color: "#111827" }}>
@@ -8015,16 +8053,18 @@ class Billing_Edit_ extends React.Component {
           fullWidth
           maxWidth={fullScreen ? false : "lg"}
           scroll="paper"
-          PaperProps={{
-            sx: {
-              ...billingConfirmDialogPaperSx,
-              ...(fullScreen
-                ? {
-                    borderRadius: 0,
-                    minHeight: "100dvh",
-                    maxHeight: "100dvh",
-                  }
-                : {}),
+          slotProps={{
+            paper: {
+              sx: {
+                ...billingConfirmDialogPaperSx,
+                ...(fullScreen
+                  ? {
+                      borderRadius: 0,
+                      minHeight: "100dvh",
+                      maxHeight: "100dvh",
+                    }
+                  : {}),
+              },
             },
           }}
         >
@@ -8087,16 +8127,18 @@ class Billing_Edit_ extends React.Component {
           fullWidth={true}
           maxWidth={fullScreen ? false : "lg"}
           scroll="paper"
-          PaperProps={{
-            sx: {
-              ...billingConfirmDialogPaperSx,
-              ...(fullScreen
-                ? {
-                    borderRadius: 0,
-                    minHeight: "100dvh",
-                    maxHeight: "100dvh",
-                  }
-                : {}),
+          slotProps={{
+            paper: {
+              sx: {
+                ...billingConfirmDialogPaperSx,
+                ...(fullScreen
+                  ? {
+                      borderRadius: 0,
+                      minHeight: "100dvh",
+                      maxHeight: "100dvh",
+                    }
+                  : {}),
+              },
             },
           }}
         >
@@ -8170,22 +8212,28 @@ class Billing_Edit_ extends React.Component {
                         </Typography>
                         <Typography
                           variant="body2"
-                          color="text.secondary"
-                          sx={{ mt: 0.75 }}
+                          sx={{
+                            color: "text.secondary",
+                            mt: 0.75,
+                          }}
                         >
                           Строка: {item.ocrItem?.line ?? index + 1}
                         </Typography>
                         {!normalizeBillingText(item.ocrItem?.__ocr_file_name) ? null : (
                           <Typography
                             variant="body2"
-                            color="text.secondary"
+                            sx={{
+                              color: "text.secondary",
+                            }}
                           >
                             Файл: {item.ocrItem.__ocr_file_name}
                           </Typography>
                         )}
                         <Typography
                           variant="body2"
-                          color="text.secondary"
+                          sx={{
+                            color: "text.secondary",
+                          }}
                         >
                           OCR: {formatBillingQuantity(item.ocrItem?.quantity)}
                           {formatBillingQuantity(item.ocrItem?.quantity) === "—" ? "" : " упак."}
@@ -8206,8 +8254,10 @@ class Billing_Edit_ extends React.Component {
                         {!item.resolveIssue ? null : (
                           <Typography
                             variant="body2"
-                            color="warning.main"
-                            sx={{ mt: 1 }}
+                            sx={{
+                              color: "warning.main",
+                              mt: 1,
+                            }}
                           >
                             {item.resolveIssue}
                           </Typography>

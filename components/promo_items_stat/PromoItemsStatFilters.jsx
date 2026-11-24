@@ -249,7 +249,9 @@ export default function PromoItemsStatFilters({ onRefresh }) {
         >
           <Stack
             direction="row"
-            justifyContent="flex-end"
+            sx={{
+              justifyContent: "flex-end",
+            }}
           >
             <Button
               variant="contained"

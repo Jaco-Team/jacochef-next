@@ -56,7 +56,9 @@ export default function RequestStockModal({
           <Stack spacing={2}>
             <Typography
               variant="body2"
-              color="text.secondary"
+              sx={{
+                color: "text.secondary",
+              }}
             >
               Поставщик: {formatValue(supplierName)}
             </Typography>
@@ -70,7 +72,9 @@ export default function RequestStockModal({
             {!materials.length ? (
               <Typography
                 variant="body2"
-                color="text.secondary"
+                sx={{
+                  color: "text.secondary",
+                }}
               >
                 У поставщика нет доступного сырья для запроса
               </Typography>

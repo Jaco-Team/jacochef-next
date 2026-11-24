@@ -50,7 +50,6 @@ export default function VendorCard({ vendor, cities, onClick, action = null }) {
           {action}
         </Box>
       ) : null}
-
       <CardActionArea
         sx={{ display: "flex", alignItems: "stretch" }}
         onClick={() => onClick?.(vendor)}
@@ -68,9 +67,11 @@ export default function VendorCard({ vendor, cities, onClick, action = null }) {
         >
           <Stack
             direction={{ xs: "column", sm: "row" }}
-            alignItems={{ xs: "flex-start", sm: "center" }}
-            justifyContent="space-between"
             spacing={0.5}
+            sx={{
+              alignItems: { xs: "flex-start", sm: "center" },
+              justifyContent: "space-between",
+            }}
           >
             <Typography
               variant="subtitle1"
@@ -84,8 +85,10 @@ export default function VendorCard({ vendor, cities, onClick, action = null }) {
             {vendor.inn && (
               <Typography
                 variant="caption"
-                color="text.secondary"
-                sx={{ fontWeight: 600 }}
+                sx={{
+                  color: "text.secondary",
+                  fontWeight: 600,
+                }}
               >
                 {vendor.inn ? `ИНН: ${vendor.inn}` : ""}
               </Typography>
@@ -107,15 +110,19 @@ export default function VendorCard({ vendor, cities, onClick, action = null }) {
               <Fragment key={row.label}>
                 <Typography
                   variant="caption"
-                  color="text.secondary"
-                  sx={{ fontWeight: 600 }}
+                  sx={{
+                    color: "text.secondary",
+                    fontWeight: 600,
+                  }}
                 >
                   {row.label}
                 </Typography>
                 <Typography
                   variant="caption"
-                  color="text.primary"
-                  sx={
+                  sx={[
+                    {
+                      color: "text.primary",
+                    },
                     row.multiline
                       ? {
                           display: "-webkit-box",
@@ -124,8 +131,8 @@ export default function VendorCard({ vendor, cities, onClick, action = null }) {
                           overflow: "hidden",
                           textOverflow: "ellipsis",
                         }
-                      : undefined
-                  }
+                      : undefined,
+                  ]}
                 >
                   {row.value}
                 </Typography>
@@ -133,15 +140,19 @@ export default function VendorCard({ vendor, cities, onClick, action = null }) {
             ))}
             <Typography
               variant="caption"
-              color="text.secondary"
-              sx={{ fontWeight: 600 }}
+              sx={{
+                color: "text.secondary",
+                fontWeight: 600,
+              }}
             >
               Декларации
             </Typography>
             <Stack
               direction="row"
-              alignItems="center"
               spacing={0.5}
+              sx={{
+                alignItems: "center",
+              }}
             >
               <DescriptionOutlinedIcon sx={{ fontSize: 14, color: "text.secondary" }} />
               <Typography
@@ -156,15 +167,19 @@ export default function VendorCard({ vendor, cities, onClick, action = null }) {
             </Stack>
             <Typography
               variant="caption"
-              color="text.secondary"
-              sx={{ fontWeight: 600 }}
+              sx={{
+                color: "text.secondary",
+                fontWeight: 600,
+              }}
             >
               Номенклатура
             </Typography>
             <Stack
               direction="row"
-              alignItems="center"
               spacing={0.5}
+              sx={{
+                alignItems: "center",
+              }}
             >
               <InventoryOutlinedIcon sx={{ fontSize: 14, color: "text.secondary" }} />
               <Typography variant="caption">{productsText}</Typography>

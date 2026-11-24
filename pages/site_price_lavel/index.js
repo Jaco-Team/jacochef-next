@@ -108,7 +108,15 @@ class SitePriceLevel_Modal_XLS extends React.Component {
               }}
             >
               <Tooltip
-                title={<Typography color="inherit">{"Скачать шаблон таблицы в Excel"}</Typography>}
+                title={
+                  <Typography
+                    sx={{
+                      color: "inherit",
+                    }}
+                  >
+                    {"Скачать шаблон таблицы в Excel"}
+                  </Typography>
+                }
               >
                 <IconButton
                   disableRipple
@@ -803,7 +811,7 @@ class SitePriceLevel_Tab_Level extends React.Component {
     let formData = new FormData();
 
     //const urlApi_dev = 'http://127.0.0.1:8000/api/site_price_lavel/import_file_xls';
-    const urlApi_dev = "https://apichef.jacochef.ru/api/site_price_lavel/import_file_xls";
+    const urlApi_dev = (process.env.NEXT_PUBLIC_API_URL || "https://apichef2.jacochef.ru/api").replace(/\/+$/, "") + "/site_price_lavel/import_file_xls";
 
     formData.append("file", file);
     formData.append("method", "import_file_xls");
@@ -1025,13 +1033,29 @@ class SitePriceLevel_Tab_Level extends React.Component {
                               <IconButton /*onClick={() => this.getOneLevel(level.id)}*/>
                                 {parseInt(acces?.edit_level_access) ? (
                                   <Tooltip
-                                    title={<Typography color="inherit">Редактировать</Typography>}
+                                    title={
+                                      <Typography
+                                        sx={{
+                                          color: "inherit",
+                                        }}
+                                      >
+                                        Редактировать
+                                      </Typography>
+                                    }
                                   >
                                     <EditIcon />
                                   </Tooltip>
                                 ) : (
                                   <Tooltip
-                                    title={<Typography color="inherit">Просмотр</Typography>}
+                                    title={
+                                      <Typography
+                                        sx={{
+                                          color: "inherit",
+                                        }}
+                                      >
+                                        Просмотр
+                                      </Typography>
+                                    }
                                   >
                                     <VisibilityIcon />
                                   </Tooltip>

@@ -80,20 +80,21 @@ function ThemeNamesPopover({ names }) {
           {names.length} {getNamesWord(names.length)}
         </Typography>
       </Box>
-
       <Popover
         open={open}
         anchorEl={anchorEl}
         onClose={handleClose}
         anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
         transformOrigin={{ vertical: "top", horizontal: "left" }}
-        PaperProps={{
-          sx: {
-            mt: 1,
-            p: 1.5,
-            borderRadius: 3,
-            boxShadow: "0 12px 32px rgba(17, 24, 39, 0.12)",
-            minWidth: 260,
+        slotProps={{
+          paper: {
+            sx: {
+              mt: 1,
+              p: 1.5,
+              borderRadius: 3,
+              boxShadow: "0 12px 32px rgba(17, 24, 39, 0.12)",
+              minWidth: 260,
+            },
           },
         }}
       >

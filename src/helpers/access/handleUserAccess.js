@@ -13,7 +13,7 @@ export default function handleUserAccess(accessData) {
     const can = {
       view: view || edit || access,
       edit: edit || access,
-      access: view || edit || access,
+      access,
     };
     return can[action] ?? false;
   };

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import Grid from "@mui/material/Grid";
 import Table from "@mui/material/Table";
 import TableHead from "@mui/material/TableHead";
@@ -22,6 +22,8 @@ import Dialog from "@mui/material/Dialog";
 import DialogActions from "@mui/material/DialogActions";
 import DialogContent from "@mui/material/DialogContent";
 import DialogTitle from "@mui/material/DialogTitle";
+import Autocomplete from "@mui/material/Autocomplete";
+import TextField from "@mui/material/TextField";
 import { styled } from "@mui/material/styles";
 import { api_laravel_local, api_laravel } from "@/src/api_new";
 import CityCafeAutocomplete2 from "@/ui/CityCafeAutocomplete2";
@@ -33,7 +35,11 @@ import ViewColumnIcon from "@mui/icons-material/ViewColumn";
 import MyAlert from "@/ui/MyAlert";
 import handleUserAccess from "@/src/helpers/access/handleUserAccess";
 import EndAnalyticsColumnsDialog from "@/components/end_analytics/EndAnalyticsColumnsDialog";
-import AiAnalystTab, { AI_ANALYST_SOURCES } from "@/components/end_analytics/AiAnalystTab";
+import AiAnalystTab, {
+  AI_ANALYST_SOURCES,
+  DEFAULT_AI_COMPARISON,
+} from "@/components/end_analytics/AiAnalystTab";
+import MarketingTab from "@/components/end_analytics/MarketingTab";
 import {
   DEFAULT_END_ANALYTICS_VISIBLE_COLUMNS,
   END_ANALYTICS_COLUMNS,
@@ -42,11 +48,13 @@ import {
 
 const PRIMARY_COLOR = "#cc0033";
 const BACKGROUND_COLOR = "#f5f5f5";
-const COMPARISON_MODE_NAMES = {
-  previous_period: "Предыдущий равный период",
-  previous_month: "Те же даты прошлого месяца",
-  previous_year: "Те же даты прошлого года",
-  custom: "Свой период",
+const END_ANALYTICS_ACTIVE_CHAT_STORAGE_KEY = "end_analytics_active_chat_thread_id";
+const EMPTY_CUSTOM_COST_OPTIONS = {
+  src_source: [],
+  src_medium: [],
+  src_campaign: [],
+  src_term: [],
+  src_content: [],
 };
 
 const createEmptyCustomCostForm = () => ({
@@ -61,6 +69,28 @@ const createEmptyCustomCostForm = () => ({
   cost: "",
   comment: "",
 });
+
+function UtmFreeSoloAutocomplete({ label, value, options, onChange }) {
+  return (
+    <Autocomplete
+      freeSolo
+      size="small"
+      options={options || []}
+      value={value || null}
+      onChange={(_, nextValue) => onChange(nextValue || "")}
+      onInputChange={(_, nextValue, reason) => {
+        if (reason !== "reset") onChange(nextValue);
+      }}
+      renderInput={(params) => (
+        <TextField
+          {...params}
+          label={label}
+          fullWidth
+        />
+      )}
+    />
+  );
+}
 
 const StyledPaper = styled(Paper)(({ theme }) => ({
   padding: theme.spacing(3),
@@ -186,13 +216,6 @@ const ADDITIVE_METRIC_FIELDS = [
   "repeatOrders",
 ];
 const DERIVED_METRIC_FIELDS = ["conversion", "costPerOrder", "averageCheck", "roi", "drr", "ltv"];
-const ATTRIBUTED_DERIVED_METRIC_FIELDS = [
-  "attributedConversion",
-  "attributedCostPerOrder",
-  "attributedAverageCheck",
-  "attributedRoi",
-  "attributedDrr",
-];
 
 const parseMetric = (value) => {
   if (value === null || value === undefined || value === "") {
@@ -267,6 +290,7 @@ const normalizeAiSiteDataSnapshot = (payload) => {
     "ai_analysis",
     "site_data",
     "site_data_by_category",
+    "site_totals",
     "daily_metrics",
     "analytics_meta",
     "request_payload",
@@ -314,13 +338,6 @@ const pickDerivedMetrics = (item) =>
 const pickOptionalMetrics = (item) => ({
   clicks: item.clicks ?? null,
   clicksAvailable: Boolean(item.clicksAvailable),
-  attributedOrders: item.attributedOrders ?? null,
-  attributedRevenue: item.attributedRevenue ?? null,
-  attributedAvailable: Boolean(item.attributedAvailable),
-  ...ATTRIBUTED_DERIVED_METRIC_FIELDS.reduce((acc, field) => {
-    acc[field] = item[field] ?? null;
-    return acc;
-  }, {}),
 });
 
 const applyOptionalAggregates = (item, rows) => {
@@ -331,19 +348,6 @@ const applyOptionalAggregates = (item, rows) => {
   item.clicks = item.clicksAvailable
     ? sourceRows.reduce((sum, row) => sum + parseMetric(row.clicks), 0)
     : null;
-
-  item.attributedAvailable =
-    sourceRows.length > 0 && sourceRows.every((row) => Boolean(row.attributedAvailable));
-  item.attributedOrders = item.attributedAvailable
-    ? sourceRows.reduce((sum, row) => sum + parseMetric(row.attributedOrders), 0)
-    : null;
-  item.attributedRevenue = item.attributedAvailable
-    ? sourceRows.reduce((sum, row) => sum + parseMetric(row.attributedRevenue), 0)
-    : null;
-
-  ATTRIBUTED_DERIVED_METRIC_FIELDS.forEach((field) => {
-    delete item[field];
-  });
 
   return item;
 };
@@ -411,44 +415,6 @@ const applyDerivedMetrics = (item) => {
 
   item.clicksAvailable = Boolean(item.clicksAvailable);
   item.clicks = item.clicksAvailable ? parseMetric(item.clicks) : null;
-  item.attributedAvailable = Boolean(item.attributedAvailable);
-
-  if (item.attributedAvailable) {
-    const attributedOrders = parseMetric(item.attributedOrders);
-    const attributedRevenue = parseMetric(item.attributedRevenue);
-
-    item.attributedOrders = attributedOrders;
-    item.attributedRevenue = attributedRevenue;
-    item.attributedConversion = hasMetricValue(item, "attributedConversion")
-      ? parseMetric(item.attributedConversion)
-      : visits > 0
-        ? (attributedOrders / visits) * 100
-        : 0;
-    item.attributedCostPerOrder = hasMetricValue(item, "attributedCostPerOrder")
-      ? parseMetric(item.attributedCostPerOrder)
-      : attributedOrders > 0
-        ? cost / attributedOrders
-        : 0;
-    item.attributedAverageCheck = hasMetricValue(item, "attributedAverageCheck")
-      ? parseMetric(item.attributedAverageCheck)
-      : attributedOrders > 0
-        ? attributedRevenue / attributedOrders
-        : 0;
-    item.attributedRoi = hasMetricValue(item, "attributedRoi")
-      ? parseMetric(item.attributedRoi)
-      : calculateRoi(attributedRevenue, cost);
-    item.attributedDrr = hasMetricValue(item, "attributedDrr")
-      ? parseMetric(item.attributedDrr)
-      : attributedRevenue > 0
-        ? (cost / attributedRevenue) * 100
-        : 0;
-  } else {
-    item.attributedOrders = null;
-    item.attributedRevenue = null;
-    ATTRIBUTED_DERIVED_METRIC_FIELDS.forEach((field) => {
-      item[field] = null;
-    });
-  }
 
   return item;
 };
@@ -468,6 +434,31 @@ const aggregateTotalRow = (item, rows) => {
   applyOptionalAggregates(item, rows);
   applyDerivedMetrics(item);
   return applyAggregatedRoi(item, rows);
+};
+
+const applyServerTotals = (item, totals) => {
+  if (!totals || typeof totals !== "object" || Array.isArray(totals)) {
+    return item;
+  }
+
+  ADDITIVE_METRIC_FIELDS.forEach((field) => {
+    if (hasMetricValue(totals, field)) {
+      item[field] = parseMetric(totals[field]);
+    }
+  });
+  DERIVED_METRIC_FIELDS.forEach((field) => {
+    if (hasMetricValue(totals, field)) {
+      item[field] = parseMetric(totals[field]);
+    }
+  });
+
+  item.uniqueClients = parseMetric(totals.uniqueClients);
+  item.clicksAvailable = Boolean(totals.clicksAvailable);
+  item.clicks = item.clicksAvailable ? parseMetric(totals.clicks) : null;
+  item.roiRevenue = parseMetric(item.revenue);
+  item.roiCost = parseMetric(item.cost);
+
+  return applyDerivedMetrics(item);
 };
 
 const applyTotalMetricsFromRows = (item, rows) => {
@@ -525,10 +516,7 @@ function EndPage() {
   const standardForm = {
     points: [],
     dateStart: dayjs(new Date()).subtract(1, "day").format("YYYY-MM-DD"),
-    dateEnd: dayjs(new Date()).format("YYYY-MM-DD"),
-    comparisonMode: { id: "previous_period", name: "Предыдущий равный период" },
-    comparisonDateStart: dayjs(new Date()).subtract(2, "day").format("YYYY-MM-DD"),
-    comparisonDateEnd: dayjs(new Date()).subtract(2, "day").format("YYYY-MM-DD"),
+    dateEnd: dayjs(new Date()).subtract(1, "day").format("YYYY-MM-DD"),
     cities: {},
     src_source: "",
     src_medium: "",
@@ -557,11 +545,29 @@ function EndPage() {
   const [errText, setErrText] = useState("");
   const [customCostDialogOpen, setCustomCostDialogOpen] = useState(false);
   const [customCosts, setCustomCosts] = useState([]);
+  const [customCostOptions, setCustomCostOptions] = useState(EMPTY_CUSTOM_COST_OPTIONS);
   const [customCostForm, setCustomCostForm] = useState(createEmptyCustomCostForm);
   const [columnsDialogOpen, setColumnsDialogOpen] = useState(false);
   const [visibleColumns, setVisibleColumns] = useState(DEFAULT_END_ANALYTICS_VISIBLE_COLUMNS);
   const [activeTab, setActiveTab] = useState(false);
-  const [aiSource, setAiSource] = useState(null);
+  const [aiSources, setAiSources] = useState([]);
+  const [aiSourceOptions, setAiSourceOptions] = useState(AI_ANALYST_SOURCES);
+  const [aiComparison, setAiComparison] = useState(DEFAULT_AI_COMPARISON);
+  const [siteDataHistoryTotal, setSiteDataHistoryTotal] = useState(0);
+  const [attributionLoading, setAttributionLoading] = useState(false);
+  const attributionRequestRef = useRef(null);
+  const [aiDevices, setAiDevices] = useState(null);
+  const [devicesLoading, setDevicesLoading] = useState(false);
+  const [aiAdInsights, setAiAdInsights] = useState(null);
+  const [adInsightsLoading, setAdInsightsLoading] = useState(false);
+  const [aiModels, setAiModels] = useState([
+    { id: "auto", name: "Автоматически", description: "Модель выбирается сервером" },
+  ]);
+  const [aiModel, setAiModel] = useState({
+    id: "auto",
+    name: "Автоматически",
+    description: "Модель выбирается сервером",
+  });
   const [aiAnalysis, setAiAnalysis] = useState(null);
   const [siteDataRequestId, setSiteDataRequestId] = useState(null);
   const [dailyMetrics, setDailyMetrics] = useState([]);
@@ -570,10 +576,14 @@ function EndPage() {
   const [historyChatMessages, setHistoryChatMessages] = useState(null);
   const [aiChatThreads, setAiChatThreads] = useState([]);
   const [activeChatThreadId, setActiveChatThreadId] = useState(null);
+  const activeChatThreadIdRef = useRef(null);
+  const chatPollInFlightRef = useRef(false);
   const [aiSiteDataSnapshot, setAiSiteDataSnapshot] = useState(null);
   const accessApi = handleUserAccess(access || {});
   const canViewAnalytics = access !== null && accessApi.userCan("access", "analytics");
   const canViewAiAnalyst = access !== null && accessApi.userCan("access", "ai_analyst");
+  const canViewMarketing = access !== null && accessApi.userCan("access", "marketing");
+  const canExportReport = access !== null && accessApi.userCan("access", "export");
 
   useEffect(() => {
     getData("get_all").then((data) => {
@@ -588,17 +598,31 @@ function EndPage() {
           ? 0
           : nextAccessApi.userCan("access", "ai_analyst")
             ? 1
-            : false,
+            : nextAccessApi.userCan("access", "marketing")
+              ? 2
+              : false,
       );
       setCities(data.cities);
+      const availableModels = Array.isArray(data.ai_models) ? data.ai_models : [];
+      if (availableModels.length) {
+        setAiModels(availableModels);
+        setAiModel(
+          availableModels.find((item) => item.id === data.default_ai_model) || availableModels[0],
+        );
+      }
       setSiteDataHistory(data.site_data_history || []);
+      setSiteDataHistoryTotal(Number(data.site_data_history_total) || 0);
+      if (Array.isArray(data.ai_sources) && data.ai_sources.length) {
+        setAiSourceOptions(data.ai_sources);
+      }
       const initialThreads = Array.isArray(data.ai_chat_threads) ? data.ai_chat_threads : [];
       if (initialThreads.length) {
-        applyChatThreads(initialThreads);
-        const initialThread =
-          initialThreads.find((thread) => thread.is_pinned) || initialThreads[0] || null;
+        const savedThreadId =
+          typeof window !== "undefined"
+            ? Number(window.localStorage.getItem(END_ANALYTICS_ACTIVE_CHAT_STORAGE_KEY)) || null
+            : null;
+        const initialThread = applyChatThreads(initialThreads, savedThreadId);
         if (initialThread) {
-          setActiveChatThreadId(initialThread.id);
           loadChatThreadMessages(initialThread.id);
         }
       }
@@ -709,33 +733,157 @@ function EndPage() {
     }
   };
 
-  const applyRequest = () => {
+  const applyRequest = async () => {
+    if (isLoad) return;
+
     console.log("Фильтры:", form);
-    getData("get_data", {
-      ...form,
-      dateStart: dayjs(form.dateStart).format("YYYY-MM-DD"),
-      dateEnd: dayjs(form.dateEnd).format("YYYY-MM-DD"),
-    }).then((data) => {
-      if (data.st) {
+    setTableData([]);
+    setAnalyticsMeta(null);
+
+    try {
+      const data = await getData("get_data", {
+        ...form,
+        dateStart: dayjs(form.dateStart).format("YYYY-MM-DD"),
+        dateEnd: dayjs(form.dateEnd).format("YYYY-MM-DD"),
+      });
+      if (data?.st) {
         const formattedData = formatApiData(data);
         setTableData(formattedData);
         setAnalyticsMeta(data.analytics_meta || null);
         setLastUpdate(dayjs().format("HH:mm"));
       } else {
-        if (!data.st) {
-          setErrStatus(data.st);
-          setErrText(data.text);
-          setOpenAlert(true);
-        }
+        showError(data?.text || "Не удалось загрузить аналитику");
       }
-    });
+    } catch (_) {
+      showError("Не удалось загрузить аналитику");
+    }
   };
 
   const refreshSiteDataHistory = async () => {
     const data = await getData("get_all");
     if (data?.module_info) {
       setSiteDataHistory(data.site_data_history || []);
+      setSiteDataHistoryTotal(Number(data.site_data_history_total) || 0);
     }
+  };
+
+  // Атрибуция считается по журналу визитов несколько секунд, поэтому догружается после отчёта.
+  const loadAttribution = async (requestId, analysis) => {
+    if (!requestId || !analysis || analysis.attribution) {
+      attributionRequestRef.current = null;
+      setAttributionLoading(false);
+      return;
+    }
+
+    attributionRequestRef.current = requestId;
+    setAttributionLoading(true);
+    try {
+      const result = await api_laravel("end_analytics", "get_attribution", {
+        site_data_request_id: requestId,
+      });
+      const data = result?.data && typeof result.data === "object" ? result.data : result;
+      if (attributionRequestRef.current !== requestId) return;
+      if (data?.st && data.attribution) {
+        setAiAnalysis((current) =>
+          current ? { ...current, attribution: data.attribution } : current,
+        );
+        setAiSiteDataSnapshot((current) =>
+          current?.ai_analysis
+            ? { ...current, ai_analysis: { ...current.ai_analysis, attribution: data.attribution } }
+            : current,
+        );
+      }
+    } catch (_) {
+      // Блок атрибуции необязателен: отчёт остаётся доступным без него.
+    } finally {
+      if (attributionRequestRef.current === requestId) {
+        setAttributionLoading(false);
+      }
+    }
+  };
+
+  const loadAdInsights = async () => {
+    const requestId = siteDataRequestId;
+    if (!requestId || adInsightsLoading) return;
+
+    setAdInsightsLoading(true);
+    try {
+      const result = await api_laravel("end_analytics", "get_ad_insights", {
+        site_data_request_id: requestId,
+      });
+      const data = result?.data && typeof result.data === "object" ? result.data : result;
+      if (data?.st && Array.isArray(data.sections)) {
+        setAiAdInsights({ requestId, data: { sections: data.sections } });
+      } else {
+        showError(data?.text || "Не удалось собрать детали рекламы");
+      }
+    } catch (_) {
+      showError("Не удалось собрать детали рекламы");
+    } finally {
+      setAdInsightsLoading(false);
+    }
+  };
+
+  const loadDevices = async () => {
+    const requestId = siteDataRequestId;
+    if (!requestId || devicesLoading) return;
+
+    setDevicesLoading(true);
+    try {
+      const result = await api_laravel("end_analytics", "get_devices", {
+        site_data_request_id: requestId,
+      });
+      const data = result?.data && typeof result.data === "object" ? result.data : result;
+      if (data?.st && data.devices) {
+        setAiDevices({ requestId, data: { ...data.devices, tables: data.tables || [] } });
+      } else {
+        showError(data?.text || "Не удалось посчитать устройства");
+      }
+    } catch (_) {
+      showError("Не удалось посчитать устройства");
+    } finally {
+      setDevicesLoading(false);
+    }
+  };
+
+  const clearAiReport = () => {
+    attributionRequestRef.current = null;
+    setAttributionLoading(false);
+    setAiAnalysis(null);
+    setSiteDataRequestId(null);
+    setDailyMetrics([]);
+    setTrafficSourceMetrics([]);
+    setAiSiteDataSnapshot(null);
+  };
+
+  const deleteSiteDataHistory = async (ids) => {
+    const data = await getData("delete_site_data_history", { ids });
+    if (data?.st === false || !data) {
+      showError(data?.text || "Не удалось удалить отчёт");
+      return;
+    }
+
+    setSiteDataHistory(data.site_data_history || []);
+    setSiteDataHistoryTotal(Number(data.total) || 0);
+    if (ids.some((id) => Number(id) === Number(siteDataRequestId))) {
+      clearAiReport();
+    }
+  };
+
+  const loadMoreSiteDataHistory = async () => {
+    const data = await getData("get_site_data_history_list", {
+      limit: 50,
+      offset: siteDataHistory.length,
+    });
+    if (data?.st === false || !data) {
+      showError(data?.text || "Не удалось загрузить историю");
+      return;
+    }
+
+    const known = new Set(siteDataHistory.map((item) => Number(item.id)));
+    const next = (data.site_data_history || []).filter((item) => !known.has(Number(item.id)));
+    setSiteDataHistory((current) => [...current, ...next]);
+    setSiteDataHistoryTotal(Number(data.total) || 0);
   };
 
   const mapAiChatToMessages = (aiChat) => {
@@ -743,6 +891,11 @@ function EndPage() {
 
     return aiChat.flatMap((item) => {
       const messages = [];
+      const processingStartedAt = item?.updated_at || item?.created_at;
+      const processingTimedOut =
+        item?.status === "processing" &&
+        processingStartedAt &&
+        dayjs().diff(dayjs(processingStartedAt), "minute") >= 10;
       if (item?.prompt) {
         messages.push({
           id: `${item.id || "message"}-user`,
@@ -754,22 +907,60 @@ function EndPage() {
       if (item?.answer) {
         messages.push({
           id: `${item.id || "message"}-assistant`,
+          messageId: item.id || null,
+          question: item.prompt || "",
           role: "assistant",
           text: item.answer,
           dataRefs: item.context_meta?.data_refs || [],
           limitations: item.context_meta?.limitations || [],
+          aiModelName: item.context_meta?.ai_model_name || null,
+          tables: item.context_meta?.tables || [],
+          suggestions: item.context_meta?.suggestions || [],
+          feedback: item.context_meta?.feedback || null,
         });
       } else if (item?.status === "error") {
         messages.push({
           id: `${item.id || "message"}-error`,
           role: "assistant",
-          text: "Не удалось получить ответ AI. Предыдущая история чата сохранена.",
+          text:
+            item.error_text || "Не удалось получить ответ AI. Предыдущая история чата сохранена.",
+          isError: true,
+          dataRefs: item.context_meta?.data_refs || [],
+        });
+      } else if (item?.status === "processing" && !processingTimedOut) {
+        messages.push({
+          id: `${item.id || "message"}-processing`,
+          role: "assistant",
+          text: "AI анализирует данные. Можно перейти в другую вкладку — ответ появится здесь после завершения.",
+          isPending: true,
+          stage: item.context_meta?.stage || null,
+          dataRefs: item.context_meta?.data_refs || [],
+          aiModelName: item.context_meta?.ai_model_name || null,
+        });
+      } else if (processingTimedOut) {
+        messages.push({
+          id: `${item.id || "message"}-error`,
+          role: "assistant",
+          text: "Запрос не завершился. Повторите его ещё раз.",
           isError: true,
           dataRefs: item.context_meta?.data_refs || [],
         });
       }
       return messages;
     });
+  };
+
+  const rememberActiveChatThread = (threadId) => {
+    const nextThreadId = threadId ? Number(threadId) : null;
+    activeChatThreadIdRef.current = nextThreadId;
+    setActiveChatThreadId(nextThreadId);
+
+    if (typeof window === "undefined") return;
+    if (nextThreadId) {
+      window.localStorage.setItem(END_ANALYTICS_ACTIVE_CHAT_STORAGE_KEY, String(nextThreadId));
+    } else {
+      window.localStorage.removeItem(END_ANALYTICS_ACTIVE_CHAT_STORAGE_KEY);
+    }
   };
 
   const restoreChatThreads = (threads, legacyChat) => {
@@ -810,10 +1001,11 @@ function EndPage() {
       null;
 
     setAiChatThreads(nextThreads);
-    setActiveChatThreadId(selected?.id ?? null);
+    rememberActiveChatThread(selected?.id ?? null);
     if (Array.isArray(selected?.messages)) {
       setHistoryChatMessages(mapAiChatToMessages(selected.messages));
     }
+    return selected;
   };
 
   const loadChatThreadMessages = async (threadId) => {
@@ -833,13 +1025,77 @@ function EndPage() {
         Number(thread.id) === Number(threadId) ? { ...thread, messages } : thread,
       ),
     );
-    setHistoryChatMessages(mapAiChatToMessages(messages));
+    if (Number(activeChatThreadIdRef.current) === Number(threadId)) {
+      setHistoryChatMessages(mapAiChatToMessages(messages));
+    }
     return messages;
+  };
+
+  // Опрос во время ответа: запрашиваем только сообщения новее уже загруженных.
+  const pollChatThreadMessages = async (threadId) => {
+    const known = aiChatThreads.find((thread) => Number(thread.id) === Number(threadId))?.messages;
+    const settled = (Array.isArray(known) ? known : []).filter(
+      (message) => message?.id && message.status !== "processing",
+    );
+    const afterId = settled.reduce((max, message) => Math.max(max, Number(message.id) || 0), 0);
+    if (!afterId) {
+      return loadChatThreadMessages(threadId);
+    }
+
+    const result = await api_laravel("end_analytics", "get_ai_chat_thread_messages", {
+      thread_id: threadId,
+      after_id: afterId,
+    });
+    const data = result?.data && typeof result.data === "object" ? result.data : result || {};
+    if (data?.st === false || !data?.partial) {
+      return loadChatThreadMessages(threadId);
+    }
+    const fresh = Array.isArray(data.messages) ? data.messages : data.items || [];
+    const messages = [...settled, ...fresh];
+    setAiChatThreads((current) =>
+      current.map((thread) =>
+        Number(thread.id) === Number(threadId) ? { ...thread, messages } : thread,
+      ),
+    );
+    if (Number(activeChatThreadIdRef.current) === Number(threadId)) {
+      setHistoryChatMessages(mapAiChatToMessages(messages));
+    }
+    return messages;
+  };
+
+  const rateAiChatMessage = async (messageId, rating) => {
+    const result = await api_laravel("end_analytics", "rate_ai_chat_message", {
+      chat_message_id: messageId,
+      rating,
+    });
+    const data = result?.data && typeof result.data === "object" ? result.data : result || {};
+    if (data?.st === false) {
+      showError(data?.text || "Не удалось сохранить оценку");
+      return;
+    }
+    const feedback = Number(data?.feedback?.rating) ? data.feedback : null;
+    setAiChatThreads((current) =>
+      current.map((thread) => ({
+        ...thread,
+        messages: Array.isArray(thread.messages)
+          ? thread.messages.map((message) =>
+              Number(message.id) === Number(messageId)
+                ? { ...message, context_meta: { ...(message.context_meta || {}), feedback } }
+                : message,
+            )
+          : thread.messages,
+      })),
+    );
+    setHistoryChatMessages((current) =>
+      (Array.isArray(current) ? current : []).map((message) =>
+        Number(message.messageId) === Number(messageId) ? { ...message, feedback } : message,
+      ),
+    );
   };
 
   const selectChatThread = async (threadId) => {
     const selected = aiChatThreads.find((thread) => Number(thread.id) === Number(threadId));
-    setActiveChatThreadId(selected?.id ?? null);
+    rememberActiveChatThread(selected?.id ?? null);
     if (!selected) {
       setHistoryChatMessages([]);
       return;
@@ -851,20 +1107,52 @@ function EndPage() {
     }
   };
 
+  useEffect(() => {
+    const hasPendingMessage = Array.isArray(historyChatMessages)
+      ? historyChatMessages.some((message) => message?.isPending)
+      : false;
+    if (!activeChatThreadId || !hasPendingMessage) return undefined;
+
+    const timer = window.setTimeout(async () => {
+      if (chatPollInFlightRef.current) return;
+      chatPollInFlightRef.current = true;
+      try {
+        await pollChatThreadMessages(activeChatThreadId);
+      } finally {
+        chatPollInFlightRef.current = false;
+      }
+    }, 3000);
+
+    return () => window.clearTimeout(timer);
+  }, [activeChatThreadId, historyChatMessages]);
+
   const applyAiRequest = () => {
+    if (aiComparison.mode === "custom" && (!aiComparison.dateStart || !aiComparison.dateEnd)) {
+      showError("Укажите обе даты периода сравнения");
+      return;
+    }
+
     setAiAnalysis(null);
     setSiteDataRequestId(null);
     setDailyMetrics([]);
     setTrafficSourceMetrics([]);
     setAiSiteDataSnapshot(null);
 
+    const sourceNames = aiSources.map((item) => item?.name).filter(Boolean);
+    const isCustomComparison = aiComparison.mode === "custom";
+
     getData("get_site_data", {
       ...form,
-      comparisonMode: form.comparisonMode?.id || "previous_period",
-      comparisonDateStart: dayjs(form.comparisonDateStart).format("YYYY-MM-DD"),
-      comparisonDateEnd: dayjs(form.comparisonDateEnd).format("YYYY-MM-DD"),
+      comparisonMode: aiComparison.mode,
+      comparisonDateStart: isCustomComparison
+        ? dayjs(aiComparison.dateStart).format("YYYY-MM-DD")
+        : null,
+      comparisonDateEnd: isCustomComparison
+        ? dayjs(aiComparison.dateEnd).format("YYYY-MM-DD")
+        : null,
       typeOrder: [{ id: 2, name: "Сайт" }],
-      src_source: aiSource?.name || "",
+      src_source: sourceNames.length === 1 ? sourceNames[0] : "",
+      src_sources: sourceNames,
       dateStart: dayjs(form.dateStart).format("YYYY-MM-DD"),
       dateEnd: dayjs(form.dateEnd).format("YYYY-MM-DD"),
     }).then(async (data) => {
@@ -879,6 +1167,7 @@ function EndPage() {
         }
         setAiSiteDataSnapshot(snapshot);
         setLastUpdate(dayjs().format("HH:mm"));
+        loadAttribution(snapshot.site_data_request_id, snapshot.ai_analysis);
         await refreshSiteDataHistory();
       } else {
         setAiAnalysis(null);
@@ -912,18 +1201,27 @@ function EndPage() {
 
       if (snapshot.request_payload) {
         const requestPayload = snapshot.request_payload;
-        const comparisonModeId = requestPayload.comparisonMode || "previous_period";
         setForm((current) => ({
           ...current,
           ...requestPayload,
-          comparisonMode: {
-            id: comparisonModeId,
-            name: COMPARISON_MODE_NAMES[comparisonModeId] || COMPARISON_MODE_NAMES.previous_period,
-          },
         }));
-        setAiSource(
-          AI_ANALYST_SOURCES.find((item) => item.name === requestPayload.src_source) || null,
+        const savedSources =
+          Array.isArray(requestPayload.src_sources) && requestPayload.src_sources.length
+            ? requestPayload.src_sources
+            : requestPayload.src_source
+              ? [requestPayload.src_source]
+              : [];
+        setAiSources(
+          savedSources.map(
+            (name) =>
+              aiSourceOptions.find((item) => item.name === name) || { id: `saved_${name}`, name },
+          ),
         );
+        setAiComparison({
+          mode: requestPayload.comparisonMode || DEFAULT_AI_COMPARISON.mode,
+          dateStart: requestPayload.comparisonDateStart || null,
+          dateEnd: requestPayload.comparisonDateEnd || null,
+        });
       }
 
       setAiAnalysis(snapshot.ai_analysis || null);
@@ -934,6 +1232,7 @@ function EndPage() {
         applyChatThreads(restoreChatThreads(snapshot.ai_chat_threads, snapshot.ai_chat));
       }
       setAiSiteDataSnapshot(snapshot);
+      loadAttribution(snapshot.site_data_request_id ?? requestId, snapshot.ai_analysis);
       if (snapshot.analytics_meta) {
         setAnalyticsMeta(snapshot.analytics_meta);
       }
@@ -991,6 +1290,11 @@ function EndPage() {
   };
 
   const exportAiReport = async (fileType) => {
+    if (!canExportReport) {
+      showError("Недостаточно прав для экспорта");
+      return;
+    }
+
     if (!aiSiteDataSnapshot) {
       showError("Сначала получите или откройте отчёт AI-анализа");
       return;
@@ -1046,11 +1350,42 @@ function EndPage() {
     }
   };
 
-  const sendAiChat = async (prompt) => {
+  const sendAiChat = async (prompt, options = {}) => {
     const idempotencyKey =
       typeof window !== "undefined" && window.crypto?.randomUUID
         ? window.crypto.randomUUID().replaceAll("-", "")
         : `${Date.now()}_${Math.random().toString(36).slice(2, 14)}`;
+    const requestThreadId = activeChatThreadIdRef.current || activeChatThreadId;
+    const optimisticUserId = `${idempotencyKey}-user`;
+    const optimisticAssistantId = `${idempotencyKey}-processing`;
+    setHistoryChatMessages((current) => [
+      ...(Array.isArray(current) ? current : []),
+      { id: optimisticUserId, role: "user", text: prompt },
+      {
+        id: optimisticAssistantId,
+        role: "assistant",
+        text: "AI анализирует данные. Можно перейти в другую вкладку — ответ появится здесь после завершения.",
+        isPending: true,
+        aiModelName: aiModel?.name || null,
+      },
+    ]);
+
+    const settleOptimisticMessage = (text, options = {}) => {
+      setHistoryChatMessages((current) =>
+        (Array.isArray(current) ? current : []).map((message) =>
+          message.id === optimisticAssistantId
+            ? {
+                ...message,
+                text,
+                isPending: false,
+                isError: Boolean(options.isError),
+                aiModelName: options.aiModelName || message.aiModelName || null,
+              }
+            : message,
+        ),
+      );
+    };
+
     try {
       const result = await api_laravel(
         "end_analytics",
@@ -1058,17 +1393,25 @@ function EndPage() {
         {
           prompt,
           site_data_request_id: siteDataRequestId,
-          thread_id: activeChatThreadId,
+          thread_id: requestThreadId,
           idempotency_key: idempotencyKey,
+          ai_model: options.modelId || aiModel?.id || "auto",
         },
         { throwErrors: true },
       );
       const data = result?.data && typeof result.data === "object" ? result.data : result || {};
       const chatSynced = Array.isArray(data.ai_chat_threads);
+      const responseThreadId = data.thread_id || requestThreadId;
 
       if (chatSynced) {
-        applyChatThreads(data.ai_chat_threads, data.thread_id || activeChatThreadId);
-        await loadChatThreadMessages(data.thread_id || activeChatThreadId);
+        applyChatThreads(data.ai_chat_threads, activeChatThreadIdRef.current || responseThreadId);
+        await loadChatThreadMessages(responseThreadId);
+      } else if (data.st !== false) {
+        settleOptimisticMessage(data.answer || "Пустой ответ AI", {
+          aiModelName: data.ai_model_name,
+        });
+      } else {
+        settleOptimisticMessage(data.text || "Не удалось получить ответ AI", { isError: true });
       }
 
       if (data.st !== false) {
@@ -1080,22 +1423,29 @@ function EndPage() {
 
       return {
         ...data,
-        chat_synced: chatSynced,
+        chat_synced: true,
       };
     } catch (error) {
       const response = error?.response?.data;
       const data = response?.data && typeof response.data === "object" ? response.data : response;
       const chatSynced = Array.isArray(data?.ai_chat_threads);
+      const responseThreadId = data?.thread_id || requestThreadId;
 
       if (chatSynced) {
-        applyChatThreads(data.ai_chat_threads, data.thread_id || activeChatThreadId);
-        await loadChatThreadMessages(data.thread_id || activeChatThreadId);
+        applyChatThreads(data.ai_chat_threads, activeChatThreadIdRef.current || responseThreadId);
+        await loadChatThreadMessages(responseThreadId);
+      } else {
+        settleOptimisticMessage(data?.text || "Ошибка при обращении к AI-чату", {
+          isError: true,
+        });
       }
 
       return {
         st: false,
         text: data?.text || "Ошибка при обращении к AI-чату",
-        chat_synced: chatSynced,
+        code: data?.code || null,
+        retry_after_seconds: data?.retry_after_seconds || null,
+        chat_synced: true,
       };
     }
   };
@@ -1153,16 +1503,10 @@ function EndPage() {
       cities: {},
       dateStart: standardForm.dateStart,
       dateEnd: standardForm.dateEnd,
-      comparisonMode: standardForm.comparisonMode,
-      comparisonDateStart: standardForm.comparisonDateStart,
-      comparisonDateEnd: standardForm.comparisonDateEnd,
     }));
-    setAiSource(null);
-    setAiAnalysis(null);
-    setSiteDataRequestId(null);
-    setDailyMetrics([]);
-    setTrafficSourceMetrics([]);
-    setAiSiteDataSnapshot(null);
+    setAiSources([]);
+    setAiComparison(DEFAULT_AI_COMPARISON);
+    clearAiReport();
   };
 
   const refreshData = () => {
@@ -1171,6 +1515,12 @@ function EndPage() {
 
   const showError = (text) => {
     setErrStatus(false);
+    setErrText(text);
+    setOpenAlert(true);
+  };
+
+  const showNotice = (text) => {
+    setErrStatus(true);
     setErrText(text);
     setOpenAlert(true);
   };
@@ -1191,6 +1541,10 @@ function EndPage() {
 
     if (data?.st) {
       setCustomCosts(data.items || []);
+      setCustomCostOptions({
+        ...EMPTY_CUSTOM_COST_OPTIONS,
+        ...(data.options || {}),
+      });
     } else {
       showError(data?.text || "Не удалось загрузить ручные расходы");
     }
@@ -1662,6 +2016,7 @@ function EndPage() {
         );
 
         applyTotalMetricsFromRows(siteTotal, siteSourceRows);
+        applyServerTotals(siteTotal, apiData.site_totals);
 
         result.push(siteTotal);
       }
@@ -1702,18 +2057,21 @@ function EndPage() {
     }
 
     if (result.length > 0) {
-      return [
-        aggregateTotalRow(
-          {
-            id: `total_grand`,
-            name: "ВСЕГО",
-            isTotal: true,
-            isGrandTotal: true,
-            sourceType: "grand",
-          },
-          result,
-        ),
-      ];
+      const grandTotal = aggregateTotalRow(
+        {
+          id: `total_grand`,
+          name: "ВСЕГО",
+          isTotal: true,
+          isGrandTotal: true,
+          sourceType: "grand",
+        },
+        result,
+      );
+      if (result.length === 1 && result[0].sourceType === "site") {
+        applyServerTotals(grandTotal, apiData.site_totals);
+      }
+
+      return [grandTotal];
     }
 
     return result;
@@ -1957,27 +2315,6 @@ function EndPage() {
   const formatOptionalNumber = (value, available) =>
     available && value !== null && value !== undefined ? formatNumber(value) : "н/д";
 
-  const formatOptionalCurrency = (value, available) =>
-    available && value !== null && value !== undefined ? formatCurrency(value) : "н/д";
-
-  const formatOptionalPercent = (value, available) =>
-    available && value !== null && value !== undefined ? formatPercent(value) : "н/д";
-
-  const getAttributionModelLabel = (model) => {
-    const labels = {
-      cross_device_last_significant: "последний значимый клик, cross-device",
-      legacy: "legacy",
-    };
-
-    return labels[model] || model || "не указана";
-  };
-
-  const formatIssuePeriod = (issue) => {
-    const start = dayjs(issue.date_start).format("DD.MM.YYYY");
-    const end = dayjs(issue.date_end).format("DD.MM.YYYY");
-    return start === end ? start : `${start}–${end}`;
-  };
-
   const renderMetricValue = (key, row, isTotalRow) => {
     switch (key) {
       case "visits":
@@ -1996,8 +2333,10 @@ function EndPage() {
           <Typography
             variant="body2"
             color={row.conversion > 5 ? "success.main" : "inherit"}
-            fontWeight={isTotalRow ? 700 : 400}
-            sx={{ whiteSpace: "nowrap" }}
+            sx={{
+              fontWeight: isTotalRow ? 700 : 400,
+              whiteSpace: "nowrap",
+            }}
           >
             {formatPercent(row.conversion)}
           </Typography>
@@ -2011,22 +2350,14 @@ function EndPage() {
           <Typography
             variant="body2"
             color={row.roi > 100 ? "success.main" : row.roi < 0 ? "error.main" : "inherit"}
-            fontWeight={isTotalRow ? 700 : 400}
-            sx={{ whiteSpace: "nowrap" }}
+            sx={{
+              fontWeight: isTotalRow ? 700 : 400,
+              whiteSpace: "nowrap",
+            }}
           >
             {formatPercent(row.roi)}
           </Typography>
         );
-      case "attributedOrders":
-        return formatOptionalNumber(row.attributedOrders, row.attributedAvailable);
-      case "attributedConversion":
-      case "attributedRoi":
-      case "attributedDrr":
-        return formatOptionalPercent(row[key], row.attributedAvailable);
-      case "attributedCostPerOrder":
-      case "attributedRevenue":
-      case "attributedAverageCheck":
-        return formatOptionalCurrency(row[key], row.attributedAvailable);
       case "drr":
         return formatPercent(row.drr);
       default:
@@ -2093,9 +2424,12 @@ function EndPage() {
               <Box>
                 <Typography
                   variant="body2"
-                  fontWeight={isTotalRow ? 700 : 500}
                   color={isGrandTotal ? PRIMARY_COLOR : "inherit"}
-                  sx={{ whiteSpace: "normal", wordBreak: "break-word" }}
+                  sx={{
+                    fontWeight: isTotalRow ? 700 : 500,
+                    whiteSpace: "normal",
+                    wordBreak: "break-word",
+                  }}
                 >
                   {row.level && getLevelIcon(row.level)}
                   {row.name}
@@ -2106,8 +2440,10 @@ function EndPage() {
                   row.level !== "src_platform" && (
                     <Typography
                       variant="caption"
-                      color="text.secondary"
-                      sx={{ fontStyle: "italic" }}
+                      sx={{
+                        color: "text.secondary",
+                        fontStyle: "italic",
+                      }}
                     >
                       ({row.level.replace("src_", "")})
                     </Typography>
@@ -2178,10 +2514,14 @@ function EndPage() {
         <DialogContent>
           <Typography
             variant="body2"
-            color="text.secondary"
-            sx={{ mb: 2 }}
+            sx={{
+              color: "text.secondary",
+              mb: 2,
+            }}
           >
-            Расход добавляется к выбранному UTM-ключу в отчёте. Пустые UTM-поля будут сохранены как
+            Можно выбрать существующее значение из списка или ввести своё. Для поискового Яндекса
+            укажите Source: yandex и Medium: organic, остальные UTM-поля оставьте пустыми. Яндекс
+            Директ с Medium: cpc останется отдельным источником. Пустые поля сохраняются как
             not_set.
           </Typography>
 
@@ -2209,38 +2549,43 @@ function EndPage() {
               />
             </Grid>
             <Grid size={{ xs: 12, sm: 3 }}>
-              <MyTextInput
+              <UtmFreeSoloAutocomplete
                 label="UTM Source"
                 value={customCostForm.src_source}
-                func={({ target }) => setCustomCostField("src_source", target?.value)}
+                options={customCostOptions.src_source}
+                onChange={(value) => setCustomCostField("src_source", value)}
               />
             </Grid>
             <Grid size={{ xs: 12, sm: 3 }}>
-              <MyTextInput
+              <UtmFreeSoloAutocomplete
                 label="UTM Medium"
                 value={customCostForm.src_medium}
-                func={({ target }) => setCustomCostField("src_medium", target?.value)}
+                options={customCostOptions.src_medium}
+                onChange={(value) => setCustomCostField("src_medium", value)}
               />
             </Grid>
             <Grid size={{ xs: 12, sm: 3 }}>
-              <MyTextInput
+              <UtmFreeSoloAutocomplete
                 label="UTM Campaign"
                 value={customCostForm.src_campaign}
-                func={({ target }) => setCustomCostField("src_campaign", target?.value)}
+                options={customCostOptions.src_campaign}
+                onChange={(value) => setCustomCostField("src_campaign", value)}
               />
             </Grid>
             <Grid size={{ xs: 12, sm: 3 }}>
-              <MyTextInput
+              <UtmFreeSoloAutocomplete
                 label="UTM Term"
                 value={customCostForm.src_term}
-                func={({ target }) => setCustomCostField("src_term", target?.value)}
+                options={customCostOptions.src_term}
+                onChange={(value) => setCustomCostField("src_term", value)}
               />
             </Grid>
             <Grid size={{ xs: 12, sm: 3 }}>
-              <MyTextInput
+              <UtmFreeSoloAutocomplete
                 label="UTM Content"
                 value={customCostForm.src_content}
-                func={({ target }) => setCustomCostField("src_content", target?.value)}
+                options={customCostOptions.src_content}
+                onChange={(value) => setCustomCostField("src_content", value)}
               />
             </Grid>
             <Grid size={{ xs: 12, sm: 3 }}>
@@ -2342,8 +2687,10 @@ function EndPage() {
           <Box>
             <Typography
               variant="h5"
-              fontWeight={700}
               gutterBottom
+              sx={{
+                fontWeight: 700,
+              }}
             >
               {module.name || "Сквозная аналитика"}
             </Typography>
@@ -2351,8 +2698,7 @@ function EndPage() {
           <Box sx={{ display: "flex", gap: 1 }}></Box>
         </Box>
       </Grid>
-
-      {(canViewAnalytics || canViewAiAnalyst) && (
+      {(canViewAnalytics || canViewAiAnalyst || canViewMarketing) && (
         <Grid size={{ xs: 12 }}>
           <Tabs
             value={activeTab}
@@ -2376,51 +2722,96 @@ function EndPage() {
                 label="AI аналитик"
               />
             )}
+            {canViewMarketing && (
+              <Tab
+                value={2}
+                label="Маркетинг"
+              />
+            )}
           </Tabs>
         </Grid>
       )}
-
-      {access !== null && !canViewAnalytics && !canViewAiAnalyst && (
+      {access !== null && !canViewAnalytics && !canViewAiAnalyst && !canViewMarketing && (
         <Grid size={{ xs: 12 }}>
           <Paper sx={{ p: 3 }}>
-            <Typography color="text.secondary">Нет доступа к вкладкам модуля</Typography>
+            <Typography
+              sx={{
+                color: "text.secondary",
+              }}
+            >
+              Нет доступа к вкладкам модуля
+            </Typography>
           </Paper>
         </Grid>
       )}
-
+      {activeTab === 2 && canViewMarketing && (
+        <Grid size={{ xs: 12 }}>
+          <MarketingTab
+            cities={cities}
+            onError={showError}
+          />
+        </Grid>
+      )}
       {activeTab === 1 && canViewAiAnalyst && (
         <Grid size={{ xs: 12 }}>
           <AiAnalystTab
             cities={cities}
             form={form}
-            source={aiSource}
+            sources={aiSources}
+            sourceOptions={aiSourceOptions}
+            comparison={aiComparison}
+            models={aiModels}
+            model={aiModel}
             analysis={aiAnalysis}
             dailyMetrics={dailyMetrics}
             trafficSourceMetrics={trafficSourceMetrics}
             siteDataRequestId={siteDataRequestId}
             history={siteDataHistory}
+            historyTotal={siteDataHistoryTotal}
             historyChatMessages={historyChatMessages}
             chatThreads={aiChatThreads}
             activeChatThreadId={activeChatThreadId}
             onCitiesChange={handleCitiesChange}
             onFieldChange={setField}
-            onSourceChange={setAiSource}
+            onSourcesChange={setAiSources}
+            onComparisonChange={setAiComparison}
+            onModelChange={setAiModel}
             onApply={applyAiRequest}
             onReset={resetAiFilters}
             onSendChat={sendAiChat}
+            onRateChatMessage={rateAiChatMessage}
             onSelectChatThread={selectChatThread}
             onCreateChatThread={createAiChatThread}
             onUpdateChatThread={updateAiChatThread}
             onDeleteChatThread={deleteAiChatThread}
             onSelectHistory={loadSiteDataHistoryItem}
+            onDeleteHistory={deleteSiteDataHistory}
+            onLoadMoreHistory={loadMoreSiteDataHistory}
             onExport={exportAiReport}
-            canExport={Boolean(aiSiteDataSnapshot)}
+            canExport={canExportReport}
+            canExportData={Boolean(aiSiteDataSnapshot)}
             onAnalyze={analyzeAiReport}
             canAnalyze={Boolean(aiSiteDataSnapshot)}
+            onError={showError}
+            onNotice={showNotice}
+            attributionLoading={attributionLoading}
+            devices={
+              aiDevices && Number(aiDevices.requestId) === Number(siteDataRequestId)
+                ? aiDevices.data
+                : null
+            }
+            devicesLoading={devicesLoading}
+            onLoadDevices={loadDevices}
+            adInsights={
+              aiAdInsights && Number(aiAdInsights.requestId) === Number(siteDataRequestId)
+                ? aiAdInsights.data
+                : null
+            }
+            adInsightsLoading={adInsightsLoading}
+            onLoadAdInsights={loadAdInsights}
           />
         </Grid>
       )}
-
       {activeTab === 0 && canViewAnalytics && analyticsMeta && (
         <Grid size={{ xs: 12 }}>
           <Box
@@ -2436,47 +2827,23 @@ function EndPage() {
             }}
           >
             <Typography variant="body2">
-              Модель атрибуции: {getAttributionModelLabel(analyticsMeta.attribution_model)}
-            </Typography>
-            <Typography variant="body2">
               Период данных: {analyticsMeta.effective_date_start} —{" "}
               {analyticsMeta.effective_date_end}
-            </Typography>
-            <Typography
-              variant="body2"
-              color={analyticsMeta.attributed_orders_available ? "success.main" : "warning.main"}
-            >
-              Атрибуция: {analyticsMeta.attributed_orders_available ? "доступна" : "недоступна"}
             </Typography>
             {analyticsMeta.date_was_clamped && (
               <Typography
                 variant="body2"
-                color="warning.main"
+                sx={{
+                  color: "warning.main",
+                }}
               >
                 Текущий или будущий день исключён; данные доступны по{" "}
                 {analyticsMeta.complete_through}
               </Typography>
             )}
-            {!analyticsMeta.attributed_orders_available &&
-              (analyticsMeta.attribution_issues || []).length > 0 && (
-                <Box sx={{ width: "100%" }}>
-                  {(analyticsMeta.attribution_issues || []).map((issue, index) => (
-                    <Typography
-                      key={`${issue.city_id}_${issue.code}_${issue.date_start}_${index}`}
-                      variant="caption"
-                      color="warning.main"
-                      sx={{ display: "block" }}
-                    >
-                      {issue.city_name || `Город ${issue.city_id}`}, {formatIssuePeriod(issue)}:{" "}
-                      {issue.message}
-                    </Typography>
-                  ))}
-                </Box>
-              )}
           </Box>
         </Grid>
       )}
-
       {activeTab === 0 && canViewAnalytics && (
         <>
           <Grid size={{ xs: 12 }}>
@@ -2636,8 +3003,11 @@ function EndPage() {
                 <Grid size={{ xs: 12 }}>
                   <Typography
                     variant="caption"
-                    color="text.secondary"
-                    sx={{ display: "block", mb: 1 }}
+                    sx={{
+                      color: "text.secondary",
+                      display: "block",
+                      mb: 1,
+                    }}
                   >
                     Способ заказа
                   </Typography>
@@ -2682,6 +3052,7 @@ function EndPage() {
                   <StyledButton
                     variant="primary"
                     onClick={applyRequest}
+                    disabled={isLoad}
                     startIcon={<SearchIcon />}
                   >
                     Применить
@@ -2742,7 +3113,9 @@ function EndPage() {
                         >
                           <Typography
                             variant="body1"
-                            color="text.secondary"
+                            sx={{
+                              color: "text.secondary",
+                            }}
                           >
                             Выберите фильтры и нажмите "Применить" для отображения данных
                           </Typography>

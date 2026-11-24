@@ -23,8 +23,8 @@ import Checkbox from "@mui/material/Checkbox";
 import CircularProgress from "@mui/material/CircularProgress";
 import Dropzone from "dropzone";
 import Tab from "@mui/material/Tab";
+import Tabs from "@mui/material/Tabs";
 import Box from "@mui/material/Box";
-import TabList from "@mui/lab/TabList";
 import TabContext from "@mui/lab/TabContext";
 import TabPanel from "@mui/lab/TabPanel";
 import { getAuthHeaders } from "@/src/api_new";
@@ -47,7 +47,7 @@ const blockBackground = "#F3F3F3";
 const blockBorder = "#E5E5E5";
 const textPrimary = "#3C3B3B";
 const textSecondary = "#5E5E5E";
-const apiBaseUrl = (process.env.NEXT_PUBLIC_API_URL || "https://apichef.jacochef.ru/api").replace(
+const apiBaseUrl = (process.env.NEXT_PUBLIC_API_URL || "https://apichef2.jacochef.ru/api").replace(
   /\/+$/,
   "",
 );
@@ -138,6 +138,7 @@ export class SiteItemsModalTech extends React.Component {
       is_mark: "0",
       mark_code: "",
       category_id: null,
+      category_id2: null,
       count_part: "",
       stol: "",
       weight: "",
@@ -176,6 +177,7 @@ export class SiteItemsModalTech extends React.Component {
       modalNewTag: false,
       tag_name_new: "",
       activeCompositionAutocomplete: null,
+      compositionSearchByField: {},
       compositionContentReady: false,
       err_valid: {},
     };
@@ -550,10 +552,17 @@ export class SiteItemsModalTech extends React.Component {
       },
       {
         key: "category_id",
-        label: "Категория",
+        label: "Старая категория",
         tab: "0",
         missing:
           this.getFieldAccess("category_id") && this.isEmptySelectValue(this.state.category_id),
+      },
+      {
+        key: "category_id2",
+        label: "Новая категория",
+        tab: "0",
+        missing:
+          this.getFieldAccess("category_id") && this.isEmptySelectValue(this.state.category_id2),
       },
       {
         key: "stol",
@@ -698,14 +707,33 @@ export class SiteItemsModalTech extends React.Component {
       return;
     }
 
-    this.setState({
+    this.setState((prevState) => ({
       activeCompositionAutocomplete: fieldKey,
-    });
+      compositionSearchByField: {
+        ...prevState.compositionSearchByField,
+        [fieldKey]: "",
+      },
+    }));
+  }
+
+  changeCompositionSearch(fieldKey, event, inputValue, reason) {
+    if (reason !== "input" && reason !== "clear") {
+      return;
+    }
+
+    this.setState((prevState) => ({
+      compositionSearchByField: {
+        ...prevState.compositionSearchByField,
+        [fieldKey]: inputValue,
+      },
+    }));
   }
 
   getCompositionAutocompleteOptions(fieldKey, selectedValue, options) {
     if (this.state.activeCompositionAutocomplete === fieldKey) {
-      return options || [];
+      return filterCompositionOptions(options || [], {
+        inputValue: this.state.compositionSearchByField?.[fieldKey] || "",
+      });
     }
 
     return selectedValue ? [selectedValue] : [];
@@ -851,10 +879,16 @@ export class SiteItemsModalTech extends React.Component {
       const normalizedItemsStage = this.normalizeItemsStage(this.props.items_stage);
       const normalizedItemItems = this.normalizeItemItems(this.props.item_items);
       const visibleSections = this.getVisibleSections();
+      const selectedLegacyCategory = isNewItem
+        ? null
+        : (this.props.categoryLegacy?.find(
+            (categoryItem) => parseInt(categoryItem?.id) === parseInt(this.props.item?.category_id),
+          ) ?? null);
       const selectedCategory = isNewItem
         ? null
         : (this.props.category?.find(
-            (categoryItem) => parseInt(categoryItem?.id) === parseInt(this.props.item?.category_id),
+            (categoryItem) =>
+              parseInt(categoryItem?.id) === parseInt(this.props.item?.category_id2),
           ) ?? null);
 
       this.setState(
@@ -865,7 +899,8 @@ export class SiteItemsModalTech extends React.Component {
           art: isNewItem ? "" : this.props.item?.art || "",
           is_mark: isNewItem ? "0" : String(this.props.item?.is_mark ?? 0),
           mark_code: isNewItem ? "" : this.props.item?.mark_code || "",
-          category_id: selectedCategory,
+          category_id: selectedLegacyCategory,
+          category_id2: selectedCategory,
           count_part: isNewItem
             ? ""
             : this.getEditableFieldValue(this.props.item?.count_part, true),
@@ -1432,8 +1467,9 @@ export class SiteItemsModalTech extends React.Component {
       link: this.props.item?.link,
       tags: this.state.tags_my,
       category_id: this.state.category_id?.id || "",
-      size_pizza: parseInt(this.state.category_id?.id) === 14 ? this.state.count_part : 0,
-      count_part: parseInt(this.state.category_id?.id) !== 14 ? this.state.count_part : 0,
+      category_id2: this.state.category_id2?.id || "",
+      size_pizza: parseInt(this.state.category_id2?.id) === 14 ? this.state.count_part : 0,
+      count_part: parseInt(this.state.category_id2?.id) !== 14 ? this.state.count_part : 0,
       stol: this.state.stol,
       weight: this.state.weight,
       is_price: this.state.is_price,
@@ -1567,7 +1603,7 @@ export class SiteItemsModalTech extends React.Component {
   }
 
   render() {
-    const { open, method, fullScreen, category, stages } = this.props;
+    const { open, method, fullScreen, category = [], categoryLegacy = [], stages } = this.props;
     const access = this.getNormalizedAccess();
     const visibleSections = this.getVisibleSections();
     const activeSection =
@@ -2066,6 +2102,7 @@ export class SiteItemsModalTech extends React.Component {
                       this.state.items_stage?.all,
                     )}
                     filterOptions={filterCompositionOptions}
+                    onInputChange={this.changeCompositionSearch.bind(this, autocompleteKey)}
                     value={item.type_id}
                     onFocus={this.activateCompositionAutocomplete.bind(this, autocompleteKey)}
                     func={this.changeItemData.bind(this, key, stageKey)}
@@ -2161,6 +2198,7 @@ export class SiteItemsModalTech extends React.Component {
                   this.state.item_items?.all_items,
                 )}
                 filterOptions={filterCompositionOptions}
+                onInputChange={this.changeCompositionSearch.bind(this, autocompleteKey)}
                 value={item.item_id}
                 onFocus={this.activateCompositionAutocomplete.bind(this, autocompleteKey)}
                 func={this.changeItemData.bind(this, key, "this_items")}
@@ -2585,7 +2623,8 @@ export class SiteItemsModalTech extends React.Component {
                     },
                   }}
                 >
-                  <TabList
+                  <Tabs
+                    value={this.state.activeTab}
                     onChange={this.changeTab.bind(this)}
                     variant="scrollable"
                     scrollButtons="auto"
@@ -2600,7 +2639,7 @@ export class SiteItemsModalTech extends React.Component {
                         {...a11yProps(index)}
                       />
                     ))}
-                  </TabList>
+                  </Tabs>
                 </Box>
 
                 <Paper sx={desktopNavPaperSx}>
@@ -2732,15 +2771,34 @@ export class SiteItemsModalTech extends React.Component {
                             style={hiddenIf(!access?.category_id_edit && !access?.category_id_view)}
                           >
                             <MyAutocomplite
-                              label="Категория"
+                              label="Старая категория"
                               multiple={false}
                               unifiedPopup
-                              data={category}
+                              data={categoryLegacy}
                               disabled={!access?.category_id_edit}
                               value={this.state.category_id}
                               onFocus={() => this.clearFieldError("category_id")}
                               sx={this.getErrorFieldSx("category_id")}
                               func={(event, value) => this.updateFieldValue("category_id", value)}
+                            />
+                          </Grid>
+                          <Grid
+                            size={{
+                              xs: 12,
+                              md: 3,
+                            }}
+                            style={hiddenIf(!access?.category_id_edit && !access?.category_id_view)}
+                          >
+                            <MyAutocomplite
+                              label="Новая категория"
+                              multiple={false}
+                              unifiedPopup
+                              data={category}
+                              disabled={!access?.category_id_edit}
+                              value={this.state.category_id2}
+                              onFocus={() => this.clearFieldError("category_id2")}
+                              sx={this.getErrorFieldSx("category_id2")}
+                              func={(event, value) => this.updateFieldValue("category_id2", value)}
                             />
                           </Grid>
                           <Grid
@@ -3293,6 +3351,10 @@ export class SiteItemsModalTech extends React.Component {
                                             this.state.items_stage?.all,
                                           )}
                                           filterOptions={filterCompositionOptions}
+                                          onInputChange={this.changeCompositionSearch.bind(
+                                            this,
+                                            "preparation-new",
+                                          )}
                                           disabledItemsFocusable={true}
                                           value={null}
                                           optionKey="un_id"
@@ -3398,6 +3460,10 @@ export class SiteItemsModalTech extends React.Component {
                                             this.state.item_items?.all_items,
                                           )}
                                           filterOptions={filterCompositionOptions}
+                                          onInputChange={this.changeCompositionSearch.bind(
+                                            this,
+                                            "item-new",
+                                          )}
                                           disabledItemsFocusable={true}
                                           value={null}
                                           blurOnSelect={true}
@@ -3470,9 +3536,12 @@ export class SiteItemsModalTech extends React.Component {
                     ) : (
                       <Stack
                         spacing={1.5}
-                        alignItems="center"
-                        justifyContent="center"
-                        sx={{ minHeight: 240, color: textSecondary }}
+                        sx={{
+                          alignItems: "center",
+                          justifyContent: "center",
+                          minHeight: 240,
+                          color: textSecondary,
+                        }}
                       >
                         <CircularProgress
                           size={28}
@@ -3497,7 +3566,9 @@ export class SiteItemsModalTech extends React.Component {
                         <Grid
                           container
                           spacing={2.5}
-                          alignItems="flex-start"
+                          sx={{
+                            alignItems: "flex-start",
+                          }}
                         >
                           {this.state.img_app.length > 0 ? (
                             <Grid
@@ -3551,9 +3622,9 @@ export class SiteItemsModalTech extends React.Component {
                                   </picture>
                                 ) : (
                                   <Stack
-                                    alignItems="center"
-                                    justifyContent="center"
                                     sx={{
+                                      alignItems: "center",
+                                      justifyContent: "center",
                                       width: 180,
                                       maxWidth: "100%",
                                       aspectRatio: "1 / 1",

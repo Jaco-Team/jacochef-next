@@ -273,8 +273,10 @@ export function MyAutocomplite(props) {
     },
     listbox: {
       ...props.slotProps?.listbox,
+      ...(props.ListboxProps || {}),
       sx: {
         ...(unifiedListboxSx || {}),
+        ...(props.ListboxProps?.sx || {}),
         ...(props.slotProps?.listbox?.sx || {}),
       },
     },
@@ -316,13 +318,14 @@ export function MyAutocomplite(props) {
         disableClearable={props.disableClearable}
         getOptionKey={resolveOptionKey}
         value={props.value ?? (props.multiple ? [] : null)}
+        inputValue={props.inputValue}
         onChange={props.func}
+        onInputChange={props.onInputChange}
         onFocus={props.onFocus}
         autoFocus={props.autoFocus}
         disabledItemsFocusable={props.disabledItemsFocusable}
         //disableAutoFocus={props.disableAutoFocus}
         blurOnSelect={props.blurOnSelect}
-        ListboxProps={props.ListboxProps || undefined}
         onBlur={props.onBlur || undefined}
         disablePortal={props.disablePortal ?? false}
         filterSelectedOptions={props.filterSelectedOptions ?? true}
@@ -337,27 +340,32 @@ export function MyAutocomplite(props) {
           props.isOptionEqualToValue ||
           ((option, value) => parseInt(option?.id) === parseInt(value?.id))
         }
-        renderTags={(value, getTagProps) =>
-          value.map((option, index) => (
-            <Chip
-              {...(() => {
-                const { key, ...tagProps } = getTagProps({ index });
-                return tagProps;
-              })()}
-              key={`${resolveOptionKey(option)}-${index}`}
-              label={option.name}
-              size="small"
-              sx={{
-                color: props.disabled ? "rgba(0, 0, 0, 0.38)" : undefined,
-                "&.Mui-disabled": {
-                  backgroundColor: props.disabled ? "rgba(0, 0, 0, 0.08) !important" : undefined,
-                },
-                "& .MuiChip-deleteIcon": {
-                  color: props.disabled ? "rgba(0, 0, 0, 0.26)" : undefined,
-                },
-              }}
-            />
-          ))
+        renderValue={
+          props.multiple
+            ? (value, getItemProps) =>
+                (Array.isArray(value) ? value : []).map((option, index) => (
+                  <Chip
+                    {...(() => {
+                      const { key, ...tagProps } = getItemProps({ index });
+                      return tagProps;
+                    })()}
+                    key={`${resolveOptionKey(option)}-${index}`}
+                    label={option.name}
+                    size="small"
+                    sx={{
+                      color: props.disabled ? "rgba(0, 0, 0, 0.38)" : undefined,
+                      "&.Mui-disabled": {
+                        backgroundColor: props.disabled
+                          ? "rgba(0, 0, 0, 0.08) !important"
+                          : undefined,
+                      },
+                      "& .MuiChip-deleteIcon": {
+                        color: props.disabled ? "rgba(0, 0, 0, 0.26)" : undefined,
+                      },
+                    }}
+                  />
+                ))
+            : undefined
         }
         renderInput={
           props.renderInput ||
@@ -377,14 +385,18 @@ export function MyAutocomplite(props) {
         renderOption={
           props.renderOption
             ? props.renderOption
-            : (params, option) => (
-                <li
-                  {...params}
-                  key={props.optionKey ? option[`${props.optionKey}`] : resolveOptionKey(option)}
-                >
-                  {option.name}
-                </li>
-              )
+            : (params, option) => {
+                const { key, ...optionProps } = params;
+
+                return (
+                  <li
+                    {...optionProps}
+                    key={key ?? resolveOptionKey(option)}
+                  >
+                    {option.name}
+                  </li>
+                );
+              }
         }
       />
     </Stack>

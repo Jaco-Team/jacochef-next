@@ -118,7 +118,9 @@ export default function AddressOrders({ canAccess, getData, openClientOrder }) {
       <Grid
         container
         spacing={3}
-        maxWidth="lg"
+        sx={{
+          maxWidth: "lg",
+        }}
       >
         <Grid
           size={{
@@ -222,7 +224,6 @@ export default function AddressOrders({ canAccess, getData, openClientOrder }) {
           )}
         </Grid>
       </Grid>
-
       <Grid
         container
         sx={{ mt: 3 }}
@@ -247,7 +248,6 @@ export default function AddressOrders({ canAccess, getData, openClientOrder }) {
           </Paper>
         </Grid>
       </Grid>
-
       {/* Список заказов */}
       <Grid container>
         <Grid
@@ -408,7 +408,11 @@ export default function AddressOrders({ canAccess, getData, openClientOrder }) {
                             <TableCell>
                               <Tooltip
                                 title={
-                                  <Typography color="inherit">
+                                  <Typography
+                                    sx={{
+                                      color: "inherit",
+                                    }}
+                                  >
                                     Все заказы по этому адресу
                                   </Typography>
                                 }

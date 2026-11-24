@@ -381,7 +381,9 @@ export default function SiteItemMarkSeries() {
       <DialogContent>
         <Typography
           variant="body2"
-          color="text.secondary"
+          sx={{
+            color: "text.secondary",
+          }}
         >
           Введённые данные будут потеряны.
         </Typography>
@@ -564,8 +566,10 @@ export default function SiteItemMarkSeries() {
       <DialogContent sx={{ pt: 2, pb: 3, px: 3 }}>
         <Typography
           variant="body2"
-          color="text.secondary"
-          sx={{ mb: 2 }}
+          sx={{
+            color: "text.secondary",
+            mb: 2,
+          }}
         >
           Партия{closeBatch?.series ? ` "${closeBatch.series}"` : ""} будет отключена. Остаток не
           будет списан.
@@ -722,12 +726,10 @@ export default function SiteItemMarkSeries() {
           text={alertText}
         />
       </Box>
-
       {formOpen ? renderFormDialog() : null}
       {discardOpen ? renderDiscardDialog() : null}
       {closeOpen ? renderCloseDialog() : null}
       {movesOpen ? renderMovesDialog() : null}
-
       {isInitialLoad ? (
         <Box
           sx={{
@@ -743,7 +745,6 @@ export default function SiteItemMarkSeries() {
           <CircularProgress aria-label="Загрузка" />
         </Box>
       ) : null}
-
       <Grid
         container
         spacing={3}
@@ -753,15 +754,19 @@ export default function SiteItemMarkSeries() {
         <Grid size={{ xs: 12 }}>
           <Stack
             direction={{ xs: "column", sm: "row" }}
-            justifyContent="space-between"
-            alignItems={{ xs: "flex-start", sm: "flex-start" }}
             spacing={2}
+            sx={{
+              justifyContent: "space-between",
+              alignItems: { xs: "flex-start", sm: "flex-start" },
+            }}
           >
             <Box>
               <Stack
                 direction="row"
-                alignItems="center"
                 spacing={0.5}
+                sx={{
+                  alignItems: "center",
+                }}
               >
                 <h1>{moduleName}</h1>
                 <Tooltip title="Обновить">
@@ -779,8 +784,10 @@ export default function SiteItemMarkSeries() {
               </Stack>
               <Typography
                 variant="body2"
-                color="text.secondary"
-                sx={{ mt: 0.5 }}
+                sx={{
+                  color: "text.secondary",
+                  mt: 0.5,
+                }}
               >
                 Коды ведутся отдельно по каждой точке. Текущие поля товара не изменяются.
               </Typography>
@@ -802,7 +809,9 @@ export default function SiteItemMarkSeries() {
             <Grid
               container
               spacing={2}
-              alignItems="center"
+              sx={{
+                alignItems: "center",
+              }}
             >
               <Grid size={{ xs: 12, sm: 6, md: 5 }}>
                 <MyAutocomplite
@@ -867,7 +876,9 @@ export default function SiteItemMarkSeries() {
                     </Typography>
                     <Typography
                       variant="caption"
-                      color="text.secondary"
+                      sx={{
+                        color: "text.secondary",
+                      }}
                     >
                       {card.label}
                     </Typography>
@@ -884,14 +895,18 @@ export default function SiteItemMarkSeries() {
             <Paper sx={{ py: 8, textAlign: "center", border: `1px solid ${blockBorder}` }}>
               <Typography
                 variant="h6"
-                color="text.secondary"
+                sx={{
+                  color: "text.secondary",
+                }}
               >
                 {hasFilters ? "Ничего не найдено" : "Нет записей"}
               </Typography>
               <Typography
                 variant="body2"
-                color="text.secondary"
-                sx={{ mt: 1 }}
+                sx={{
+                  color: "text.secondary",
+                  mt: 1,
+                }}
               >
                 {hasFilters
                   ? "По выбранным фильтрам записей нет"

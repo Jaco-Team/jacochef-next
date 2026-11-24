@@ -25,6 +25,7 @@ function HistoryLog({
   restoreFunc = null,
   defaultExpanded = false,
   hiddenFields = [],
+  dateLabel = "Дата изменения",
 }) {
   return (
     <>
@@ -42,7 +43,7 @@ function HistoryLog({
               <Table stickyHeader>
                 <TableHead>
                   <TableRow>
-                    <TableCell sx={{ minWidth: "120px" }}>Дата изменения</TableCell>
+                    <TableCell sx={{ minWidth: "120px" }}>{dateLabel}</TableCell>
                     <TableCell sx={{ minWidth: "120px" }}>Автор</TableCell>
                     <TableCell>Изменения</TableCell>
                     {!!restoreFunc && <TableCell>Откатить</TableCell>}
@@ -59,7 +60,11 @@ function HistoryLog({
                         "& td": { borderBottom: "1px solid", borderColor: "divider" },
                       }}
                     >
-                      <TableCell>{dayjs(item.created_at)?.format("DD.MM.YYYY HH:mm")}</TableCell>
+                      <TableCell>
+                        {item.created_at
+                          ? dayjs(item.created_at).format("DD.MM.YYYY HH:mm")
+                          : "Неизвестно"}
+                      </TableCell>
                       <TableCell>{item.actor_name}</TableCell>
                       <TableCell>
                         <SmartDiff

@@ -11,7 +11,13 @@ const toChartValue = (value) => {
   return Number.isFinite(parsed) ? parsed : null;
 };
 
-export default function StatSalePlanFactLineChart({ data, title, resetKey }) {
+export default function StatSalePlanFactLineChart({
+  data,
+  title,
+  resetKey,
+  valueSuffix = "шт",
+  valueDecimals = 0,
+}) {
   const groupedByYear = data.reduce((acc, item) => {
     const year = Number(item.year);
     const month = Number(item.monthNumber);
@@ -32,19 +38,26 @@ export default function StatSalePlanFactLineChart({ data, title, resetKey }) {
     .map(Number)
     .sort((a, b) => a - b);
   const singleYear = years.length === 1;
+  const hasAnyPlan = years.some((year) => groupedByYear[year].plan.some((value) => value !== null));
   const series = years.flatMap((year, index) => {
     const color = yearColorPalette[index % yearColorPalette.length];
     const yearSuffix = singleYear ? "" : ` ${year}`;
+    const yearHasPlan = groupedByYear[year].plan.some((value) => value !== null);
+    const factName = hasAnyPlan ? `Факт${yearSuffix}` : singleYear ? "Факт" : String(year);
 
     return [
+      ...(yearHasPlan
+        ? [
+            {
+              name: `План${yearSuffix}`,
+              color,
+              strokeDasharray: [8, 5],
+              values: groupedByYear[year].plan,
+            },
+          ]
+        : []),
       {
-        name: `План${yearSuffix}`,
-        color,
-        strokeDasharray: [8, 5],
-        values: groupedByYear[year].plan,
-      },
-      {
-        name: `Факт${yearSuffix}`,
+        name: factName,
         color,
         values: groupedByYear[year].fact,
       },
@@ -55,7 +68,8 @@ export default function StatSalePlanFactLineChart({ data, title, resetKey }) {
     <StatSaleMonthlyLineChart
       title={title}
       series={series}
-      valueSuffix="шт"
+      valueSuffix={valueSuffix}
+      valueDecimals={valueDecimals}
       collapsible
       defaultExpanded={false}
       resetKey={resetKey}

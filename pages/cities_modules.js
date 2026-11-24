@@ -31,8 +31,8 @@ import { api_laravel, api_laravel_local } from "@/src/api_new";
 
 import dayjs from "dayjs";
 import Box from "@mui/material/Box";
-import TabList from "@mui/lab/TabList";
 import Tab from "@mui/material/Tab";
+import Tabs from "@mui/material/Tabs";
 import TabContext from "@mui/lab/TabContext";
 import TabPanel from "@mui/lab/TabPanel";
 import InputAdornment from "@mui/material/InputAdornment";
@@ -479,7 +479,8 @@ class CitiesModules_Modal extends React.Component {
                   }}
                 >
                   <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
-                    <TabList
+                    <Tabs
+                      value={this.state.ItemTab1}
                       onChange={this.changeTab1.bind(this)}
                       variant="fullWidth"
                       aria-label="настройки города"
@@ -491,7 +492,7 @@ class CitiesModules_Modal extends React.Component {
                           value={item.id}
                         />
                       ))}
-                    </TabList>
+                    </Tabs>
                   </Box>
                 </Grid>
 
