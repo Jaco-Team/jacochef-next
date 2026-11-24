@@ -200,7 +200,7 @@ export function BannerModal({
             }}
           >
             <MyTextInput
-              label="Заголовок"
+              label="Заголовок (H1)"
               disabled={!canEdit("banners")}
               value={banner?.this_ban?.title || ""}
               func={(e) => changeThisBanField("title", e)}
