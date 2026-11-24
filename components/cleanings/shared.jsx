@@ -111,6 +111,13 @@ export function CleaningTemplateChips({ item, withAdditionType = true, sx }) {
           variant="outlined"
         />
       )}
+      {item?.is_need ? (
+        <JacoStatusChip
+          label="Особый день"
+          tone="neutral"
+          variant="soft"
+        />
+      ) : null}
       {additionTypeName ? (
         <JacoStatusChip
           label={additionTypeName}
@@ -221,7 +228,13 @@ export function CleaningActions({ item, onEdit, onArchiveToggle, onHistory, onRe
 }
 
 // «Обновить» of the control toolbars with the time of the last successful load; a failed load is a soft hint.
-export function ControlRefreshControl({ onRefresh, refreshing = false, disabled = false, updatedAt, error }) {
+export function ControlRefreshControl({
+  onRefresh,
+  refreshing = false,
+  disabled = false,
+  updatedAt,
+  error,
+}) {
   const updatedText = updatedAt ? `Обновлено в ${formatClockTime(updatedAt)}` : "";
   const hint = error
     ? [updatedText, "не удалось обновить"].filter(Boolean).join(" · ")

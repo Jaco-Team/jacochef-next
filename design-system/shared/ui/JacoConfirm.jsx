@@ -85,13 +85,29 @@ export function useJacoConfirm() {
         contentSx={{ py: 3 }}
         actionsSx={{ justifyContent: "center", pt: 0, pb: 3, borderTop: "none" }}
         actions={
-          <Box sx={{ display: "flex", justifyContent: "center", gap: 1.5, width: "100%" }}>
+          <Box
+            sx={{
+              display: "flex",
+              flexWrap: "wrap",
+              justifyContent: "center",
+              gap: 1.5,
+              width: "100%",
+            }}
+          >
             <JacoButton
               tone={state.cancelTone}
               compact
               autoFocus={state.confirmTone === "danger"}
               onClick={handleCancel}
-              sx={{ flex: "1 1 0", maxWidth: 160, minWidth: 0, fontWeight: 500, fontSize: 16 }}
+              sx={{
+                flex: "0 1 auto",
+                minWidth: "min(160px, 100%)",
+                maxWidth: "100%",
+                whiteSpace: "normal",
+                overflowWrap: "anywhere",
+                fontWeight: 500,
+                fontSize: 16,
+              }}
             >
               {state.cancelLabel}
             </JacoButton>
@@ -101,9 +117,11 @@ export function useJacoConfirm() {
               onClick={handleConfirm}
               tone={state.confirmTone}
               sx={{
-                flex: "1 1 0",
-                maxWidth: 160,
-                minWidth: 0,
+                flex: "0 1 auto",
+                minWidth: "min(160px, 100%)",
+                maxWidth: "100%",
+                whiteSpace: "normal",
+                overflowWrap: "anywhere",
                 fontWeight: 500,
                 fontSize: 16,
                 ...(state.confirmTone === "secondary"
