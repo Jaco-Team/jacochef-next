@@ -41,59 +41,9 @@ env:
 jobs:
   required_checks:
     name: Frontend required checks
-    runs-on: ubuntu-24.04
-    timeout-minutes: 20
-    steps:
-      - name: Bound the event and source before checking out code
-        run: |
-          python3 - <<'PYTHON'
-          import os, re
-          if os.environ.get("GITHUB_REPOSITORY") != "Jaco-Team/jacochef-next":
-              raise SystemExit("UNREVIEWED_FRONTEND_TARGET")
-          event = os.environ.get("GITHUB_EVENT_NAME")
-          if event not in ("push", "pull_request", "workflow_dispatch"):
-              raise SystemExit("UNREVIEWED_FRONTEND_EVENT")
-          if event == "pull_request":
-              if os.environ.get("GITHUB_BASE_REF") != "main":
-                  raise SystemExit("UNREVIEWED_FRONTEND_PR_TARGET")
-          elif os.environ.get("GITHUB_REF") != "refs/heads/main":
-              raise SystemExit("UNREVIEWED_FRONTEND_TARGET")
-          if event == "workflow_dispatch":
-              source = os.environ.get("SOURCE_SHA", "")
-              if not re.fullmatch(r"[a-f0-9]{40}", source) or source != os.environ.get("GITHUB_SHA") or source != os.environ.get("DISPATCH_WORKFLOW_SHA"):
-                  raise SystemExit("DISPATCH_HEAD_MISMATCH")
-          print("Reviewed frontend source selected")
-          PYTHON
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          ref: ${{ github.sha }}
-          persist-credentials: false
-      - name: Reject tracked runtime env and exclude env from Docker context
-        run: python3 .github/scripts/jaco-chef/prepare-build-context.py --dockerfile Dockerfile
-      - name: Validate the controller-supplied public snapshot
-        if: github.event_name == 'workflow_dispatch'
-        run: python3 .github/scripts/jaco-chef/prepare-public-build.py
-      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
-        with:
-          node-version: "22"
-          cache: npm
-      - name: Install existing dependencies
-        run: npm ci
-      - name: Existing frontend syntax check
-        run: npm run check:syntax
-      # Quarantined by exact name: source-contract tests that already fail on main.
-      - name: Existing frontend unit tests
-        run: >-
-          node --test
-          --test-skip-pattern='^both table variants use capability; open/save and modal lifetime use current graph identity$'
-          --test-skip-pattern='^desktop and mobile use the same gate, accessible whole-cell actions and editable-only cues$'
-          --test-skip-pattern='^day modal and page independently defend cached edit flags and stale context$'
-          --test-skip-pattern='^desktop and mobile hide quick controls and checkboxes without access; revoked selection is cleared$'
-          --test-skip-pattern='^finance, month and export entry/save handlers recheck rights without caller-role authority$'
-          --test-skip-pattern='^normal/sticky and mobile team-bonus headers reuse the period modal and obey edit/blur gates$'
-          --test-skip-pattern='^quick controls and mutation lifecycle share the selected-half date guard$'
-          --test-skip-pattern='^revoking finance reads closes cached financial modals and invalidates pending day/month reads$'
-          tests/unit/*/*.test.mjs
+    permissions:
+      contents: read
+    uses: Jaco-Team/jacochef-next/.github/workflows/frontend-checks.yml@ff48c0dc703a8f70980102847de5b273e22286c9
   publish:
     name: Publish frontend image and metadata
     needs: required_checks
