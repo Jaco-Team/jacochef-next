@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Box } from "@mui/material";
 import { displayText, formatNumber, formatPercent, formatSeconds } from "./format";
+import RateAnomalyCard from "./RateAnomalyCard";
 import {
   CodeText,
   FunnelBlock,
@@ -38,6 +39,15 @@ export default function AuthTab({ data, onRowClick }) {
         subtitle={chart.subtitle || "по дням, все города"}
         series={chart.series || []}
         points={chart.points || []}
+      />
+      <RateAnomalyCard
+        title="Аномалии успешности входа"
+        points={data?.daily_rates || []}
+        totalKey="attempts"
+        successKey="success"
+        totalLabel="Попыток"
+        successLabel="Успешно"
+        color="#F08A24"
       />
       <SectionCard
         title="Неудачи по причинам"

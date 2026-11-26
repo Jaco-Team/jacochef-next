@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Box } from "@mui/material";
 import { displayText, formatMoney, formatNumber, formatPercent, formatSeconds } from "./format";
+import RateAnomalyCard from "./RateAnomalyCard";
 import {
   CodeText,
   FunnelBlock,
@@ -39,6 +40,15 @@ export default function PaymentsTab({ data, onRowClick }) {
         subtitle={chart.subtitle || "по дням, подтверждено webhook"}
         series={chart.series || []}
         points={chart.points || []}
+      />
+      <RateAnomalyCard
+        title="Аномалии конверсии оплаты"
+        points={data?.daily_rates || []}
+        totalKey="started"
+        successKey="paid"
+        totalLabel="Начато"
+        successLabel="Оплачено"
+        color="#3B82F6"
       />
       <SectionCard
         title="Воронка оплаты"

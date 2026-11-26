@@ -28,6 +28,36 @@ const paymentPoints = paymentCards.map((bankCard, index) => {
   };
 });
 
+const authAttempts = [340, 352, 368, 355, 372, 380, 360, 348, 392, 365, 376, 384, 358, 370];
+const authSuccessRates = [
+  87.2, 86.8, 87.5, 87.0, 86.9, 73.0, 87.3, 87.1, 86.6, 87.4, 78.5, 87.2, 87.0, 87.6,
+];
+
+const authDailyRates = authAttempts.map((attempts, index) => {
+  const date = authStart.add(index, "day");
+  return {
+    date: date.format("YYYY-MM-DD"),
+    label: date.format("DD.MM"),
+    attempts,
+    success: Math.round((attempts * authSuccessRates[index]) / 100),
+  };
+});
+
+const paymentStarted = [158, 166, 172, 164, 178, 170, 186, 160, 174, 182, 168, 176, 188, 172];
+const paymentConversions = [
+  88.6, 88.2, 89.0, 88.5, 88.9, 88.4, 76.2, 88.7, 88.3, 88.8, 88.1, 80.0, 88.6, 88.9,
+];
+
+const paymentDailyRates = paymentStarted.map((started, index) => {
+  const date = authStart.add(index, "day");
+  return {
+    date: date.format("YYYY-MM-DD"),
+    label: date.format("DD.MM"),
+    started,
+    paid: Math.round((started * paymentConversions[index]) / 100),
+  };
+});
+
 export const DEMO_BOOTSTRAP = {
   module_info: { name: "Метрики сайта" },
   cities: [
@@ -131,6 +161,7 @@ export const DEMO_AUTH = {
     ],
     points: authPoints,
   },
+  daily_rates: authDailyRates,
   failures: [
     { reason: "Неверный или истёкший код", code: "wrong_code", attempts: 1204, share: 46.2 },
     { reason: "Неверный пароль", code: "wrong_password", attempts: 862, share: 33.1 },
@@ -308,6 +339,7 @@ export const DEMO_PAYMENTS = {
     ],
     points: paymentPoints,
   },
+  daily_rates: paymentDailyRates,
   funnels: {
     all: {
       steps: [
