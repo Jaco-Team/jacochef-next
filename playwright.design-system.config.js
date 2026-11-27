@@ -25,7 +25,7 @@ module.exports = defineConfig({
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 1 : 0,
   workers: 1,
-  reporter: "list",
+  reporter: [["./scripts/test-reporters/playwright.cjs"]],
   use: {
     baseURL: process.env.STORYBOOK_BASE_URL || "http://127.0.0.1:6006",
     ...devices["Desktop Chrome"],

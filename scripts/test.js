@@ -3,10 +3,19 @@
 const fs = require("fs");
 const { spawnSync } = require("child_process");
 const path = require("path");
+const { styleText } = require("node:util");
+const {
+  emptyReport,
+  fromVitest,
+  formatReports,
+  line,
+  startupReason,
+  createReportDirectory,
+} = require("./test-reporters/report.cjs");
 
 function parseArgs(argv) {
   const result = {
-    type: "all",
+    type: "unit",
     scope: "",
     headed: false,
     list: false,
@@ -14,204 +23,266 @@ function parseArgs(argv) {
     project: "",
     passthrough: [],
   };
-
   for (let index = 0; index < argv.length; index += 1) {
     const arg = argv[index];
-    const next = argv[index + 1];
-
-    if (arg.startsWith("--type=")) {
-      result.type = arg.split("=")[1] || result.type;
-      continue;
+    if (arg === "--") {
+      result.passthrough = argv.slice(index + 1);
+      break;
     }
-
-    if (arg === "--type" && next) {
-      result.type = next;
-      index += 1;
-      continue;
-    }
-
-    if (arg.startsWith("--scope=")) {
-      result.scope = arg.split("=")[1] || "";
-      continue;
-    }
-
-    if (arg === "--scope" && next) {
-      result.scope = next;
-      index += 1;
-      continue;
-    }
-
-    if (arg === "--headed") {
-      result.headed = true;
-      continue;
-    }
-
-    if (arg === "--list") {
-      result.list = true;
-      continue;
-    }
-
-    if (arg.startsWith("--grep=")) {
-      result.grep = arg.slice("--grep=".length);
-      continue;
-    }
-
-    if (arg === "--grep" && next) {
-      result.grep = next;
-      index += 1;
-      continue;
-    }
-
-    if (arg.startsWith("--project=")) {
-      result.project = arg.slice("--project=".length);
-      continue;
-    }
-
-    if (arg === "--project" && next) {
-      result.project = next;
-      index += 1;
-      continue;
-    }
-
-    result.passthrough.push(arg);
+    const match = /^--(type|scope|grep|project)(?:=(.*))?$/.exec(arg);
+    if (match) {
+      const value = match[2] ?? argv[++index];
+      if (!value || value.startsWith("--")) throw new Error(`Missing value for --${match[1]}`);
+      result[match[1]] = value;
+    } else if (arg === "--headed") result.headed = true;
+    else if (arg === "--list") result.list = true;
+    else throw new Error(`Unknown test option: ${arg}`);
   }
-
+  result.type = result.type.toLowerCase();
+  result.scope = result.scope.trim().toLowerCase().replace(/_/g, "-");
+  if (!["unit", "all", "legacy", "vitest", "e2e"].includes(result.type))
+    throw new Error(`Unsupported test type: ${result.type}`);
+  if (result.headed && result.type !== "e2e") throw new Error("--headed applies only to test:e2e");
+  if (
+    (result.list || result.project || result.passthrough.length) &&
+    ["unit", "all"].includes(result.type)
+  ) {
+    throw new Error("Use test:legacy, test:vitest or test:e2e for runner-specific options");
+  }
+  if ((result.list || result.project) && result.type === "legacy")
+    throw new Error("--list and --project do not apply to the legacy runner");
   return result;
 }
 
-function normalizeScope(scope) {
-  return String(scope || "")
-    .trim()
-    .toLowerCase()
-    .replace(/_/g, "-");
-}
-
-function listScopeDirectories(type) {
-  const root = path.join(process.cwd(), "tests", type);
-
-  if (!fs.existsSync(root)) {
-    return [];
-  }
-
+function directories(directory) {
+  if (!fs.existsSync(directory)) return [];
   return fs
-    .readdirSync(root, { withFileTypes: true })
+    .readdirSync(directory, { withFileTypes: true })
     .filter(
       (entry) => entry.isDirectory() && !entry.name.startsWith("_") && entry.name !== "support",
     )
-    .map((entry) => entry.name)
-    .sort();
+    .map((entry) => entry.name);
 }
 
-function listTestFiles(rootPath) {
-  if (!fs.existsSync(rootPath)) {
-    return [];
-  }
-
+function files(directory, pattern) {
+  if (!fs.existsSync(directory)) return [];
   return fs
-    .readdirSync(rootPath, { withFileTypes: true })
+    .readdirSync(directory, { withFileTypes: true })
     .flatMap((entry) => {
-      const entryPath = path.join(rootPath, entry.name);
-
-      if (entry.isDirectory()) {
-        return listTestFiles(entryPath);
-      }
-
-      return entry.isFile() && /\.test\.(mjs|js|cjs)$/.test(entry.name) ? [entryPath] : [];
+      const filename = path.join(directory, entry.name);
+      return entry.isDirectory()
+        ? files(filename, pattern)
+        : pattern.test(entry.name)
+          ? [filename]
+          : [];
     })
     .sort();
 }
 
-function resolveScopedPath(type, scope) {
-  const normalized = normalizeScope(scope);
-  const basePath = path.join("tests", type);
-
-  if (!normalized) {
-    return basePath;
+function buildCommands(options, root = process.cwd()) {
+  const legacyRoot = path.join(root, "tests/unit");
+  const vitestRoots = ["unit", "components"].map((name) => path.join(root, "tests/vitest", name));
+  const e2eRoot = path.join(root, "tests/e2e");
+  const legacyScopes = directories(legacyRoot);
+  const vitestScopes = [...new Set(vitestRoots.flatMap(directories))];
+  const scopes =
+    options.type === "legacy"
+      ? legacyScopes
+      : options.type === "vitest"
+        ? vitestScopes
+        : options.type === "e2e"
+          ? directories(e2eRoot)
+          : [...new Set([...legacyScopes, ...vitestScopes])];
+  if (options.scope && !scopes.includes(options.scope))
+    throw new Error(
+      `Unknown ${options.type} scope "${options.scope}". Available: ${scopes.sort().join(", ")}`,
+    );
+  const commands = [];
+  if (
+    ["unit", "all", "legacy"].includes(options.type) &&
+    (!options.scope || legacyScopes.includes(options.scope))
+  ) {
+    const testFiles = files(path.join(legacyRoot, options.scope), /\.test\.(mjs|js|cjs)$/);
+    if (!testFiles.length) throw new Error("No legacy unit tests found");
+    commands.push({
+      runner: "node",
+      root,
+      name: "Legacy unit tests",
+      command: process.execPath,
+      args: [
+        "--test",
+        ...(options.grep ? [`--test-name-pattern=${options.grep}`] : []),
+        ...options.passthrough,
+        ...testFiles,
+      ],
+    });
   }
-
-  const scopes = listScopeDirectories(type);
-  const matchedScope = scopes.find((item) => item === normalized);
-
-  if (!matchedScope) {
-    const available = scopes.length > 0 ? scopes.join(", ") : "none";
-    throw new Error(`Unknown ${type} scope "${scope}". Available: ${available}`);
+  if (
+    ["unit", "all", "vitest"].includes(options.type) &&
+    (!options.scope || vitestScopes.includes(options.scope))
+  ) {
+    const testFiles = vitestRoots.flatMap((directory) =>
+      files(path.join(directory, options.scope), /\.test\.(mjs|js|jsx)$/),
+    );
+    if (!testFiles.length) throw new Error("No Vitest tests found");
+    const cli = path.join(path.dirname(require.resolve("vitest/package.json")), "vitest.mjs");
+    commands.push({
+      runner: "vitest",
+      root,
+      list: options.list,
+      name: "Vitest unit and component tests",
+      command: process.execPath,
+      args: [
+        cli,
+        options.list ? "list" : "run",
+        ...(options.scope ? testFiles : []),
+        ...(options.grep ? ["--testNamePattern", options.grep] : []),
+        ...(options.project ? ["--project", options.project] : []),
+        ...options.passthrough,
+      ],
+    });
   }
-
-  return path.join(basePath, matchedScope);
+  if (options.type === "e2e") {
+    const configs = {
+      "design-system": "playwright.design-system.config.js",
+      "sklad-items": "playwright.sklad.config.js",
+    };
+    const cli = path.join(path.dirname(require.resolve("@playwright/test/package.json")), "cli.js");
+    commands.push({
+      runner: "playwright",
+      root,
+      list: options.list,
+      name: "Playwright",
+      command: process.execPath,
+      args: [
+        cli,
+        "test",
+        "--config",
+        configs[options.scope] || "playwright.config.js",
+        ...(options.scope ? [path.join(e2eRoot, options.scope)] : []),
+        ...(options.headed ? ["--headed"] : []),
+        ...(options.list ? ["--list"] : []),
+        ...(options.grep ? ["--grep", options.grep] : []),
+        ...(options.project ? ["--project", options.project] : []),
+        ...options.passthrough,
+      ],
+    });
+  }
+  return commands;
 }
 
-function run(command, args) {
-  const result = spawnSync(command, args, {
-    stdio: "inherit",
-    env: process.env,
-  });
-
-  if (result.error) {
-    throw result.error;
+function runCommands(commands, spawn = spawnSync, options = {}) {
+  let failed = false;
+  let directory;
+  const reports = [];
+  for (const task of commands) {
+    if (task.list) {
+      const result = spawn(task.command, task.args, {
+        stdio: "inherit",
+        env: process.env,
+        cwd: task.root,
+      });
+      if (result.error) console.error(line(result.error.message));
+      if (result.error || result.status !== 0) failed = true;
+      continue;
+    }
+    console.log(
+      styleText(
+        "cyan",
+        `Запуск ${task.runner === "node" ? "Node.js" : task.runner === "vitest" ? "Vitest" : "Playwright"}…`,
+      ),
+    );
+    const root = task.root || process.cwd();
+    if (!directory) {
+      directory = createReportDirectory(root, "run-", options.directory);
+    }
+    const reportFile = path.join(directory, `${task.runner}.json`);
+    const logFile = path.join(directory, `${task.runner}-full.log`);
+    let args = [...task.args];
+    if (task.runner === "node")
+      args.splice(1, 0, `--test-reporter=${path.join(__dirname, "test-reporters", "node.cjs")}`);
+    if (task.runner === "vitest")
+      args.push("--reporter=json", `--outputFile=${reportFile}`, "--includeTaskLocation");
+    const fd = fs.openSync(logFile, "a");
+    let result;
+    try {
+      result = spawn(task.command, args, {
+        stdio: ["inherit", fd, fd],
+        env: { ...process.env, CHEF_TEST_REPORT_FILE: reportFile },
+        cwd: root,
+      });
+    } finally {
+      fs.closeSync(fd);
+    }
+    let report;
+    try {
+      const raw = JSON.parse(fs.readFileSync(reportFile, "utf8"));
+      report = task.runner === "vitest" ? fromVitest(raw) : raw;
+      if (!Array.isArray(report.failures) || !Array.isArray(report.errors))
+        throw new Error("invalid report");
+    } catch {
+      report = emptyReport(
+        task.runner === "node" ? "Node.js" : task.runner === "vitest" ? "Vitest" : "Playwright",
+      );
+      let firstOutput = "";
+      try {
+        firstOutput = fs.readFileSync(logFile, "utf8").trim();
+      } catch {}
+      report.errors.push({
+        message: result.error
+          ? line(result.error.message)
+          : `Не создан структурированный отчёт (код ${result.status ?? result.signal ?? "неизвестен"}). ${startupReason(firstOutput)}`,
+      });
+    }
+    if (
+      !fs.existsSync(logFile) &&
+      !report.errors.some((error) => error.kind === "report-persistence")
+    ) {
+      report.errors.push({
+        kind: "report-persistence",
+        message: "Подробный журнал удалён во время запуска; полный вывод не сохранился",
+      });
+    }
+    if (result.error || result.status !== 0) {
+      failed = true;
+      if (!report.failed && !report.cancelled && !report.errors.length)
+        report.errors.push({
+          message: result.error
+            ? line(result.error.message)
+            : `Раннер завершился с кодом ${result.status ?? result.signal}`,
+        });
+    }
+    if (report.failed || report.cancelled || report.errors.length) failed = true;
+    reports.push(report);
   }
+  if (reports.length) {
+    let saved = false;
+    try {
+      fs.mkdirSync(directory, { recursive: true });
+      fs.writeFileSync(path.join(directory, "summary.json"), JSON.stringify(reports, null, 2));
+      saved = true;
+    } catch (error) {
+      failed = true;
+      console.error(`Не удалось сохранить сводный отчёт: ${line(error.message)}`);
+    }
+    console.log(
+      formatReports(reports, {
+        root: commands[0]?.root || process.cwd(),
+        directory: saved ? directory : undefined,
+        style: styleText,
+      }),
+    );
+  }
+  return failed ? 1 : 0;
+}
 
-  if (typeof result.status === "number" && result.status !== 0) {
-    process.exit(result.status);
+if (require.main === module) {
+  try {
+    process.exitCode = runCommands(buildCommands(parseArgs(process.argv.slice(2))));
+  } catch (error) {
+    console.error(error.message);
+    process.exitCode = 1;
   }
 }
 
-function runE2e(options) {
-  const args = ["playwright", "test", resolveScopedPath("e2e", options.scope)];
-
-  if (options.headed) {
-    args.push("--headed");
-  }
-
-  if (options.list) {
-    args.push("--list");
-  }
-
-  if (options.grep) {
-    args.push("--grep", options.grep);
-  }
-
-  if (options.project) {
-    args.push("--project", options.project);
-  }
-
-  args.push(...options.passthrough);
-  run("npx", args);
-}
-
-function runUnit(options) {
-  const scopedPath = resolveScopedPath("unit", options.scope);
-  const testFiles = fs.statSync(scopedPath).isDirectory()
-    ? listTestFiles(scopedPath)
-    : [scopedPath];
-
-  if (testFiles.length === 0) {
-    throw new Error(`No unit test files found in ${scopedPath}`);
-  }
-
-  const args = ["--test", ...testFiles, ...options.passthrough];
-  run("node", args);
-}
-
-function main() {
-  const options = parseArgs(process.argv.slice(2));
-  const type = String(options.type || "all").toLowerCase();
-
-  if (!["all", "e2e", "unit"].includes(type)) {
-    throw new Error(`Unsupported test type: ${options.type}`);
-  }
-
-  if (type === "unit") {
-    runUnit(options);
-    return;
-  }
-
-  if (type === "e2e") {
-    runE2e(options);
-    return;
-  }
-
-  runUnit(options);
-  runE2e(options);
-}
-
-main();
+module.exports = { parseArgs, buildCommands, runCommands };

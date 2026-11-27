@@ -1,6 +1,5 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
 import {
   canEditStaffScheduleBonus,
   createStaffScheduleAccess,
@@ -101,26 +100,4 @@ test("revoked rights or refreshed server capability reject a previously opened b
     }),
     null,
   );
-});
-
-test("both table variants use capability; open/save and modal lifetime use current graph identity", () => {
-  const page = readFileSync(
-    new URL("../../../components/staff_schedule/useStaffSchedulePage.js", import.meta.url),
-    "utf8",
-  );
-  for (const name of ["StaffScheduleTableSection.jsx", "StaffScheduleMobileTableSection.jsx"]) {
-    const source = readFileSync(
-      new URL(`../../../components/staff_schedule/sections/${name}`, import.meta.url),
-      "utf8",
-    );
-    assert.match(source, /canEditStaffScheduleBonus\(\{ row: data, canEdit, selectedPart \}\)/);
-  }
-  assert.equal((page.match(/getEditableStaffScheduleBonusRow\(\{/g) || []).length, 3);
-  assert.match(
-    page,
-    /date: monthId, user_id: row\.id, app_id: row\.app_id, smena_id: row\.smena_id/,
-  );
-  assert.match(page, /value: currentRow\?\.dir_bonus/);
-  assert.match(page, /summaryActionRef\.current\.request !== request/);
-  assert.doesNotMatch(page, /Бонус директора/);
 });

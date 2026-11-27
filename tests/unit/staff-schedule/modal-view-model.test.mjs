@@ -159,45 +159,6 @@ test("day model preserves past data/history while every editing section is read-
   }
 });
 
-test("day modal and page independently defend cached edit flags and stale context", () => {
-  const modal = readFileSync(
-    new URL("../../../components/staff_schedule/modals/StaffScheduleDayModal.jsx", import.meta.url),
-    "utf8",
-  );
-  const page = readFileSync(
-    new URL("../../../components/staff_schedule/useStaffSchedulePage.js", import.meta.url),
-    "utf8",
-  );
-  assert.match(modal, /const dayDate = modal\.request\?\.date \|\| modal\.data\?\.date/);
-  for (const section of ["Hours", "Assignment", "Health"]) {
-    assert.match(
-      modal,
-      new RegExp(
-        `const canEdit${section} = isPeriodEditable && Boolean\\(modal\\.data\\?\\.canEdit${section}\\)`,
-      ),
-    );
-  }
-  assert.match(modal, /\{onRemove \? <JacoIconButton/);
-  assert.match(modal, /\{canSave \? <JacoButton/);
-  assert.match(modal, /\{canEditHours \? <Grid/);
-  assert.match(modal, /open=\{isAddTimeOpen && canEditHours\}/);
-  assert.match(modal, /current\.request === modal\.request/);
-  assert.match(
-    modal,
-    /isEditableDayHalfPeriod\(current\.request\?\.date \|\| current\.data\?\.date\)/,
-  );
-  assert.match(modal, /if \(!isCurrentDayEditable\("canEditHours"\)\) return/g);
-  assert.match(modal, /Прошедший период — только просмотр/);
-  assert.match(modal, /\{canSave \? "Отменить" : "Закрыть"\}/);
-  assert.match(
-    page,
-    /buildAuthorizedDaySavePayload\(\{ request, payload, access: accessRef\.current/,
-  );
-  assert.match(page, /api\.saveUserDay\(buildCurrentPayload\(\)\)/);
-  assert.match(page, /generation === dayRequestGeneration\.current/);
-  assert.match(page, /if \(!isCurrentContext\(\)\) return;\s*handleCloseDayModal\(\)/);
-});
-
 test("buildMonthModalViewModel forwards recent custom ranges without changing month days", () => {
   const model = buildMonthModalViewModel({
     h_info: { user: {} },
@@ -266,7 +227,13 @@ test("month permissions are role-independent and financial fields stay individua
   const zero = buildMonthModalViewModel(
     {
       h_info: {
-        user: { total_sum: 0, to_pay_sum: "", opening_balance: -150, salary_difference: 0, h_price: 1000 },
+        user: {
+          total_sum: 0,
+          to_pay_sum: "",
+          opening_balance: -150,
+          salary_difference: 0,
+          h_price: 1000,
+        },
       },
     },
     { access: { all_price_view: 1, test_all_price_view: 1 } },

@@ -9,7 +9,8 @@
 - [Спецификация переработки закупок](close-buy-redesign-spec.md)
 - [Спецификация отчёта по себестоимости](otchety-sebestoimost-spec-i-lovable-prompt_v1_2026-07-21.md)
 - [Дизайн-система](../design-system/README.md) · [план](../design-system/PLAN.md)
-- [Тесты](../tests/README.md)
+- [Тестирование: покрытие, команды запуска и окружения](../tests/README.md)
+- Планы unit/компонентных сценариев: [Накладные](../tests/plans/billing.md) · [Управление кафе](../tests/plans/cafe-edit.md)
 
 ## Модули и планы
 

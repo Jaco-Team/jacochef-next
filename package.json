@@ -13,7 +13,6 @@
     "postinstall": "node scripts/copy-tinymce.js",
     "dev": "next dev --webpack",
     "dev:turbo": "next dev",
-    "test": "node scripts/test.js",
     "build": "next build",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
@@ -28,7 +27,13 @@
     "deploy:dev": "next build && pm2 startOrRestart ecosystem.config.js --env development",
     "deploy_test:prod": "npm update && next build && npm run sentry:sourcemaps && pm2 startOrRestart ecosystem.config.js --env production",
     "deploy:prod": "npm update && next build && pm2 startOrRestart ecosystem.config.js --env production",
-    "sentry:sourcemaps": "sentry-cli --url https://sentry.jacochef.ru/ sourcemaps upload --org sentry --project jacosoft-dop-react ./.next --rewrite"
+    "sentry:sourcemaps": "sentry-cli --url https://sentry.jacochef.ru/ sourcemaps upload --org sentry --project jacosoft-dop-react ./.next --rewrite",
+    "test:unit": "node scripts/test.js --type=unit",
+    "test:legacy": "node scripts/test.js --type=legacy",
+    "test:vitest": "vitest run",
+    "test:vitest:watch": "vitest",
+    "test:vitest:coverage": "vitest run --coverage",
+    "test:e2e": "node scripts/test.js --type=e2e"
   },
   "dependencies": {
     "@amcharts/amcharts5": "^5.20.6",
@@ -78,15 +83,25 @@
     "@playwright/test": "^1.63.0",
     "@storybook/addon-a11y": "^10.5.10",
     "@storybook/nextjs": "^10.5.10",
+    "@testing-library/dom": "10.4.2",
+    "@testing-library/jest-dom": "8.0.0",
+    "@testing-library/react": "16.3.3",
+    "@testing-library/user-event": "14.6.13",
     "@types/dropzone": "^5.7.9",
     "@types/file-saver": "^2.0.7",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
+    "@vitejs/plugin-react": "6.3.0",
+    "@vitest/coverage-v8": "5.1.2",
     "baseline-browser-mapping": "^2.11.24",
     "husky": "^9.1.7",
+    "jsdom": "29.0.0",
     "lint-staged": "^17.5.1",
+    "msw": "2.15.0",
     "prettier": "^3.9.7",
     "sass": "^1.104.1",
-    "storybook": "^10.5.10"
+    "storybook": "^10.5.10",
+    "vite": "8.4.0",
+    "vitest": "5.1.2"
   }
 }

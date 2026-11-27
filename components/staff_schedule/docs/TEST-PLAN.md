@@ -2,11 +2,11 @@
 
 ## Purpose
 
-This module currently has no dedicated automated test runner or module-level test harness in the repository.
+В модуле уже есть автоматические unit-тесты на `node:test`, браузерный smoke на Playwright с настоящим API и отдельные Storybook-проверки. Актуальное покрытие, команды запуска, ограничения и результаты сверки собраны в [единой документации по тестированию](../../../tests/README.md).
 
-For now, the practical test baseline is a local manual smoke pass against the local Laravel API on `127.0.0.1` / `localhost`, followed by targeted follow-up automation only after the current UI and payload flows are stable.
+Ниже сохранён план ручных проверок и исторический smoke от 02.07.2026. Его результаты не подтверждают состояние текущей ветки. Существующий API-smoke вызывает сохранение данных и требует отдельной тестовой БД; адрес `localhost` не гарантирует изоляцию от боевых данных.
 
-## Latest Smoke Run
+## Historical Smoke Run — 2026-07-02
 
 Date: `2026-07-02`
 

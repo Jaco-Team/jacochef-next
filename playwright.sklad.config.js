@@ -13,7 +13,10 @@ module.exports = defineConfig({
   forbidOnly: true,
   retries: 0,
   workers: 1,
-  reporter: [["list"], ["html", { outputFolder: "playwright-report/sklad-items", open: "never" }]],
+  reporter: [
+    ["./scripts/test-reporters/playwright.cjs"],
+    ["html", { outputFolder: "playwright-report/sklad-items", open: "never" }],
+  ],
   use: {
     baseURL,
     trace: "retain-on-failure",
