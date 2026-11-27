@@ -17,6 +17,10 @@ import { MyTextInput } from "@/ui/Forms";
 
 const CafeEdit_Modal_History = (props) => {
   const { itemView, open, fullScreen, type_modal, date_edit } = props;
+  const traineeOnlineOnly = itemView?.driver_trainee_online_paid_only;
+  const traineeOnlineOnlyValue = traineeOnlineOnly?.color
+    ? traineeOnlineOnly.key
+    : traineeOnlineOnly;
 
   const onClose = () => {
     props.onClose();
@@ -664,6 +668,23 @@ const CafeEdit_Modal_History = (props) => {
                   className={cn({
                     disabled_input: true,
                     disabled_input_color: itemView?.summ_driver_min?.color,
+                  })}
+                />
+              </Grid>
+              <Grid size={12}>
+                <MyTextInput
+                  label="Стажёры могут брать только оплаченные онлайн-заказы"
+                  value={
+                    traineeOnlineOnlyValue == null
+                      ? "Нет данных"
+                      : Number(traineeOnlineOnlyValue) === 1
+                        ? "Включена"
+                        : "Выключена"
+                  }
+                  disabled
+                  className={cn({
+                    disabled_input: true,
+                    disabled_input_color: traineeOnlineOnly?.color,
                   })}
                 />
               </Grid>

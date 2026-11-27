@@ -51,12 +51,19 @@ function CafeEditTabDrivers({ canView, canEdit, saveSettings, openHistModal }) {
           value={Boolean(point_info?.driver_need_gps)}
           func={(e) => changeItemChecked("driver_need_gps", e)}
         />
+        <MyCheckBox
+          label="Стажёры могут брать только оплаченные онлайн-заказы"
+          disabled={!canEdit("settings_driver")}
+          value={Number(point_info?.driver_trainee_online_paid_only) === 1}
+          func={(e) => changeItemChecked("driver_trainee_online_paid_only", e)}
+        />
       </Grid>
       {canEdit("settings_driver") && (
         <Grid
           size={{ xs: 12, sm: 6 }}
           sx={{
             display: "grid",
+            alignContent: "start",
           }}
         >
           <Button

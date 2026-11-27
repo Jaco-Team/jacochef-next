@@ -687,6 +687,15 @@ export default function CafeEdit() {
       itemView.manager_id = itemView.manager_name ?? "";
     }
 
+    if (type_modal === "driver") {
+      const current = histData[index].driver_trainee_online_paid_only;
+      const previous = histData[Number(index) + 1]?.driver_trainee_online_paid_only;
+      const changed = current != null && previous != null && Number(current) !== Number(previous);
+      itemView.driver_trainee_online_paid_only = changed
+        ? { key: current, color: "true" }
+        : current;
+    }
+
     let date_edit = null;
 
     if (type_modal === "rate" || type_modal === "pay") {
@@ -1087,7 +1096,7 @@ export default function CafeEdit() {
               <CafeEditTabDrivers
                 canView={canView}
                 canEdit={canEdit}
-                openHistModal={(index) => open_hist_view(index, "sett")}
+                openHistModal={(index) => open_hist_view(index, "driver")}
                 saveSettings={save_edit_point_sett_driver}
               />
             </TabPanel>
